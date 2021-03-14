@@ -109,7 +109,7 @@ pub type Plan<'a, M> = Vec<EnforcedConstraint<'a, M>>;
 /// # Examples
 ///
 /// ```rust
-/// # use hotdrink_rs::{component, ret, algorithms::simple_planner::{simple_planner, EnforcedConstraint}};
+/// # use hotdrink_rs::{component, ret, algorithms::simple_planner::{simple_planner, EnforcedConstraint}, Method};
 ///
 /// // Construct a component
 /// let component = component! {
@@ -123,7 +123,7 @@ pub type Plan<'a, M> = Vec<EnforcedConstraint<'a, M>>;
 /// };
 ///
 /// // Run simple planner
-/// let plan: Option<Vec<EnforcedConstraint>> = simple_planner(&component);
+/// let plan: Option<Vec<EnforcedConstraint<Method<i32>>>> = simple_planner(&component);
 ///
 /// assert_eq!(plan, Some(vec![EnforcedConstraint::new("Eq", &component["Eq"]["m2"])]));
 /// ```

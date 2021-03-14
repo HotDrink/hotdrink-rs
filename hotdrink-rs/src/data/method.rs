@@ -18,23 +18,20 @@ use std::{
 /// It usually has a set of input-variables, a set of output-variables,
 /// and a function for creating the outputs from the inputs.
 #[derive(Clone)]
-pub enum Method<T> {
-    /// A stay-method that reads a value from a variable, then writes the same one back.
-    /// This works like an identity function.
-    Stay(usize),
-    /// Any other method.
-    Normal(String, Vec<usize>, Vec<usize>, MethodFunction<T>),
+pub struct Method<T> {
+    is_stay: bool,
+    name: String,
+    inputs: Vec<usize>,
+    outputs: Vec<usize>,
+    apply: MethodFunction<T>,
 }
 
 impl<T> PartialEq for Method<T> {
     fn eq(&self, other: &Self) -> bool {
-        match (self, other) {
-            (Method::Stay(var1), Method::Stay(var2)) => var1 == var2,
-            (Method::Normal(_, is1, os1, _), Method::Normal(_, is2, os2, _)) => {
-                is1 == is2 && os1 == os2
-            }
-            _ => false,
-        }
+        self.is_stay == other.is_stay
+            && self.name == other.name
+            && self.inputs == other.inputs
+            && self.outputs == other.outputs
     }
 }
 
@@ -42,12 +39,7 @@ impl<T> Eq for Method<T> {}
 
 impl<T> Debug for Method<T> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Method::Stay(var) => write!(f, "Method::Stay({})", var),
-            Method::Normal(name, inputs, outputs, _) => {
-                write!(f, "{}({:?} -> {:?})", name, inputs, outputs)
-            }
-        }
+        write!(f, "{}({:?} -> {:?})", self.name, self.inputs, self.outputs)
     }
 }
 
@@ -60,7 +52,13 @@ impl<T> MethodLike for Method<T> {
         outputs: Vec<usize>,
         apply: MethodFunction<T>,
     ) -> Self {
-        Method::Normal(name, inputs, outputs, apply)
+        Self {
+            is_stay: false,
+            name,
+            inputs,
+            outputs,
+            apply,
+        }
     }
 
     /// Apply the inner function of this method
@@ -69,29 +67,21 @@ impl<T> MethodLike for Method<T> {
         if input.len() != self.n_inputs() {
             return Err(MethodFailure::WrongInputCount(self.n_inputs(), input.len()));
         }
-        match self {
-            Method::Stay(_) => Ok(vec![]),
-            Method::Normal(_, _, _, apply) => {
-                // Perform computation
-                let output = (apply)(input)?;
-                // Verify that all outputs are defined
-                if output.len() != self.n_outputs() {
-                    return Err(MethodFailure::WrongOutputCount(
-                        self.n_outputs(),
-                        output.len(),
-                    ));
-                }
-                // Return the result
-                Ok(output)
-            }
+        // Compute output
+        let output = (self.apply)(input)?;
+        // Verify that all outputs are defined
+        if output.len() != self.n_outputs() {
+            return Err(MethodFailure::WrongOutputCount(
+                self.n_outputs(),
+                output.len(),
+            ));
         }
+
+        Ok(output)
     }
 
     fn name(&self) -> &str {
-        match self {
-            Method::Stay(_) => "<stay>",
-            Method::Normal(name, _, _, _) => &name,
-        }
+        &self.name
     }
 }
 
@@ -157,11 +147,7 @@ impl<T> Method<T> {
         }
 
         // We need a clone of the computation to move into the thread
-        // TODO: Use `apply` instead to do some extra checks.
-        let f: Arc<dyn Fn(Vec<T>) -> MethodResult<T> + Send + Sync + 'static> = match self {
-            Method::Stay(_) => Arc::new(|_| Ok(vec![])),
-            Method::Normal(_, _, _, fun) => fun.clone(),
-        };
+        let f = self.apply.clone();
 
         // Run the computation in another thread, which
         // will eventually put the computed values in
@@ -302,25 +288,25 @@ impl<T> Method<T> {
 impl<T> Vertex for Method<T> {
     /// Get the indices of the inputs to this method
     fn inputs(&self) -> &[usize] {
-        match self {
-            Method::Normal(_, inputs, _, _) => &inputs,
-            Method::Stay(var) => std::slice::from_ref(&var),
-        }
+        &self.inputs
     }
     /// Get the indices of the outputs to this method
     fn outputs(&self) -> &[usize] {
-        match self {
-            Method::Normal(_, _, outputs, _) => &outputs,
-            Method::Stay(var) => std::slice::from_ref(&var),
-        }
+        &self.outputs
     }
 
     fn stay(index: usize) -> Self {
-        Method::Stay(index)
+        Self {
+            is_stay: true,
+            name: format!("_stay_{}", index),
+            inputs: vec![index],
+            outputs: vec![index],
+            apply: Arc::new(|mut v| Ok(vec![v.remove(0)])),
+        }
     }
 
     fn is_stay(&self) -> bool {
-        matches!(self, Method::Stay(_))
+        self.is_stay
     }
 }
 

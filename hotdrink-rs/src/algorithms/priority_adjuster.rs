@@ -247,6 +247,6 @@ mod tests {
         // Verify that the updated ranking works as expected
         new_ranker.touch(2);
         let plan = hierarchical_planner(&component, &new_ranker.ranking()).unwrap();
-        assert_eq!(plan, vec![dummy("Sum", "m3", &[0, 2], &[1]),]);
+        assert_eq!(plan, vec![dummy("Sum", "acb", &[0, 2], &[1]),]);
     }
 }

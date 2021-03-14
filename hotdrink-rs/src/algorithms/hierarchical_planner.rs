@@ -6,7 +6,8 @@
 //! # Examples
 //!
 //! ```rust
-//! let component: Component<i32> = crate::component! {
+//! # use hotdrink_rs::{component, ret, algorithms::hierarchical_planner::{hierarchical_planner, OwnedEnforcedConstraint}, Component};
+//! let component: Component<i32> = component! {
 //!     component Comp {
 //!         let a: i32 = 0, b: i32 = 0, c: i32 = 0;
 //!         constraint C {
@@ -18,7 +19,7 @@
 //! };
 //! assert_eq!(
 //!     hierarchical_planner(&component, &[0, 1, 2]),
-//!     Ok(vec![OwnedSatisfiedConstraint::new(
+//!     Ok(vec![OwnedEnforcedConstraint::new(
 //!         "C",
 //!         component["C"]["m1"].clone()
 //!     )])
