@@ -1,3 +1,7 @@
+//! An algorithm for "locking in" methods of constraints that must be selected,
+//! and removing those that can not be selected.
+//! This can often make planning a lot faster by shrinking the constraint graph.
+
 use crate::algorithms::hierarchical_planner::Vertex;
 use crate::data::traits::{ComponentLike, ConstraintLike, MethodLike};
 use std::collections::HashSet;

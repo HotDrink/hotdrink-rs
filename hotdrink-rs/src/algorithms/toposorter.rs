@@ -1,3 +1,6 @@
+//! A function for topologically sorting plans.
+//! This must be done before executing them.
+
 use super::hierarchical_planner::Vertex;
 
 /// Topologically sort a slice of method references.

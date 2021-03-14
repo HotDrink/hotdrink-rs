@@ -1,4 +1,4 @@
-//! https://github.com/HotDrink/hotdrink/blob/master/test/models/ladder-10.js
+//! <https://github.com/HotDrink/hotdrink/blob/3f9bc25751079c69f8277918521a75dd1163bee4/test/models/ladder-10.js>
 
 use crate::data::traits::{MethodFailure, MethodLike};
 use crate::data::{Component, Constraint, Method};
@@ -14,6 +14,7 @@ fn rev<T: Default>(_: Vec<T>) -> Result<Vec<T>, MethodFailure> {
     Ok(vec![T::default()])
 }
 
+/// Generate a component with the "ladder"-shape.
 pub fn ladder<T>(name: String, n_variables: usize) -> Component<T>
 where
     T: Clone + Default + 'static,

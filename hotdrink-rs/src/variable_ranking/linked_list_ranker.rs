@@ -1,4 +1,4 @@
-//! A faster variable ranker.
+//! A variable ranker based on a linked list.
 //!
 //! This one performs ranking updates in constant time,
 //! and then only requires linear time to gather the
@@ -90,6 +90,7 @@ impl VariableRanker for LinkedListRanker {
 }
 
 impl LinkedListRanker {
+    /// Returns an iterator over the variables in ranked order.
     pub fn iter(&self) -> impl Iterator<Item = usize> + '_ {
         FastRankerIterator {
             ranker: &self,

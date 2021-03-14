@@ -50,6 +50,7 @@ impl<T: Clone + Debug> ConstraintSystem<T> {
             .unwrap_or_else(|_| panic!("No such variable: {}.{}", component, variable));
     }
 
+    /// Returns the current value of the variable with name `var`, if one exists.
     pub fn get_variable(&self, component: &str, variable: &str) -> Option<T> {
         let index = self.component_map[component];
         self.components[index].get_variable(variable)
@@ -79,6 +80,8 @@ impl<T: Clone + Debug> ConstraintSystem<T> {
         Ok(())
     }
 
+    /// Attempts to enforces all constraints in every component.
+    /// If no plan could be found, it will return a [`PlanError`].
     pub fn par_update_always(&mut self, spawn: &mut impl ThreadPool) -> Result<(), PlanError>
     where
         T: Send + 'static + Debug,
@@ -139,6 +142,11 @@ impl<T: Clone + Debug> ConstraintSystem<T> {
             .expect("Could not unsubscribe");
     }
 
+    /// Pins a variable.
+    ///
+    /// This adds a stay constraint to the specified variable,
+    /// meaning that planning will attempt to avoid modifying it.
+    /// The stay constraint can be remove with [`ConstraintSystem::unpin`].
     pub fn pin(&mut self, component: &str, variable: &str)
     where
         T: 'static,
@@ -147,6 +155,9 @@ impl<T: Clone + Debug> ConstraintSystem<T> {
         self.components[index].pin(variable);
     }
 
+    /// Unpins a variable.
+    ///
+    /// This removes the stay constraint added by [`ConstraintSystem::pin`].
     pub fn unpin(&mut self, component: &str, variable: &str)
     where
         T: 'static,

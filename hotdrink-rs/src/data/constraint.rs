@@ -6,11 +6,14 @@ use crate::{
 };
 use std::{collections::HashSet, fmt::Debug, ops::Index};
 
+/// Represents a constraint in a multiway dataflow constraint system.
+/// It has a name, a set of variables it references, a set of [`Method`]s to enforce it,
+/// and an optional assertion to run to ensure that it is actually enforced upon running a method.
 #[derive(Clone)]
 pub struct Constraint<T> {
     name: String,
     variables: Vec<usize>,
-    pub methods: Vec<Method<T>>,
+    methods: Vec<Method<T>>,
     assert: Option<Assert<T>>,
 }
 
@@ -78,9 +81,13 @@ impl<T> Constraint<T> {
             }
         }
     }
+
+    /// Constructs a new [`Component`](crate::Component) with the specified name.
     pub fn new_with_name(name: String, methods: Vec<Method<T>>) -> Self {
         Self::new_with_name_and_assert(name, methods, None)
     }
+
+    /// Constructs a new [`Component`](crate::Component) with the specified name and assertion.
     pub fn new_with_name_and_assert(
         name: String,
         methods: Vec<Method<T>>,

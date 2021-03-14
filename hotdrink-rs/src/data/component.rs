@@ -8,7 +8,7 @@ use super::{
 use super::{solve_error::SolveError, traits::MethodLike};
 use crate::{
     algorithms::{
-        hierarchical_planner::{self, OwnedSatisfiedConstraint, Vertex},
+        hierarchical_planner::{self, OwnedEnforcedConstraint, Vertex},
         priority_adjuster::adjust_priorities,
         solver,
     },
@@ -27,10 +27,12 @@ use std::{
     sync::{Arc, Mutex},
 };
 
+/// A callback that responds some input `T`.
 pub type GeneralCallback<T> = Arc<Mutex<dyn Fn(T) + Send>>;
 
-/// A collection of constraints that can be solved.
-/// This can receive updates to variables, and allows subscribing to variables by adding a callback.
+/// A collection of variables along with constraints that should be maintained between them.
+/// Variables can get new values, values can be retrieved from the component, and the constraints can be enforced.
+/// Subscribing to variables will send a notification when the new values are ready.
 #[derive(Clone)]
 pub struct Component<T> {
     name: String,
@@ -54,12 +56,12 @@ impl<T: Debug> Debug for Component<T> {
     }
 }
 
+/// Errors that can happen in a component.
 #[derive(Debug)]
 pub enum ComponentError {
+    /// No variable of the specified name exists.
     NoSuchVariable,
 }
-
-pub type ComponentResult<T> = Result<T, ComponentError>;
 
 impl<T: Clone> Component<T> {
     /// Add a callback to be called when a given variable is updated.
@@ -67,7 +69,7 @@ impl<T: Clone> Component<T> {
         &mut self,
         variable: &str,
         callback: impl Fn(Event<T, SolveError>) + Send + 'static,
-    ) -> ComponentResult<()>
+    ) -> Result<(), ComponentError>
     where
         T: 'static,
     {
@@ -104,7 +106,7 @@ impl<T: Clone> Component<T> {
     }
 
     /// Give a variable a new value.
-    pub fn set_variable(&mut self, var: &str, value: T) -> ComponentResult<()> {
+    pub fn set_variable(&mut self, var: &str, value: T) -> Result<(), ComponentError> {
         if let Some(&idx) = self.name_to_index.get(var) {
             self.updated_since_last_solve.insert(idx);
             self.ranker.touch(idx);
@@ -118,20 +120,24 @@ impl<T: Clone> Component<T> {
         }
     }
 
+    /// Returns the current value of the variable with name `var`, if one exists.
     pub fn get_variable(&self, var: &str) -> Option<T> {
         self.name_to_index
             .get(var)
             .map(|&idx| self.variable_activations[idx].value())
     }
 
+    /// Returns a reference to the name of this component.
     pub fn name(&self) -> &str {
         &self.name
     }
 
+    /// Returns a [`Vec<&str>`] of names of variables in this component.
     pub fn variable_names(&self) -> Vec<&str> {
         self.name_to_index.keys().map(String::as_str).collect()
     }
 
+    /// Constructs a new component from a precomputed map from variable names to indices.
     pub fn new_with_map(
         name: String,
         name_to_idx: HashMap<String, usize>,
@@ -166,7 +172,7 @@ impl<T: Clone> Component<T> {
     fn solve(
         &mut self,
         pool: &mut impl ThreadPool,
-        plan: Vec<OwnedSatisfiedConstraint<Method<T>>>,
+        plan: Vec<OwnedEnforcedConstraint<Method<T>>>,
     ) -> Result<(), PlanError>
     where
         T: Send + 'static + Debug,
@@ -198,6 +204,11 @@ impl<T: Clone> Component<T> {
         Ok(())
     }
 
+    /// Pins a variable.
+    ///
+    /// This adds a stay constraint to the specified variable,
+    /// meaning that planning will attempt to avoid modifying it.
+    /// The stay constraint can be remove with [`Component::unpin`].
     pub fn pin(&mut self, var: &str)
     where
         T: 'static,
@@ -211,6 +222,9 @@ impl<T: Clone> Component<T> {
         )]));
     }
 
+    /// Unpins a variable.
+    ///
+    /// This removes the stay constraint added by [`Component::pin`].
     pub fn unpin(&mut self, var: &str)
     where
         T: 'static,
@@ -224,10 +238,15 @@ impl<T: Clone> Component<T> {
         });
     }
 
+    /// Returns true if any variables have been updated since
+    /// the last solve, meaning that any constraints may be broken.
     pub fn is_modified(&self) -> bool {
         !self.updated_since_last_solve.is_empty()
     }
 
+    /// Constructs a string-representation of a graph formatted in the [dot language](https://graphviz.org/doc/info/lang.html).
+    /// This can be used for visualization of the constraint graph that the component represents.
+    /// This function includes every method in a constraint.
     pub fn to_dot_detailed(&self) -> Result<String, fmt::Error> {
         // Generate map from index to name
         let mut index_to_name = HashMap::new();
@@ -296,6 +315,9 @@ impl<T: Clone> Component<T> {
         Ok(buffer)
     }
 
+    /// Constructs a string-representation of a graph formatted in the [dot language](https://graphviz.org/doc/info/lang.html).
+    /// This can be used for visualization of the constraint graph that the component represents.
+    /// This function only includes constraints, and not methods.
     pub fn to_dot_simple(&self) -> Result<String, fmt::Error> {
         // Generate map from index to name
         let mut index_to_name = HashMap::new();

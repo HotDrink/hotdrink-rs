@@ -1,6 +1,35 @@
+//! An implementation of the hierarchical planner from QuickPlan (<https://dl.acm.org/doi/abs/10.1145/225540.225543?casa_token=bNBt7g-IvVQAAAAA:qHTNWG2wtiEUZXDGFOu2ooj8TGl5yJbKf3OiDmv1mnnuy6VdvrsZuAmcQZbtdjyn0MA4WALYavk>).
+//! This will create a solution graph for a [`Component`], where
+//! a priority order for variables can be included.
+//! The algorithm will attempt to avoid modifying variables with higher priorities.
+//!
+//! # Examples
+//!
+//! ```rust
+//! let component: Component<i32> = crate::component! {
+//!     component Comp {
+//!         let a: i32 = 0, b: i32 = 0, c: i32 = 0;
+//!         constraint C {
+//!             m1(a: &i32, b: &i32) -> [c] = ret![*a + *b];
+//!             m2(b: &i32, c: &i32) -> [a] = ret![*c - *b];
+//!             m3(c: &i32, a: &i32) -> [b] = ret![*c - *a];
+//!         }
+//!     }
+//! };
+//! assert_eq!(
+//!     hierarchical_planner(&component, &[0, 1, 2]),
+//!     Ok(vec![OwnedSatisfiedConstraint::new(
+//!         "C",
+//!         component["C"]["m1"].clone()
+//!     )])
+//! );
+//! ```
+//!
+//! [`Component`]: crate::Component
+
 use super::{
     pruner::{create_var_to_constraint, prune},
-    simple_planner::{simple_planner, SatisfiedConstraint},
+    simple_planner::{simple_planner, EnforcedConstraint},
 };
 use crate::{
     algorithms::toposorter::toposort,
@@ -12,42 +41,66 @@ use crate::{
 };
 use std::{collections::HashSet, fmt::Debug};
 
+/// Represents a type with input- and output-indices.
+/// This can be used to represent Vertices in graphs.
 pub trait Vertex {
+    /// Returns the input-indices of this vertex.
     fn inputs(&self) -> &[usize];
+
+    /// Returns the number of inputs of this vertex.
     fn n_inputs(&self) -> usize {
         self.inputs().len()
     }
+
+    /// Returns the outputs-indices of this vertex.
     fn outputs(&self) -> &[usize];
+
+    /// Returns the number of outputs of this vertex.
     fn n_outputs(&self) -> usize {
         self.outputs().len()
     }
+
+    /// Creates a vertex that reads and writes to the same index.
+    /// That is, if we create a vertex `v = stay(3)`,
+    /// its only input is 3, and its only output is 3.
     fn stay(index: usize) -> Self;
+
+    /// Returns true if the vertex reads from and writes to the same index.
     fn is_stay(&self) -> bool;
 }
 
+/// A constraint with name `name` that has been enforced with `method`.
+/// This variation of `EnforcedConstraint` owns the name.
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
-pub struct OwnedSatisfiedConstraint<M> {
+pub struct OwnedEnforcedConstraint<M> {
+    /// The name of enforced constraint.
     name: String,
+    /// The method that enforces it.
     method: M,
 }
 
-impl<M> OwnedSatisfiedConstraint<M> {
+impl<M> OwnedEnforcedConstraint<M> {
+    /// Creates a new enforced constraint with name `name` that is enforced by `method`.
     pub fn new<S: Into<String>>(name: S, method: M) -> Self {
         Self {
             name: name.into(),
             method,
         }
     }
+
+    /// Returns a reference to the name of the constraint.
     pub fn name(&self) -> &str {
         &self.name
     }
+
+    /// Returns a reference to the method that enforces the constraint.
     pub fn method(&self) -> &M {
         &self.method
     }
 }
 
-impl<'a, M: Clone> From<SatisfiedConstraint<'a, M>> for OwnedSatisfiedConstraint<M> {
-    fn from(satisfied_constraint: SatisfiedConstraint<'a, M>) -> Self {
+impl<'a, M: Clone> From<EnforcedConstraint<'a, M>> for OwnedEnforcedConstraint<M> {
+    fn from(satisfied_constraint: EnforcedConstraint<'a, M>) -> Self {
         Self {
             name: satisfied_constraint.name().to_owned(),
             method: satisfied_constraint.method().to_owned(),
@@ -55,7 +108,7 @@ impl<'a, M: Clone> From<SatisfiedConstraint<'a, M>> for OwnedSatisfiedConstraint
     }
 }
 
-impl<M: Vertex> Vertex for OwnedSatisfiedConstraint<M> {
+impl<M: Vertex> Vertex for OwnedEnforcedConstraint<M> {
     fn inputs(&self) -> &[usize] {
         self.method.inputs()
     }
@@ -76,7 +129,10 @@ impl<M: Vertex> Vertex for OwnedSatisfiedConstraint<M> {
     }
 }
 
-pub type OwnedPlan<M> = Vec<OwnedSatisfiedConstraint<M>>;
+/// A plan that consists of a `Vec` of `OwnedEnforcedConstraint`.
+/// Each constraint must be enforced by a method for it to be a solution graph,
+/// and the graph must also be a DAG.
+pub type OwnedPlan<M> = Vec<OwnedEnforcedConstraint<M>>;
 
 /// Take a component as input, as well as a ranking of variables to know which ones
 /// should not be modified if possible. The leftmost variables will be prioritized.
@@ -162,7 +218,7 @@ where
     let best_solution = best_solution
         .or_else(|| simple_planner(&component).map(|p| p.into_iter().map(|sc| sc.into()).collect()))
         .ok_or(PlanError::Overconstrained)?;
-    let best_solution: Vec<OwnedSatisfiedConstraint<_>> =
+    let best_solution: Vec<OwnedEnforcedConstraint<_>> =
         best_solution.into_iter().filter(|m| !m.is_stay()).collect();
     let sorted = toposort(&best_solution, component.values().len())
         .map(|v| v.into_iter().cloned().collect());
@@ -243,7 +299,7 @@ pub fn hierarchical_planner_only_updated<T: Clone + 'static>(
 #[cfg(test)]
 mod tests {
 
-    use super::{hierarchical_planner, OwnedSatisfiedConstraint};
+    use super::{hierarchical_planner, OwnedEnforcedConstraint};
     use crate::{
         data::{
             component::Component,
@@ -266,11 +322,11 @@ mod tests {
         );
         assert_eq!(
             hierarchical_planner::<&str, _, _, _>(&component, &[0, 1]),
-            Ok(vec![OwnedSatisfiedConstraint::new("", a_to_b)])
+            Ok(vec![OwnedEnforcedConstraint::new("", a_to_b)])
         );
         assert_eq!(
             hierarchical_planner::<&str, _, _, _>(&component, &[1, 0]),
-            Ok(vec![OwnedSatisfiedConstraint::new("", b_to_a)])
+            Ok(vec![OwnedEnforcedConstraint::new("", b_to_a)])
         );
     }
 
@@ -288,7 +344,7 @@ mod tests {
         };
         assert_eq!(
             hierarchical_planner(&component, &[0, 1, 2]),
-            Ok(vec![OwnedSatisfiedConstraint::new(
+            Ok(vec![OwnedEnforcedConstraint::new(
                 "C",
                 component["C"]["m1"].clone()
             )])
@@ -315,9 +371,9 @@ mod tests {
         assert_eq!(
             hierarchical_planner(&component, &[0, 1, 2, 3]),
             Ok(vec![
-                OwnedSatisfiedConstraint::new("A", component["A"]["a1"].clone()),
-                OwnedSatisfiedConstraint::new("B", component["B"]["b1"].clone()),
-                OwnedSatisfiedConstraint::new("C", component["C"]["c1"].clone()),
+                OwnedEnforcedConstraint::new("A", component["A"]["a1"].clone()),
+                OwnedEnforcedConstraint::new("B", component["B"]["b1"].clone()),
+                OwnedEnforcedConstraint::new("C", component["C"]["c1"].clone()),
             ])
         );
     }
@@ -333,16 +389,16 @@ mod tests {
         pretty_assertions::assert_eq!(
             hierarchical_planner(&component, &(0..12).collect::<Vec<_>>()),
             Ok(vec![
-                OwnedSatisfiedConstraint::new("c0", component["c0"]["lower2"].clone()),
-                OwnedSatisfiedConstraint::new("c1", component["c1"]["upper2"].clone()),
-                OwnedSatisfiedConstraint::new("c2", component["c2"]["lower2"].clone()),
-                OwnedSatisfiedConstraint::new("c3", component["c3"]["upper2"].clone()),
-                OwnedSatisfiedConstraint::new("c4", component["c4"]["lower2"].clone()),
-                OwnedSatisfiedConstraint::new("c5", component["c5"]["upper2"].clone()),
-                OwnedSatisfiedConstraint::new("c6", component["c6"]["lower2"].clone()),
-                OwnedSatisfiedConstraint::new("c7", component["c7"]["upper2"].clone()),
-                OwnedSatisfiedConstraint::new("c8", component["c8"]["lower2"].clone()),
-                OwnedSatisfiedConstraint::new("c9", component["c9"]["upper2"].clone()),
+                OwnedEnforcedConstraint::new("c0", component["c0"]["lower2"].clone()),
+                OwnedEnforcedConstraint::new("c1", component["c1"]["upper2"].clone()),
+                OwnedEnforcedConstraint::new("c2", component["c2"]["lower2"].clone()),
+                OwnedEnforcedConstraint::new("c3", component["c3"]["upper2"].clone()),
+                OwnedEnforcedConstraint::new("c4", component["c4"]["lower2"].clone()),
+                OwnedEnforcedConstraint::new("c5", component["c5"]["upper2"].clone()),
+                OwnedEnforcedConstraint::new("c6", component["c6"]["lower2"].clone()),
+                OwnedEnforcedConstraint::new("c7", component["c7"]["upper2"].clone()),
+                OwnedEnforcedConstraint::new("c8", component["c8"]["lower2"].clone()),
+                OwnedEnforcedConstraint::new("c9", component["c9"]["upper2"].clone()),
             ])
         );
     }

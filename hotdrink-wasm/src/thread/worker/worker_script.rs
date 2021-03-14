@@ -1,4 +1,4 @@
-//! From https://github.com/chemicstry/wasm_thread/blob/main/src/lib.rs
+//! From <https://github.com/chemicstry/wasm_thread/blob/2dfcf37ef1fca9f2392272185a014280464fd028/src/lib.rs>
 
 use wasm_bindgen::JsValue;
 use web_sys::{Blob, Url};

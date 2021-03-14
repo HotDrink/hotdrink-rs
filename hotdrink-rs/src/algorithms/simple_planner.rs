@@ -1,34 +1,46 @@
+//! An implementation of the multioutput planner from QuickPlan (<https://dl.acm.org/doi/abs/10.1145/225540.225543?casa_token=bNBt7g-IvVQAAAAA:qHTNWG2wtiEUZXDGFOu2ooj8TGl5yJbKf3OiDmv1mnnuy6VdvrsZuAmcQZbtdjyn0MA4WALYavk>).
+//! Given a component, it will find one method per constraint to enforce it, such that the methods and the variables they
+//! read from and write to form a directed acyclic graph.
+
 use super::{hierarchical_planner::Vertex, toposorter::toposort};
 use crate::data::traits::{ComponentLike, ConstraintLike, MethodLike};
 use itertools::Itertools;
 use std::{collections::VecDeque, fmt::Debug};
 
+/// Maintains a list of constraints that reference this variable.
 #[derive(Debug, Clone, Default)]
 pub struct VariableRefCounter {
     referencing_constraints: Vec<usize>,
 }
 
 impl VariableRefCounter {
+    /// Creates a new `VariableRefCounter` with no references.
     pub fn new() -> Self {
         Self::default()
     }
 
+    /// Returns true if the variable is free.
+    /// That is, it only has a single constraint referencing it.
     pub fn is_free(&self) -> bool {
         self.referencing_constraints.len() == 1
     }
 
+    /// Adds a reference to a specific constraint to this variable.
     pub fn add_reference(&mut self, index: usize) {
         self.referencing_constraints.push(index);
     }
 
+    /// Removes a reference to a specific constraint from this variable.
     pub fn remove_reference(&mut self, index: usize) {
         self.referencing_constraints.retain(|ci| &index != ci);
     }
 
+    /// Returns the list of constraints that reference this variable.
     pub fn referencing_constraints(&self) -> &[usize] {
         &self.referencing_constraints
     }
 
+    /// Stores references for all variables used in a component.
     fn count_variable_refs<Comp: ComponentLike>(component: &Comp) -> Vec<Self> {
         let n_variables = component.n_variables();
         let constraints = &component.constraints();
@@ -44,25 +56,32 @@ impl VariableRefCounter {
     }
 }
 
+/// A constraint with name `name` that has been enforced with `method`.
+/// This variation of `EnforcedConstraint` references the name.
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
-pub struct SatisfiedConstraint<'a, M> {
+pub struct EnforcedConstraint<'a, M> {
+    /// The name of enforced constraint.
     name: &'a str,
+    /// The method that enforces it.
     method: &'a M,
 }
 
-impl<'a, M> SatisfiedConstraint<'a, M> {
+impl<'a, M> EnforcedConstraint<'a, M> {
+    /// Constructs a new `EnforcedConstraint` that is enforced by `method`.
     pub fn new(name: &'a str, method: &'a M) -> Self {
         Self { name, method }
     }
+    /// Returns the name of the enforced constraint.
     pub fn name(&self) -> &'a str {
         self.name
     }
+    /// Returns the method that enforces the constraint.
     pub fn method(&self) -> &'a M {
         self.method
     }
 }
 
-impl<'a, M: Vertex> Vertex for SatisfiedConstraint<'a, M> {
+impl<'a, M: Vertex> Vertex for EnforcedConstraint<'a, M> {
     fn inputs(&self) -> &[usize] {
         self.method.inputs()
     }
@@ -80,9 +99,34 @@ impl<'a, M: Vertex> Vertex for SatisfiedConstraint<'a, M> {
     }
 }
 
-pub type Plan<'a, M> = Vec<SatisfiedConstraint<'a, M>>;
-// pub type Plan<'a, M> = Vec<(&'a str, &'a M)>;
+/// A plan that consists of a `Vec` of `EnforcedConstraint`.
+/// Each constraint must be enforced by a method for it to be a solution graph,
+/// and the graph must also be a DAG.
+pub type Plan<'a, M> = Vec<EnforcedConstraint<'a, M>>;
 
+/// Attempts to construct a plan from something `ComponentLike`.
+///
+/// # Examples
+///
+/// ```rust
+/// # use hotdrink_rs::{component, ret, algorithms::simple_planner::{simple_planner, EnforcedConstraint}};
+///
+/// // Construct a component
+/// let component = component! {
+///     component Component {
+///         let x: i32 = 0, y: i32 = 0;
+///         constraint Eq {
+///           m1(x: &i32) -> [y] = ret![*x];
+///           m2(y: &i32) -> [x] = ret![*y];
+///         }
+///     }
+/// };
+///
+/// // Run simple planner
+/// let plan: Option<Vec<EnforcedConstraint>> = simple_planner(&component);
+///
+/// assert_eq!(plan, Some(vec![EnforcedConstraint::new("Eq", &component["Eq"]["m2"])]));
+/// ```
 #[allow(clippy::needless_lifetimes)]
 pub fn simple_planner<'a, M, C, Comp>(component: &'a Comp) -> Option<Plan<'a, M>>
 where
@@ -136,7 +180,7 @@ where
 
             if let Some(m) = free_methods.next() {
                 // Add this method to the plan
-                plan.push(SatisfiedConstraint::new(constraint.name(), m));
+                plan.push(EnforcedConstraint::new(constraint.name(), m));
                 remaining_constraints -= 1;
 
                 // Remove all references to this constraint
@@ -154,24 +198,25 @@ where
     Some(plan)
 }
 
+/// Runs the [`simple_planner`], and then topologically sorts the resulting plan.
+/// If successful, this plan can then be run to enforce all the constraints in the input-component.
 #[allow(clippy::needless_lifetimes)]
 pub fn new_simple_planner_toposort<'a, M, C, Comp>(
     component: &'a Comp,
-) -> Option<Vec<SatisfiedConstraint<'a, M>>>
+) -> Option<Vec<EnforcedConstraint<'a, M>>>
 where
     M: MethodLike + Clone,
     C: ConstraintLike<Method = M> + 'a + Debug,
     Comp: ComponentLike<Constraint = C>,
 {
-    let plan: Vec<SatisfiedConstraint<'a, M>> = simple_planner(component)?;
-    let sorted_plan: Vec<&'_ SatisfiedConstraint<'a, M>> =
-        toposort(&plan, component.n_variables())?;
+    let plan: Vec<EnforcedConstraint<'a, M>> = simple_planner(component)?;
+    let sorted_plan: Vec<&'_ EnforcedConstraint<'a, M>> = toposort(&plan, component.n_variables())?;
     Some(sorted_plan.into_iter().cloned().collect())
 }
 
 #[cfg(test)]
 mod tests {
-    use super::SatisfiedConstraint;
+    use super::EnforcedConstraint;
     use crate::{
         algorithms::{
             simple_planner::{new_simple_planner_toposort, simple_planner},
@@ -204,7 +249,7 @@ mod tests {
         };
         let c = &comp["C"]["c"];
         let plan = simple_planner(&comp);
-        assert_eq!(plan, Some(vec![SatisfiedConstraint::new("C", c)]));
+        assert_eq!(plan, Some(vec![EnforcedConstraint::new("C", c)]));
     }
 
     #[test]
@@ -232,8 +277,8 @@ mod tests {
         assert_eq!(
             plan,
             Some(vec![
-                SatisfiedConstraint::new("Product", p1),
-                SatisfiedConstraint::new("Sum", s1)
+                EnforcedConstraint::new("Product", p1),
+                EnforcedConstraint::new("Sum", s1)
             ])
         );
     }
@@ -261,10 +306,10 @@ mod tests {
         assert_eq!(
             &plan,
             &Some(vec![
-                SatisfiedConstraint::new("d_to_e", &comp["d_to_e"]["d_to_e"]),
-                SatisfiedConstraint::new("c_to_d", &comp["c_to_d"]["c_to_d"]),
-                SatisfiedConstraint::new("b_to_c", &comp["b_to_c"]["b_to_c"]),
-                SatisfiedConstraint::new("a_to_b", &comp["a_to_b"]["a_to_b"]),
+                EnforcedConstraint::new("d_to_e", &comp["d_to_e"]["d_to_e"]),
+                EnforcedConstraint::new("c_to_d", &comp["c_to_d"]["c_to_d"]),
+                EnforcedConstraint::new("b_to_c", &comp["b_to_c"]["b_to_c"]),
+                EnforcedConstraint::new("a_to_b", &comp["a_to_b"]["a_to_b"]),
             ])
         );
         let plan = plan.unwrap();
@@ -272,10 +317,10 @@ mod tests {
         assert_eq!(
             sorted,
             Some(vec![
-                &SatisfiedConstraint::new("a_to_b", &comp["a_to_b"]["a_to_b"]),
-                &SatisfiedConstraint::new("b_to_c", &comp["b_to_c"]["b_to_c"]),
-                &SatisfiedConstraint::new("c_to_d", &comp["c_to_d"]["c_to_d"]),
-                &SatisfiedConstraint::new("d_to_e", &comp["d_to_e"]["d_to_e"]),
+                &EnforcedConstraint::new("a_to_b", &comp["a_to_b"]["a_to_b"]),
+                &EnforcedConstraint::new("b_to_c", &comp["b_to_c"]["b_to_c"]),
+                &EnforcedConstraint::new("c_to_d", &comp["c_to_d"]["c_to_d"]),
+                &EnforcedConstraint::new("d_to_e", &comp["d_to_e"]["d_to_e"]),
             ])
         );
     }
@@ -320,8 +365,8 @@ mod tests {
         assert_eq!(
             plan,
             Some(vec![
-                SatisfiedConstraint::new("B", &comp["B"]["b1"]),
-                SatisfiedConstraint::new("A", &comp["A"]["a1"])
+                EnforcedConstraint::new("B", &comp["B"]["b1"]),
+                EnforcedConstraint::new("A", &comp["A"]["a1"])
             ])
         );
     }

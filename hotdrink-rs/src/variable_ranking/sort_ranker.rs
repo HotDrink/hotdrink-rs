@@ -1,8 +1,12 @@
+//! A simple ranker that keeps a counter that is incremented
+//! when a variable is updated. It stores the latest counter value
+//! for each variable, and ranks them based on their counter values.
+
 use super::variable_ranker::VariableRanker;
 
 /// A simple ranker that keeps a counter that is incremented
-/// when a variable is updated. Store the latest counter value
-/// for each variable, and rank them based on their counter values.
+/// when a variable is updated. It stores the latest counter value
+/// for each variable, and ranks them based on their counter values.
 #[derive(Clone, PartialEq, Debug)]
 pub struct SortRanker {
     counter: usize,

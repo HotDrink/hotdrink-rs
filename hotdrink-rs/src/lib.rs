@@ -15,7 +15,7 @@
 //! cargo build
 //! ```
 
-#![warn(missing_debug_implementations, rust_2018_idioms)]
+#![warn(missing_debug_implementations, rust_2018_idioms, missing_docs)]
 #![feature(test)]
 #![feature(result_flattening)]
 #![feature(stmt_expr_attributes)]

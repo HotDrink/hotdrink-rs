@@ -1,3 +1,7 @@
+//! Adjust priorities of variables according to a plan and the previous priorities.
+//! This is to avoid unexpected behavior where variables are updates in
+//! unexpected ways, not according to the most recent input.
+
 use std::{cmp::Ordering, collections::BinaryHeap};
 
 use super::hierarchical_planner::Vertex;
@@ -108,7 +112,7 @@ mod tests {
 
     use super::{adjust_priorities, CompareByPriority};
     use crate::{
-        algorithms::hierarchical_planner::{hierarchical_planner, OwnedSatisfiedConstraint},
+        algorithms::hierarchical_planner::{hierarchical_planner, OwnedEnforcedConstraint},
         data::{traits::*, Method},
         variable_ranking::{SortRanker, VariableRanker},
     };
@@ -152,8 +156,8 @@ mod tests {
         method: &str,
         inputs: &[usize],
         outputs: &[usize],
-    ) -> OwnedSatisfiedConstraint<Method<T>> {
-        OwnedSatisfiedConstraint::new(
+    ) -> OwnedEnforcedConstraint<Method<T>> {
+        OwnedEnforcedConstraint::new(
             constraint,
             Method::new(
                 method.to_string(),

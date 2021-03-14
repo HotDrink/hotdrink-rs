@@ -14,9 +14,15 @@ use std::{
     sync::{Arc, Mutex},
 };
 
+/// A method for enforcing a [`Constraint`](crate::Constraint).
+/// It usually has a set of input-variables, a set of output-variables,
+/// and a function for creating the outputs from the inputs.
 #[derive(Clone)]
 pub enum Method<T> {
+    /// A stay-method that reads a value from a variable, then writes the same one back.
+    /// This works like an identity function.
     Stay(usize),
+    /// Any other method.
     Normal(String, Vec<usize>, Vec<usize>, MethodFunction<T>),
 }
 
@@ -89,6 +95,7 @@ impl<T> MethodLike for Method<T> {
     }
 }
 
+/// A [`SharedState`] wrapped in an [`Arc`] and a [`Mutex`] so that it can be shared.
 pub type SharedSharedState<T> = Arc<Mutex<SharedState<T, SolveError>>>;
 
 fn handle_error<T>(

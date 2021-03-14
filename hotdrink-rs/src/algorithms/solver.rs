@@ -1,4 +1,8 @@
-use super::hierarchical_planner::{OwnedSatisfiedConstraint, Vertex};
+//! Functions for executing plans created by a planner.
+//! If provided with a plan and the current values of a component, they will
+//! ensure that the all constraints are enforced.
+
+use super::hierarchical_planner::{OwnedEnforcedConstraint, Vertex};
 use crate::{
     data::{
         method::Method,
@@ -46,8 +50,17 @@ where
     Ok(())
 }
 
+/// Solves a component by executing a plan concurrently.
+///
+/// The following arguments are required:
+/// 1. A plan to execute.
+/// 2. The current values of a component.
+/// 3. The component name for better error messages.
+/// 4. The generation to know which solve new values came from.
+/// 5. A thread pool implementation for running methods in a plan.
+/// 6. A callback to pass new produced values to. These events include the component name and the generation.
 pub fn par_solve<T>(
-    plan: &[OwnedSatisfiedConstraint<Method<T>>],
+    plan: &[OwnedEnforcedConstraint<Method<T>>],
     current_values: &mut Vec<VariableActivation<T, SolveError>>,
     component_name: String,
     generation: usize,
