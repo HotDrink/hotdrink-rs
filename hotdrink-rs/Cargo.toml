@@ -6,7 +6,7 @@ edition = "2018"
 description = "An implementation of HotDrink in Rust."
 license = "MIT"
 keywords = [ "algorithms", "data-structures", "constraint-systems" ]
-repository = "https://git.app.uib.no/Jaakko.Jarvi/hd4/-/tree/wasm/hd-wasm/hotdrink-rs"
+repository = "https://github.com/HotDrink/hotdrink-rs"
 
 [dependencies]
 

@@ -1,3 +1,20 @@
+//! HotDrink implemented in Rust.
+//!
+//! # Prerequisites
+//!
+//! Begin by downloading the prerequisites below.
+//!
+//! * Rust (nightly)
+//!
+//! To use Rust nightly for this project, either set it globally with `rustup default nightly`, or for this project with `rustup override set nightly`.
+//! It is required for the experimental benchmarking features.
+//!
+//! # Build
+//!
+//! ```bash
+//! cargo build
+//! ```
+
 #![feature(test)]
 #![feature(result_flattening)]
 #![feature(stmt_expr_attributes)]

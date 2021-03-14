@@ -1,4 +1,4 @@
-//! HotDrink implemented using Rust and WebAssembly.
+//! A wrapper library around `hotdrink-rs` for compilation to WebAssembly.
 //!
 //! # Prerequisites
 //!
