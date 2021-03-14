@@ -1,3 +1,4 @@
+use std::fmt::Debug;
 use std::sync::Arc;
 
 /// A callback that reacts to updates from a variable
@@ -48,5 +49,25 @@ impl<T, E> Callback<T, E> {
 
     pub fn call_error(&self, error: E) -> Option<()> {
         self.on_error.as_ref().map(|on_error| on_error(error))
+    }
+}
+
+/// Creates a debug-str for any `Option`
+/// without including its contents.
+/// This is useful when it contains non-`Debug` types.
+fn fmt_opt<T>(opt: &Option<T>) -> &'static str {
+    match opt {
+        Some(_) => "Some(..)",
+        None => "None",
+    }
+}
+
+impl<T, E> Debug for Callback<T, E> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Callback")
+            .field("on_pending", &fmt_opt(&self.on_pending))
+            .field("on_ready", &fmt_opt(&self.on_ready))
+            .field("on_error", &fmt_opt(&self.on_error))
+            .finish()
     }
 }

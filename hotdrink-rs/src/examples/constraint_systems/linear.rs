@@ -29,7 +29,7 @@ where
         for constraint_id in 1..n_variables {
             let prev: &str = &variable_names[constraint_id - 1];
             let current = &variable_names[constraint_id];
-            let constraint: RawConstraint<T> = RawConstraint::new(
+            let constraint: RawConstraint<'_, T> = RawConstraint::new(
                 &constraint_names[constraint_id],
                 vec![RawMethod::new(
                     "right",
@@ -80,7 +80,7 @@ where
         for constraint_id in 1..n_variables {
             let prev: &str = &variable_names[constraint_id - 1];
             let current = &variable_names[constraint_id];
-            let constraint: RawConstraint<T> = RawConstraint::new(
+            let constraint: RawConstraint<'_, T> = RawConstraint::new(
                 &constraint_names[constraint_id],
                 vec![
                     RawMethod::new("left", vec![prev], vec![current], apply.clone()),

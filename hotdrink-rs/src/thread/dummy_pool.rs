@@ -4,6 +4,7 @@ use std::sync::{atomic::AtomicBool, Arc};
 /// A thread pool with no actual additional threads.
 /// It will execute the work on the main thread.
 /// Commonly used for testing and benchmarking.
+#[derive(Copy, Clone, Debug, Default, PartialEq, Eq)]
 pub struct DummyPool;
 
 impl ThreadPool for DummyPool {

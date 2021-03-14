@@ -25,7 +25,7 @@ where
 
     for comp_id in 0..n_components {
         // Create constraints between each consecutive variable
-        let constraints: Vec<RawConstraint<T>> =
+        let constraints: Vec<RawConstraint<'_, T>> =
             make_constraints(&constraint_names, &variable_names);
 
         // Construct component

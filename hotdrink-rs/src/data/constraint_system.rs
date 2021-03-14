@@ -6,6 +6,7 @@ use crate::{
 use std::{collections::HashMap, fmt::Debug};
 
 /// A container for `Component`s.
+#[derive(Clone, Debug, PartialEq)]
 pub struct ConstraintSystem<T> {
     component_map: HashMap<String, usize>,
     components: Vec<Component<T>>,

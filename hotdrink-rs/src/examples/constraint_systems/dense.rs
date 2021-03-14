@@ -31,7 +31,7 @@ where
             for offset in 1..=4 {
                 let from = &variable_names[from_idx];
                 let to = &variable_names[from_idx + offset];
-                let constraint: RawConstraint<T> = RawConstraint::new(
+                let constraint: RawConstraint<'_, T> = RawConstraint::new(
                     &constraint_names[from_idx + offset],
                     vec![
                         RawMethod::new("right", vec![from], vec![to], apply.clone()),

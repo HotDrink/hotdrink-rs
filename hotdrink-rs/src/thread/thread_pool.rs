@@ -5,7 +5,7 @@ use std::sync::{
 };
 
 /// Three possibly strategies for when to terminate workers.
-#[derive(Clone, Copy)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub enum TerminationStrategy {
     /// Never terminate any threads.
     Never,
@@ -53,7 +53,7 @@ pub trait WorkerPool: ThreadPool {
 /// As long as at least one clone of this handle exists,
 /// the termination flag for a worker is set to false,
 /// as it means that the result is still required.
-#[derive(Clone)]
+#[derive(Clone, Debug, Default)]
 pub struct TerminationHandle {
     inner: Arc<InnerHandle>,
 }
@@ -71,6 +71,7 @@ impl TerminationHandle {
 
 /// A handle which sets the termination flag for the associated worker.
 /// This will allow the thread pool to terminate workers whose results are no longer required.
+#[derive(Clone, Debug, Default)]
 pub struct InnerHandle {
     result_needed: Arc<AtomicBool>,
 }
