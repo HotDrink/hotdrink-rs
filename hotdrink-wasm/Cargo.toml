@@ -1,0 +1,62 @@
+[package]
+name = "hotdrink-wasm"
+version = "0.3.0"
+authors = ["Rudi B. Svartveit <rudsvar@gmail.com>"]
+edition = "2018"
+description = "WebAssembly wrappers for hotdrink-rs"
+license = "MIT"
+keywords = [ "wasm", "web-programming", "gui", "algorithms", "data-structures" ]
+repository = "https://git.app.uib.no/Jaakko.Jarvi/hd4/-/tree/wasm/hd-wasm/hotdrink-wasm"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+path = "src/lib.rs"
+
+# Enable console_error_panic_hook (and wee_alloc if I can make it work again)
+[features]
+default = ["console_error_panic_hook" ]
+
+[dependencies]
+
+hotdrink-rs = { path = "../hotdrink-rs" }
+
+# Logging
+log = "0.4.11"
+wasm-logger = "0.2.0"
+
+# Misc
+itertools = "0.10.0"
+
+# Wasm
+wasm-bindgen = { version = "0.2.68" }
+wasm-bindgen-futures = "0.4.18"
+
+# The `console_error_panic_hook` crate provides better debugging of panics by
+# logging them with `console.error`. This is great for development, but requires
+# all the `std::fmt` and `std::panicking` infrastructure, so isn't great for
+# code size when deploying.
+console_error_panic_hook = { version = "0.1.6", optional = true }
+
+js-sys = "0.3.45"
+
+[dependencies.web-sys]
+version = "0.3.47"
+features = [
+    "console",
+    "Worker",
+    "WorkerOptions",
+    "DedicatedWorkerGlobalScope",
+    "Blob",
+    "Url",
+    "ErrorEvent",
+    "Document",
+    "Element",
+    "HtmlElement",
+    "Window",
+    "Performance",
+    "PerformanceTiming",
+]
+
+[dev-dependencies]
+wasm-bindgen-test = "0.3.18"
+pretty_assertions = "0.6.1"

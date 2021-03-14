@@ -1,0 +1,12 @@
+target
+**/*.rs.bk
+Cargo.lock
+pkg/
+wasm-pack.log
+!*.html
+.vscode
+perf.data
+perf.data.old
+node_modules
+dot
+*.svg

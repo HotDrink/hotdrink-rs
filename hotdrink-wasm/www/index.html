@@ -1,0 +1,43 @@
+<!doctype html>
+
+<html>
+
+<head>
+    <title>
+        WasmDrink Examples
+    </title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
+        integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+    <style>
+        html {
+            padding: 1%;
+        }
+    </style>
+</head>
+
+<body>
+    <script src="./pkg/hotdrink_wasm.js"></script>
+    <script>
+        import("./index.js").catch(e => console.error(e));
+    </script>
+    <h1>WasmDrink Examples</h1>
+    A collection of example GUIs and constraint systems.
+    <h2>Testing</h2>
+    <ol>
+        <li> <a href="examples/example1">Multi-component</a> </li>
+        <li> <a href="examples/example2">Benchmarks</a> </li>
+        <li> <a href="examples/errors">Errors</a> </li>
+        <li> <a href="examples/priority_adjust">Priority adjust</a> </li>
+    </ol>
+    <h2>7 GUIs</h2>
+    <ol>
+        <li> <a href="examples/counter">Counter</a> </li>
+        <li> <a href="examples/temperature_converter">Temperature converter</a> </li>
+        <li> <a href="examples/flight_booker">Flight booker</a> </li>
+        <li> <a href="examples/timer">Timer</a> </li>
+        <li> <a href="examples/crud">Crud</a> </li>
+        <li> <a href="examples/circle_drawer">Circle drawer</a> </li>
+    </ol>
+</body>
+
+</html>

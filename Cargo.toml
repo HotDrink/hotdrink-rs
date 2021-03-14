@@ -1,0 +1,14 @@
+[workspace]
+members = [
+    "hotdrink-rs",
+    "hotdrink-rs-example",
+    "hotdrink-wasm",
+]
+
+[profile.release.package.hotdrink-rs]
+# Debug information for flamegraph
+debug = true
+
+[profile.release.package.hotdrink-wasm]
+# Tell `rustc` to optimize for small code size.
+opt-level = "s"
