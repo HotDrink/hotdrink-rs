@@ -14,3 +14,7 @@ An example of how a Rust GUI application can use `hotdrink-rs`.
 ## hotdrink-wasm
 
 A wrapper around `hotdrink-rs` for compilation to WebAssembly.
+
+## hotdrink-comparison
+
+Benchmarks of other implementations of HotDrink to compare to.
