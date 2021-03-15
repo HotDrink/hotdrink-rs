@@ -221,7 +221,7 @@ where
         .ok_or(PlanError::Overconstrained)?;
     let best_solution: Vec<OwnedEnforcedConstraint<_>> =
         best_solution.into_iter().filter(|m| !m.is_stay()).collect();
-    let sorted = toposort(&best_solution, component.values().len())
+    let sorted = toposort(&best_solution, component.variables().len())
         .map(|v| v.into_iter().cloned().collect());
 
     sorted.ok_or(PlanError::Overconstrained)
@@ -285,7 +285,7 @@ pub fn hierarchical_planner_only_updated<T: Clone + 'static>(
     // TOOD: Remove unnecessary cloning
     let comp: Component<T> = Component::new(
         component.name().to_string(),
-        component.values().to_vec(),
+        component.variables().to_vec(),
         constraints
             .iter()
             .cloned()

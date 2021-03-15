@@ -1,3 +1,5 @@
+//! Types for a [`Component`], an independent subgraph of a constraint system with values and constraints between them.
+
 use super::{
     constraint::Constraint,
     method::Method,
@@ -78,7 +80,7 @@ impl<T: Clone> Component<T> {
             let activation = &self.variable_activations[index];
             let shared_state = activation.shared_state();
             let shared_state = shared_state.lock().unwrap();
-            let value = shared_state.get_value();
+            let value = shared_state.current_value();
             let state = shared_state.get_state();
             match state {
                 State::Pending => callback(Event::Pending),
@@ -124,7 +126,7 @@ impl<T: Clone> Component<T> {
     pub fn get_variable(&self, var: &str) -> Option<T> {
         self.name_to_index
             .get(var)
-            .map(|&idx| self.variable_activations[idx].value())
+            .map(|&idx| self.variable_activations[idx].latest_value())
     }
 
     /// Returns a reference to the name of this component.
@@ -162,7 +164,7 @@ impl<T: Clone> Component<T> {
         T: Send + 'static + Debug,
     {
         // Rank variables and run planner
-        let ranking = self.ranking();
+        let ranking = self.ranker.ranking();
         let plan = hierarchical_planner::hierarchical_planner(self, &ranking)?;
         self.solve(pool, plan)?;
         Ok(())
@@ -384,15 +386,11 @@ impl<T: Clone> ComponentLike for Component<T> {
         self.par_update(&mut DummyPool)
     }
 
-    fn ranking(&self) -> Vec<usize> {
-        self.ranker.ranking()
-    }
-
     fn n_variables(&self) -> usize {
         self.variable_activations.len()
     }
 
-    fn values(&self) -> &[Self::Variable] {
+    fn variables(&self) -> &[Self::Variable] {
         &self.variable_activations
     }
 
@@ -491,7 +489,7 @@ mod tests {
         let mut component: Component<i32> = sum();
 
         assert_eq!(
-            component.values(),
+            component.variables(),
             &[
                 VariableActivation::from(0),
                 VariableActivation::from(0),
@@ -504,7 +502,7 @@ mod tests {
         component.par_update(&mut DummyPool).unwrap();
 
         assert_eq!(
-            component.values(),
+            component.variables(),
             &[
                 VariableActivation::from(3),
                 VariableActivation::from(0),
@@ -517,7 +515,7 @@ mod tests {
         component.update().unwrap();
 
         assert_eq!(
-            component.values(),
+            component.variables(),
             &[
                 VariableActivation::from(3),
                 VariableActivation::from(-1),
@@ -539,7 +537,7 @@ mod tests {
 
         // It should pick b, since it is not pinned and has a lower priority than a
         assert_eq!(
-            component.values(),
+            component.variables(),
             &[
                 VariableActivation::from(val1),
                 VariableActivation::from(-val1),
@@ -556,7 +554,7 @@ mod tests {
 
         // It should pick c, since c is no longer pinned
         assert_eq!(
-            component.values(),
+            component.variables(),
             &[
                 VariableActivation::from(val2),
                 VariableActivation::from(-val1),

@@ -1,3 +1,8 @@
+//! Types for a [`Constraint`], an relation between variables in a [`Component`](crate::Component) that should hold.
+//!
+//! A [`Constraint`] contains a number of [`Method`](crate::Method)s that read from and write to different variables,
+//! and can be executed in order to enforce the constraint.
+
 use super::method::Method;
 use crate::{
     algorithms::hierarchical_planner::Vertex,

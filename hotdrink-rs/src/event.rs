@@ -30,17 +30,18 @@ impl Identifier {
 }
 
 /// An event from the constraint system.
-/// A variable can be
-/// 1. Pending, meaning it is being computed.
-/// 2. Ready, meaning it was computed successfully.
-/// 3. Error, meaning it was not computed successfully.
 #[derive(Debug)]
 pub enum Event<T, E> {
+    /// The value is being computed.
     Pending,
+    /// The computation succeeded.
     Ready(T),
+    /// The computation failed.
     Error(Vec<E>),
 }
 
+/// An event from [`ConstraintSystem::update`](crate::ConstraintSystem::update) with information about
+/// which variable it is, and which generation the computation is from.
 #[derive(Debug)]
 pub struct GeneralEvent<T, E> {
     variable: usize,
@@ -49,6 +50,9 @@ pub struct GeneralEvent<T, E> {
 }
 
 impl<T, E> GeneralEvent<T, E> {
+    /// Constructs a new [`GeneralEvent`] for the specified variable.
+    ///
+    /// This includes the generation the computation is from, and what the event is.
     pub fn new(variable: usize, generation: usize, event: Event<T, E>) -> Self {
         Self {
             variable,
@@ -57,14 +61,17 @@ impl<T, E> GeneralEvent<T, E> {
         }
     }
 
+    /// Returns the variable the event is for.
     pub fn variable(&self) -> usize {
         self.variable
     }
 
+    /// Returns the generation the event is from.
     pub fn generation(&self) -> usize {
         self.generation
     }
 
+    /// Returns the actual event.
     pub fn event(self) -> Event<T, E> {
         self.event
     }

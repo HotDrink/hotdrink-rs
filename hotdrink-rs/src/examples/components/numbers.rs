@@ -1,3 +1,5 @@
+//! Examples of generic numeric components.
+
 use crate::data::component::Component;
 use crate::{component, ret};
 use std::ops::{Add, Div, Mul, Sub};

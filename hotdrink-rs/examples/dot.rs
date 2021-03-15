@@ -1,5 +1,4 @@
 use hotdrink_rs::{
-    data::Component,
     examples::{
         components::ladder::ladder,
         constraint_systems::{
@@ -8,6 +7,7 @@ use hotdrink_rs::{
             tree::{singleoutput_multiway, singleoutput_singleway, unprunable},
         },
     },
+    Component,
 };
 use std::io::{self, Write};
 

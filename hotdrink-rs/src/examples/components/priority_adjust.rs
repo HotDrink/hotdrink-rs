@@ -1,5 +1,9 @@
-use crate::{component, data::Component, ret};
+//! An example component for testing the variable priority adjuster.
 
+use crate::{component, ret, Component};
+
+/// An example that would component that would be solved
+/// in an unexpected manner unless variable priorities are adjusted.
 pub fn priority_adjust() -> Component<String> {
     component! {
         component PriorityAdjust {

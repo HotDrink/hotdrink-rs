@@ -1,9 +1,12 @@
 /// A macro for specifying components.
 ///
+/// This can be used to construct constraint systems declaratively by
+/// combining the desired components in a [`ConstraintSystem`](crate::ConstraintSystem).
+///
 /// # Examples
 ///
 /// ```rust
-/// # use hotdrink_rs::{data::Component, component, ret};
+/// # use hotdrink_rs::{Component, component, ret};
 /// let component: Component<i32> = component! {
 ///     component SumAndProduct {
 ///         let a: i32 = 0, b: i32 = 0, c: i32 = 0, d: i32 = 0;
@@ -102,21 +105,84 @@ macro_rules! component {
     }};
 }
 
+/// Turns a list of inputs into a successful [`MethodResult`]().
+/// This can be used defining methods in components with [`component!`].
+/// To make returning the possible values of a sum type used in a [`Component`](crate::Component) easier,
+/// it will automatically call [`Into::into`] on each argument.
+///
+/// # Examples
+///
+/// [`ret!`] can be used with normal values like [`i32`].
+///
+/// ```rust
+/// # use hotdrink_rs::{ret, data::traits::MethodResult};
+/// let result: MethodResult<i32> = ret![3, 5];
+/// assert_eq!(result, Ok(vec![3, 5]));
+/// ```
+///
+/// It can also be used with enums.
+///
+/// ```rust
+/// # use hotdrink_rs::{ret, data::traits::MethodResult};
+/// # #[derive(Debug, PartialEq)]
+/// enum Shape {
+///     Circle(usize),
+///     Square(usize, usize),
+/// }
+/// let result: MethodResult<Shape> = ret![Shape::Circle(3), Shape::Square(4, 5)];
+/// assert_eq!(result, Ok(vec![Shape::Circle(3), Shape::Square(4, 5)]));
+/// ```
+///
+/// Even with wrapper types that implement [`From::from`] its variants.
+/// These values can then be used directly in [`ret!`],
+/// and they will automatically be converted if possible.
+///
+/// ```rust
+/// # use hotdrink_rs::{ret, data::traits::MethodResult};
+/// # #[allow(non_camel_case_types)]
+/// # #[derive(Debug, PartialEq)]
+/// enum Value {
+///     i32(i32),
+///     f64(f64),
+/// }
+///
+/// // impl From<i32> for Value { ... }
+/// # impl From<i32> for Value {
+/// #     fn from(n: i32) -> Self {
+/// #         Value::i32(n)
+/// #     }
+/// # }
+///
+/// // impl From<f64> for Value { ... }
+/// # impl From<f64> for Value {
+/// #     fn from(n: f64) -> Self {
+/// #         Value::f64(n)
+/// #     }
+/// # }
+///
+/// let result: MethodResult<Value> = ret![3i32, 5.0f64];
+/// assert_eq!(result, Ok(vec![Value::i32(3), Value::f64(5.0)]));
+/// ```
 #[macro_export]
 macro_rules! ret {
     ($($e:expr),*) => {{ Ok(vec![$($e.into()),*]) }}
 }
 
+/// Turns a list of inputs into a failed [`MethodResult`]().
+/// This can be used defining methods in components with [`component!`].
+///
+/// # Examples
+///
+/// ```rust
+/// # use hotdrink_rs::{fail, data::traits::MethodResult, data::traits::MethodFailure};
+/// let result: MethodResult<()> = fail!("Expected {} to be equal to {}", 2, 3);
+/// assert_eq!(result, Err(MethodFailure::Custom(String::from("Expected 2 to be equal to 3"))));
+/// ```
 #[macro_export]
 macro_rules! fail {
     ($($arg:tt)*) => {{
         Err($crate::data::traits::MethodFailure::Custom(format!($($arg)*)))
     }};
-}
-
-#[macro_export]
-macro_rules! all_into {
-    ($($e:expr),*) => {{ vec![$($e.into()),*] }}
 }
 
 #[cfg(test)]
@@ -129,6 +195,10 @@ mod tests {
         gen_val,
     };
     use std::convert::TryFrom;
+
+    macro_rules! all_into {
+        ($($e:expr),*) => {{ vec![$($e.into()),*] }}
+    }
 
     // Generate an enum for standard types
     gen_val! {

@@ -1,7 +1,7 @@
-//! <https://github.com/HotDrink/hotdrink/blob/3f9bc25751079c69f8277918521a75dd1163bee4/test/models/ladder-10.js>
+//! An example component used in benchmarking.
+//! It was originally defined [here](https://github.com/HotDrink/hotdrink/blob/3f9bc25751079c69f8277918521a75dd1163bee4/test/models/ladder-10.js).
 
-use crate::data::traits::{MethodFailure, MethodLike};
-use crate::data::{Component, Constraint, Method};
+use crate::{Component, Constraint, Method, MethodFailure, MethodLike};
 use std::{collections::HashMap, sync::Arc};
 
 fn avg<T: Default>(_: Vec<T>) -> Result<Vec<T>, MethodFailure> {

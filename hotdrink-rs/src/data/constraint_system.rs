@@ -1,3 +1,7 @@
+//! Types for representing constraint systems.
+//! This works as a container for components, and provides an API
+//! for interacting with them.
+
 use super::{component::Component, solve_error::SolveError, traits::PlanError};
 use crate::{
     event::Event,

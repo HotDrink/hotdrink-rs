@@ -113,8 +113,9 @@ mod tests {
     use super::{adjust_priorities, CompareByPriority};
     use crate::{
         algorithms::hierarchical_planner::{hierarchical_planner, OwnedEnforcedConstraint},
-        data::{traits::*, Method},
+        data::traits::*,
         variable_ranking::{SortRanker, VariableRanker},
+        Method,
     };
 
     #[test]

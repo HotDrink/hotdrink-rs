@@ -31,6 +31,9 @@ pub mod thread;
 pub mod variable_ranking;
 
 pub use data::{
-    traits::{ComponentLike, ConstraintLike, MethodLike},
-    Component, Constraint, ConstraintSystem, Method,
+    component::Component,
+    constraint::Constraint,
+    constraint_system::ConstraintSystem,
+    method::Method,
+    traits::{ComponentLike, ConstraintLike, MethodFailure, MethodLike, MethodResult},
 };

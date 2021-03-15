@@ -1,3 +1,7 @@
+//! Types for constraint satisfaction methods.
+//! A [`Method`] in a [`Constraint`](crate::Constraint) should enforce the relation
+//! that the constraint represents.
+
 use super::solve_error::{Reason, SolveError};
 use crate::data::variable_activation::State;
 use crate::{
@@ -247,7 +251,7 @@ impl<T> Method<T> {
                             // Set the new value
                             shared_state.set_value(res);
                             // Notify the async runtime that the value is ready
-                            if let Some(waker) = shared_state.waker.take() {
+                            if let Some(waker) = shared_state.waker_mut().take() {
                                 waker.wake();
                             }
                         }

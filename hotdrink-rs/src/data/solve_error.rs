@@ -2,6 +2,7 @@ use std::fmt::Display;
 
 use super::traits::MethodFailure;
 
+/// Information about an error that occured during solving.
 #[derive(Clone, Debug, PartialEq)]
 pub struct SolveError {
     component: String,
@@ -11,6 +12,8 @@ pub struct SolveError {
 }
 
 impl SolveError {
+    /// Constructs a new [`SolveError`] with location information (`component`, `constraint`, and `method`),
+    /// as well as a [`Reason`] describing what went wrong.
     pub fn new(component: String, constraint: String, method: String, reason: Reason) -> Self {
         Self {
             component,
@@ -48,10 +51,14 @@ impl Display for SolveError {
     }
 }
 
+/// A description of what went wrong during solving.
 #[derive(Clone, Debug, PartialEq)]
 pub enum Reason {
+    /// A precondition did not hold before enforcing a constraint.
     PreConditionFailure(String),
+    /// A postcondition did not hold after enforcing a constraint.
     PostConditionFailure(String),
+    /// A method failed to execute. See [`MethodFailure`].
     MethodFailure(MethodFailure),
 }
 

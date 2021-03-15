@@ -1,15 +1,24 @@
+//! Extra information about a variable, such as its status, generation, and callbacks.
+
 use super::variable_activation::EventCallback;
 use crate::event::{Event, GeneralEvent};
 use std::fmt::Debug;
 use std::sync::{Arc, Mutex};
 
+/// The current status of a variable.
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub enum Status {
+    /// A new value is being computed.
     Pending,
+    /// The variable's value is fully updated.
     Ready,
+    /// The variable is in an error-state.
     Error,
 }
 
+/// Information about a variable.
+///
+/// More specifically, this struct contains its generation, current status, and a callback if one exists.
 #[derive(Clone)]
 pub struct VariableInfo<T, E> {
     generation: usize,
@@ -18,6 +27,7 @@ pub struct VariableInfo<T, E> {
 }
 
 impl<T: Clone, E: Clone> VariableInfo<T, E> {
+    /// Constructs a new [`VariableInfo`] with the specified status.
     pub fn new(status: Status) -> Self {
         Self {
             generation: 0,
@@ -25,21 +35,29 @@ impl<T: Clone, E: Clone> VariableInfo<T, E> {
             callback: None,
         }
     }
+    /// Returns the current generation of the variable.
     pub fn generation(&self) -> usize {
         self.generation
     }
+    /// Sets the generation to the specified value.
     pub fn set_generation(&mut self, generation: usize) {
         self.generation = generation;
     }
+    /// Returns a reference to the callback of the variable.
     pub fn callback(&self) -> &Option<EventCallback<T, E>> {
         &self.callback
     }
+    /// Sets the callback of the variable.
     pub fn subscribe(&mut self, callback: impl Fn(Event<T, E>) + Send + 'static) {
         self.callback = Some(Arc::new(Mutex::new(callback)));
     }
+    /// Removes the callback of the variable.
     pub fn unsubscribe(&mut self) {
         self.callback = None;
     }
+    /// Calls the callback of the variable if one exists.
+    ///
+    /// Old events will be ignored, and new ones will update the current status of the variable.
     pub fn call_callback(&mut self, ge: GeneralEvent<T, E>) {
         let new_generation = ge.generation();
         let old_generation = self.generation();

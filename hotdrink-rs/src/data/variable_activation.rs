@@ -27,6 +27,7 @@ impl<E> Default for State<E> {
     }
 }
 
+/// A callback to an [`Event`] sent from a call to [`ConstraintSystem::update`](crate::ConstraintSystem::update).
 pub type EventCallback<T, E> = Arc<Mutex<dyn Fn(Event<T, E>) + Send>>;
 
 /// Contains a slot for a value to be produced,
@@ -34,11 +35,17 @@ pub type EventCallback<T, E> = Arc<Mutex<dyn Fn(Event<T, E>) + Send>>;
 pub struct SharedState<T, E> {
     value: T,
     state: State<E>,
-    pub waker: Option<Waker>,
+    waker: Option<Waker>,
 }
 
 impl<T: Clone, E: Clone> SharedState<T, E> {
+    /// Constructs a [`SharedState`] from another one.
+    /// This is used as a way of having a fallback in case the new computation fails.
+    /// That is, previous provides a default value.
     pub fn from_previous(previous: &Arc<Mutex<SharedState<T, E>>>) -> Self {
+        // TODO: If previous is not done yet, it will take previous' old value.
+        // We should wait for the previous to get a value,
+        // and if that fails it will again use a reference to the previous one.
         let previous = previous.lock().unwrap();
         Self {
             value: previous.value.clone(),
@@ -47,14 +54,17 @@ impl<T: Clone, E: Clone> SharedState<T, E> {
         }
     }
 
+    /// Returns a reference to the current state.
     pub fn get_state(&self) -> &State<E> {
         &self.state
     }
 
-    pub fn get_value(&self) -> &T {
+    /// Returns a reference to the current value.
+    pub fn current_value(&self) -> &T {
         &self.value
     }
 
+    /// Set the state to [`State::Pending`].
     pub fn set_pending(&mut self) {
         self.state = State::Pending;
     }
@@ -72,6 +82,11 @@ impl<T: Clone, E: Clone> SharedState<T, E> {
         } else {
             self.state = State::Error(errors)
         }
+    }
+
+    /// Returns a mutable reference to the [`Waker`].
+    pub fn waker_mut(&mut self) -> &mut Option<Waker> {
+        &mut self.waker
     }
 }
 
@@ -114,6 +129,7 @@ pub struct VariableActivation<T, E> {
 }
 
 impl<T: Clone, E: Clone> VariableActivation<T, E> {
+    /// Returns a reference to the shared state of this variable activation.
     pub fn shared_state(&self) -> &Arc<Mutex<SharedState<T, E>>> {
         &self.shared_state
     }
@@ -123,8 +139,10 @@ impl<T: Clone, E: Clone> VariableActivation<T, E> {
         self.producer = None;
     }
 
-    pub fn value(&self) -> T {
-        self.shared_state.lock().unwrap().get_value().clone()
+    /// Returns the value of this activation if it is done,
+    /// or the latest one that was produced otherwise.
+    pub fn latest_value(&self) -> T {
+        self.shared_state.lock().unwrap().current_value().clone()
     }
 }
 
