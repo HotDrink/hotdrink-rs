@@ -20,7 +20,9 @@ pub enum TerminationStrategy {
 
 /// A trait for thread pool implementations.
 pub trait ThreadPool {
+    /// An error for when a new thread pool could not be constructed.
     type NewError: Debug;
+    /// An error for when executing a task on the thread pool fails.
     type ExecError: Debug;
 
     /// Creates a new thread pool with the specified number of initial workers.
@@ -41,6 +43,9 @@ pub trait ThreadPool {
 /// An extension of thread pools specifically for ones that use web workers.
 /// Passing in the shim url ensures that we don't create multiple copies of it.
 pub trait WorkerPool: ThreadPool {
+    /// Constructs a new pool as usual, but with a specified
+    /// path to the Web Worker source.
+    /// This is useful to avoid creating many instances of the blob.
     fn from_url(
         initial: usize,
         termination_strategy: TerminationStrategy,
@@ -59,24 +64,29 @@ pub struct TerminationHandle {
 }
 
 impl TerminationHandle {
-    pub fn new(result_needed: Arc<AtomicBool>) -> Self {
-        Self {
-            inner: Arc::new(InnerHandle { result_needed }),
-        }
-    }
-    pub fn cancel(&self) {
-        self.inner.cancel()
+    /// Constructs a new termination handle.
+    pub fn new() -> (Self, Arc<AtomicBool>) {
+        let result_needed = Arc::new(AtomicBool::new(true));
+        let inner_handle = Self {
+            inner: Arc::new(InnerHandle {
+                result_needed: result_needed.clone(),
+            }),
+        };
+        (inner_handle, result_needed)
     }
 }
 
-/// A handle which sets the termination flag for the associated worker.
+/// A handle which sets the termination flag for an associated worker.
 /// This will allow the thread pool to terminate workers whose results are no longer required.
+/// The flag will be set when all references to this handle are dropped, or
+/// it is cancelled manually.
 #[derive(Clone, Debug, Default)]
 pub struct InnerHandle {
     result_needed: Arc<AtomicBool>,
 }
 
 impl InnerHandle {
+    /// Sets a flag to indicate that the result of the associated computation is no longer needed.
     pub fn cancel(&self) {
         self.result_needed.store(false, Ordering::SeqCst)
     }

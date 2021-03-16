@@ -3,7 +3,6 @@ use hotdrink_rs::thread::thread_pool::{
     TerminationHandle, TerminationStrategy, ThreadPool, WorkerPool,
 };
 use std::sync::{
-    atomic::AtomicBool,
     mpsc::{self, Sender},
     Arc, Mutex,
 };
@@ -40,12 +39,12 @@ impl ThreadPool for StaticPool {
         }
 
         // Insert the task into the work channel
-        let result_needed = Arc::new(AtomicBool::new(true));
-        let work = Work::new(f, result_needed.clone());
+        let (th, result_needed) = TerminationHandle::new();
+        let work = Work::new(f, result_needed);
         self.work_sender.send(work).unwrap();
 
         // Return a handle that will set a flag once it is dropped
-        Ok(TerminationHandle::new(result_needed))
+        Ok(th)
     }
 }
 
@@ -92,39 +91,35 @@ mod tests {
     #![allow(unused_variables, clippy::mutex_atomic)]
 
     use hotdrink_rs::thread::thread_pool::TerminationHandle;
-    use std::sync::{
-        atomic::{AtomicBool, Ordering},
-        Arc,
-    };
+    use std::sync::atomic::Ordering;
 
     #[test]
     pub fn termination_handle_does_not_set_flag_while_in_scope() {
-        let flag = Arc::new(AtomicBool::new(true));
-        let th = TerminationHandle::new(flag.clone());
+        let (th, flag) = TerminationHandle::new();
         assert_eq!(flag.load(Ordering::SeqCst), true);
     }
 
     #[test]
     pub fn termination_handle_sets_flag_when_out_of_scope() {
-        let flag = Arc::new(AtomicBool::new(true));
-        {
-            let th = TerminationHandle::new(flag.clone());
-        }
+        let flag = {
+            let (th, flag) = TerminationHandle::new();
+            flag
+        };
         assert_eq!(flag.load(Ordering::SeqCst), false);
     }
 
     #[test]
     pub fn termination_handle_does_not_set_flag_until_all_clones_out_of_scope() {
-        let flag = Arc::new(AtomicBool::new(true));
-        {
-            let th1 = TerminationHandle::new(flag.clone());
+        let flag = {
+            let (th1, flag) = TerminationHandle::new();
             {
                 #[allow(clippy::redundant_clone)]
                 let th2 = th1.clone();
                 assert_eq!(flag.load(Ordering::SeqCst), true);
             }
             assert_eq!(flag.load(Ordering::SeqCst), true);
-        }
+            flag
+        };
         assert_eq!(flag.load(Ordering::SeqCst), false);
     }
 }

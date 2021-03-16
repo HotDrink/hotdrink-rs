@@ -1,3 +1,5 @@
+//! A generic function for constructing [`ConstraintSystem`]s.
+
 use std::fmt::Debug;
 
 use crate::{
@@ -5,6 +7,8 @@ use crate::{
     macros::{RawComponent, RawConstraint},
 };
 
+/// Construct a constraint system with the specified number of components and variables,
+/// and creates constraints using the the provided function.
 pub fn make_cs<T>(
     n_components: usize,
     n_variables: usize,

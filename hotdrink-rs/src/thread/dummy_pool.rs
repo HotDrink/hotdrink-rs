@@ -1,5 +1,4 @@
 use super::thread_pool::{TerminationHandle, TerminationStrategy, ThreadPool, WorkerPool};
-use std::sync::{atomic::AtomicBool, Arc};
 
 /// A thread pool with no actual additional threads.
 /// It will execute the work on the main thread.
@@ -19,7 +18,8 @@ impl ThreadPool for DummyPool {
         f: impl FnOnce() + Send + 'static,
     ) -> Result<TerminationHandle, Self::ExecError> {
         f();
-        Ok(TerminationHandle::new(Arc::new(AtomicBool::new(false))))
+        let (th, _) = TerminationHandle::new();
+        Ok(th)
     }
 }
 

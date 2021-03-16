@@ -1,3 +1,5 @@
+//! Functions for creating tree-like constraint systems.
+
 use std::{fmt::Debug, sync::Arc};
 
 use super::factory::make_cs;

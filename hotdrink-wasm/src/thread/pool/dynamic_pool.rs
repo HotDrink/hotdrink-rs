@@ -146,20 +146,18 @@ impl ThreadPool for DynamicPool {
             self.workers.push(worker_info);
         }
 
-        // Execute task on a ready worker
-        let mut opt_result_needed = None;
+        // Execute task on a ready worker.
+        // We know that one must be ready, as we spawned a new one if none were.
+        let (th, result_needed) = TerminationHandle::new();
         for worker_info in &mut self.workers {
             if worker_info.is_ready() {
                 worker_info.execute(f);
-                opt_result_needed = Some(worker_info.result_needed.clone());
+                worker_info.result_needed = result_needed;
                 break;
             }
         }
 
-        // We spawned a new worker if none were ready, so we can guarantee that a ready worker was found
-        let result_needed = opt_result_needed.unwrap();
-
-        Ok(TerminationHandle::new(result_needed))
+        Ok(th)
     }
 }
 

@@ -1,3 +1,5 @@
+//! A function for creating sparse constraint systems.
+
 use std::{fmt::Debug, sync::Arc};
 
 use crate::{
