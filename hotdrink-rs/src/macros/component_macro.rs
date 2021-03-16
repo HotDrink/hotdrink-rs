@@ -192,7 +192,7 @@ mod tests {
     use crate::{
         data::{
             component::Component,
-            traits::{ComponentLike, ConstraintLike, MethodFailure, MethodLike},
+            traits::{ComponentSpec, ConstraintSpec, MethodFailure, MethodSpec},
         },
         gen_val,
     };

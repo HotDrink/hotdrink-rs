@@ -37,7 +37,7 @@ use crate::{
     data::{
         component::Component,
         method::Method,
-        traits::{ComponentLike, ConstraintLike, MethodLike, PlanError},
+        traits::{ComponentSpec, ConstraintSpec, MethodSpec, PlanError},
     },
 };
 use std::{collections::HashSet, fmt::Debug};
@@ -148,9 +148,9 @@ pub fn hierarchical_planner<T, M, C, Comp>(
     ranking: &[usize],
 ) -> Result<OwnedPlan<M>, PlanError>
 where
-    M: MethodLike<Arg = T> + Clone,
-    C: ConstraintLike<Method = M> + Debug + Clone,
-    Comp: ComponentLike<Constraint = C> + Clone,
+    M: MethodSpec<Arg = T> + Clone,
+    C: ConstraintSpec<Method = M> + Debug + Clone,
+    Comp: ComponentSpec<Constraint = C> + Clone,
 {
     log::info!("Calling hierarchical planner");
     // The initial solution with no stay constraints. If this fails, just return.
@@ -306,7 +306,7 @@ mod tests {
             component::Component,
             constraint::Constraint,
             method::Method,
-            traits::{ComponentLike, ConstraintLike, MethodLike},
+            traits::{ComponentSpec, ConstraintSpec, MethodSpec},
         },
         ret,
     };

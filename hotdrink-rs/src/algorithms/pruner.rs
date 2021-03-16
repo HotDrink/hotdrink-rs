@@ -3,11 +3,11 @@
 //! This can often make planning a lot faster by shrinking the constraint graph.
 
 use crate::algorithms::hierarchical_planner::Vertex;
-use crate::data::traits::{ComponentLike, ConstraintLike, MethodLike};
+use crate::data::traits::{ComponentSpec, ConstraintSpec, MethodSpec};
 use std::collections::HashSet;
 
 /// Create a map from variables to all components they are used in.
-pub fn create_var_to_constraint(component: &impl ComponentLike) -> Vec<HashSet<usize>> {
+pub fn create_var_to_constraint(component: &impl ComponentSpec) -> Vec<HashSet<usize>> {
     let mut var_to_constraint = vec![HashSet::new(); component.n_variables()];
     for (ci, constraint) in component.constraints().iter().enumerate() {
         for &vi in constraint.variables() {
@@ -40,7 +40,7 @@ pub fn prune<C>(
     can_stay: &mut [bool],
     component: &mut C,
 ) where
-    C: ComponentLike,
+    C: ComponentSpec,
 {
     // Lock in variables by DFS-ing from the stay constraint added
     let mut visited = vec![false; component.n_variables()];
@@ -105,7 +105,7 @@ pub fn prune<C>(
 #[cfg(test)]
 mod tests {
     use super::{create_var_to_constraint, prune};
-    use crate::{data::traits::ComponentLike, dummy_component, ret};
+    use crate::{data::traits::ComponentSpec, dummy_component, ret};
 
     #[test]
     fn prune_one_way_chain_should_do_nothing() {

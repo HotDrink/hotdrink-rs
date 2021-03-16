@@ -297,7 +297,7 @@ mod tests {
     extern crate test;
     use super::unprunable;
     use crate::{
-        algorithms::hierarchical_planner::hierarchical_planner, data::traits::ComponentLike,
+        algorithms::hierarchical_planner::hierarchical_planner, data::traits::ComponentSpec,
     };
     use test::Bencher;
 

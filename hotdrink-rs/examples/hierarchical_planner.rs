@@ -1,5 +1,5 @@
 use hotdrink_rs::{
-    algorithms::hierarchical_planner::hierarchical_planner, data::traits::ComponentLike,
+    algorithms::hierarchical_planner::hierarchical_planner, data::traits::ComponentSpec,
     examples::constraint_systems::make_dense_cs,
 };
 

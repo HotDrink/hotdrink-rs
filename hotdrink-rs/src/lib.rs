@@ -33,5 +33,5 @@ pub use data::{
     constraint::Constraint,
     constraint_system::ConstraintSystem,
     method::Method,
-    traits::{ComponentLike, ConstraintLike, MethodFailure, MethodLike, MethodResult},
+    traits::{ComponentSpec, ConstraintSpec, MethodFailure, MethodSpec, MethodResult},
 };

@@ -7,7 +7,7 @@ use std::{collections::HashMap, fmt::Debug};
 
 use crate::data::{
     method::Method,
-    traits::{MethodFunction, MethodLike},
+    traits::{MethodFunction, MethodSpec},
 };
 
 /// An intermediate struct for constructing [`Method`]s.

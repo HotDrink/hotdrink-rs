@@ -7,7 +7,7 @@ use super::{
     variable_activation::State,
     variable_information::{Status, VariableInfo},
 };
-use super::{solve_error::SolveError, traits::MethodLike};
+use super::{solve_error::SolveError, traits::MethodSpec};
 use crate::{
     algorithms::{
         hierarchical_planner::{self, OwnedEnforcedConstraint, Vertex},
@@ -15,7 +15,7 @@ use crate::{
         solver,
     },
     data::{
-        traits::{ComponentLike, ConstraintLike},
+        traits::{ComponentSpec, ConstraintSpec},
         variable_activation::VariableActivation,
     },
     event::Event,
@@ -351,7 +351,7 @@ impl<T: Clone> Component<T> {
     }
 }
 
-impl<T: Clone> ComponentLike for Component<T> {
+impl<T: Clone> ComponentSpec for Component<T> {
     type Value = T;
     type Variable = VariableActivation<T, SolveError>;
     type Constraint = Constraint<T>;
@@ -478,7 +478,7 @@ impl<T: PartialEq> PartialEq for Component<T> {
 mod tests {
     use super::Component;
     use crate::{
-        data::{traits::ComponentLike, variable_activation::VariableActivation},
+        data::{traits::ComponentSpec, variable_activation::VariableActivation},
         examples::components::numbers::sum,
         thread::dummy_pool::DummyPool,
     };

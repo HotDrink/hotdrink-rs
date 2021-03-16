@@ -1,4 +1,4 @@
-use hotdrink_rs::{component, data::traits::ComponentLike, ret, Component};
+use hotdrink_rs::{component, data::traits::ComponentSpec, ret, Component};
 use iced::{text_input::State, Align, Column, Element, Length, Sandbox, Settings, TextInput};
 
 pub fn main() -> iced::Result {

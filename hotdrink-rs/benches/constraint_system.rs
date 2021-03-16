@@ -3,7 +3,7 @@ use criterion::{
 };
 use hotdrink_rs::{
     algorithms::{hierarchical_planner::hierarchical_planner, simple_planner::simple_planner},
-    data::{constraint_system::ConstraintSystem, traits::ComponentLike},
+    data::{constraint_system::ConstraintSystem, traits::ComponentSpec},
     examples::constraint_systems::{
         dense::make_dense_cs,
         empty::make_empty_cs,

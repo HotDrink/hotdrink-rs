@@ -7,7 +7,7 @@ use crate::{
     data::{
         method::Method,
         solve_error::SolveError,
-        traits::{MethodFailure, MethodLike, PlanError},
+        traits::{MethodFailure, MethodSpec, PlanError},
         variable_activation::{SharedState, VariableActivation},
     },
     event::GeneralEvent,
@@ -23,7 +23,7 @@ use std::{
 /// until all of them are done.
 pub fn solve<T: Clone, M>(plan: &[&M], old_values: &mut Vec<T>) -> Result<(), MethodFailure>
 where
-    M: MethodLike<Arg = T>,
+    M: MethodSpec<Arg = T>,
 {
     // Store in separate variable temporarily to fail atomically
     let mut current_values = old_values.clone();

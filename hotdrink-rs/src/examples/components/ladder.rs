@@ -1,7 +1,7 @@
 //! An example component used in benchmarking.
 //! It was originally defined [here](https://github.com/HotDrink/hotdrink/blob/3f9bc25751079c69f8277918521a75dd1163bee4/test/models/ladder-10.js).
 
-use crate::{Component, Constraint, Method, MethodFailure, MethodLike};
+use crate::{Component, Constraint, Method, MethodFailure, MethodSpec};
 use std::{collections::HashMap, sync::Arc};
 
 fn avg<T: Default>(_: Vec<T>) -> Result<Vec<T>, MethodFailure> {
@@ -56,7 +56,7 @@ where
 #[cfg(test)]
 mod tests {
     use super::ladder;
-    use crate::data::traits::ComponentLike;
+    use crate::data::traits::ComponentSpec;
 
     #[test]
     fn constructs_without_error() {

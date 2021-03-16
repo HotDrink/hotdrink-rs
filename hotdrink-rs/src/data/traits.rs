@@ -29,10 +29,10 @@ pub type MethodResult<T> = Result<Vec<T>, MethodFailure>;
 pub type MethodFunction<T> = Arc<dyn Fn(Vec<T>) -> Result<Vec<T>, MethodFailure> + Send + Sync>;
 
 /// An extension of the [`Vertex`] trait for methods.
-pub trait MethodLike: Vertex {
+pub trait MethodSpec: Vertex {
     /// The input and output type of the method.
     type Arg;
-    /// Constructs a new [`MethodLike`] with the specified name, inputs, outputs, and function.
+    /// Constructs a new [`MethodSpec`] with the specified name, inputs, outputs, and function.
     fn new(
         name: String,
         inputs: Vec<usize>,
@@ -47,9 +47,9 @@ pub trait MethodLike: Vertex {
 
 /// A trait for objects that can act as
 /// constraints in a constraint system.
-pub trait ConstraintLike {
+pub trait ConstraintSpec {
     /// The type of the methods of the constraint.
-    type Method: MethodLike;
+    type Method: MethodSpec;
     /// Constructs a new constraint with the provided methods.
     fn new(methods: Vec<Self::Method>) -> Self;
     /// Returns a reference to the name of the constraint.
@@ -74,14 +74,14 @@ pub enum PlanError {
 /// A trait for objects which have the properties of
 /// a component, a self-contained subgraph of a constraint system.
 /// The most important part is that it contains variables and constraints between them.
-pub trait ComponentLike: Index<&'static str> + IndexMut<&'static str> {
+pub trait ComponentSpec: Index<&'static str> + IndexMut<&'static str> {
     /// The value of a variable.
     type Value;
     /// The variable type. It has more information than just the [`Value`](Self::Value).
     type Variable;
     /// The type of the constraints of the component.
-    type Constraint: ConstraintLike;
-    /// Constructs a new [`ComponentLike`] with the specified name, values and constraints.
+    type Constraint: ConstraintSpec;
+    /// Constructs a new [`ComponentSpec`] with the specified name, values and constraints.
     fn new(
         name: String,
         values: Vec<impl Into<Self::Variable>>,

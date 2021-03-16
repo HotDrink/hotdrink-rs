@@ -6,7 +6,7 @@
 use super::method::Method;
 use crate::{
     algorithms::hierarchical_planner::Vertex,
-    data::traits::{ConstraintLike, MethodLike},
+    data::traits::{ConstraintSpec, MethodSpec},
     macros::raw_constraint::Assert,
 };
 use std::{collections::HashSet, fmt::Debug, ops::Index};
@@ -30,7 +30,7 @@ impl<T> Debug for Constraint<T> {
     }
 }
 
-impl<T: Clone> ConstraintLike for Constraint<T> {
+impl<T: Clone> ConstraintSpec for Constraint<T> {
     type Method = Method<T>;
 
     fn new(methods: Vec<Self::Method>) -> Self {

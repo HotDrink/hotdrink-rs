@@ -7,7 +7,7 @@ use crate::data::variable_activation::State;
 use crate::{
     algorithms::hierarchical_planner::Vertex,
     data::{
-        traits::{MethodFailure, MethodFunction, MethodLike, MethodResult},
+        traits::{MethodFailure, MethodFunction, MethodSpec, MethodResult},
         variable_activation::{SharedState, VariableActivation},
     },
     event::{Event, GeneralEvent},
@@ -47,7 +47,7 @@ impl<T> Debug for Method<T> {
     }
 }
 
-impl<T> MethodLike for Method<T> {
+impl<T> MethodSpec for Method<T> {
     type Arg = T;
 
     fn new(

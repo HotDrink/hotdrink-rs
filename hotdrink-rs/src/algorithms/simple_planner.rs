@@ -3,7 +3,7 @@
 //! read from and write to form a directed acyclic graph.
 
 use super::{hierarchical_planner::Vertex, toposorter::toposort};
-use crate::data::traits::{ComponentLike, ConstraintLike, MethodLike};
+use crate::data::traits::{ComponentSpec, ConstraintSpec, MethodSpec};
 use itertools::Itertools;
 use std::{collections::VecDeque, fmt::Debug};
 
@@ -41,7 +41,7 @@ impl VariableRefCounter {
     }
 
     /// Stores references for all variables used in a component.
-    fn count_variable_refs<Comp: ComponentLike>(component: &Comp) -> Vec<Self> {
+    fn count_variable_refs<Comp: ComponentSpec>(component: &Comp) -> Vec<Self> {
         let n_variables = component.n_variables();
         let constraints = &component.constraints();
         let mut variables = vec![VariableRefCounter::new(); n_variables];
@@ -130,9 +130,9 @@ pub type Plan<'a, M> = Vec<EnforcedConstraint<'a, M>>;
 #[allow(clippy::needless_lifetimes)]
 pub fn simple_planner<'a, M, C, Comp>(component: &'a Comp) -> Option<Plan<'a, M>>
 where
-    M: MethodLike,
-    C: ConstraintLike<Method = M> + 'a + Debug,
-    Comp: ComponentLike<Constraint = C>,
+    M: MethodSpec,
+    C: ConstraintSpec<Method = M> + 'a + Debug,
+    Comp: ComponentSpec<Constraint = C>,
 {
     let mut plan = Vec::with_capacity(component.constraints().len());
     let n_variables = component.n_variables();
@@ -205,9 +205,9 @@ pub fn new_simple_planner_toposort<'a, M, C, Comp>(
     component: &'a Comp,
 ) -> Option<Vec<EnforcedConstraint<'a, M>>>
 where
-    M: MethodLike + Clone,
-    C: ConstraintLike<Method = M> + 'a + Debug,
-    Comp: ComponentLike<Constraint = C>,
+    M: MethodSpec + Clone,
+    C: ConstraintSpec<Method = M> + 'a + Debug,
+    Comp: ComponentSpec<Constraint = C>,
 {
     let plan: Vec<EnforcedConstraint<'a, M>> = simple_planner(component)?;
     let sorted_plan: Vec<&'_ EnforcedConstraint<'a, M>> = toposort(&plan, component.n_variables())?;
@@ -222,7 +222,7 @@ mod tests {
             simple_planner::{new_simple_planner_toposort, simple_planner},
             toposorter::toposort,
         },
-        data::{component::Component, traits::ComponentLike},
+        data::{component::Component, traits::ComponentSpec},
     };
     use crate::{data::constraint_system::ConstraintSystem, ret};
 
