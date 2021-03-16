@@ -1,3 +1,5 @@
+//! The flight booker example from 7GUIs.
+
 use hotdrink_rs::{
     component,
     data::constraint_system::ConstraintSystem,
@@ -6,10 +8,13 @@ use hotdrink_rs::{
 };
 use wasm_bindgen::{prelude::wasm_bindgen, JsValue};
 
+/// The flight type.
 #[wasm_bindgen]
 #[derive(Debug, Clone)]
 pub enum FlightType {
+    /// A one way flight.
     OneWay = 1,
+    /// A two way flight.
     TwoWay = 2,
 }
 
@@ -43,6 +48,7 @@ crate::gen_js_constraint_system!(
     TerminationStrategy::UnusedResultAndNotDone
 );
 
+/// Constructs a new [`FlightBookerConstraintSystem`].
 #[wasm_bindgen]
 pub fn flight_booker_cs() -> FlightBookerConstraintSystem {
     let mut cs = ConstraintSystem::new();

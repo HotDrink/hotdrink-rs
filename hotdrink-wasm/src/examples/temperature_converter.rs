@@ -1,3 +1,5 @@
+//! A constraint system for linking a temperature with different scales.
+
 use hotdrink_rs::{
     component,
     data::constraint_system::ConstraintSystem,
@@ -26,6 +28,7 @@ crate::gen_js_constraint_system!(
     TerminationStrategy::UnusedResultAndNotDone
 );
 
+/// Constructs a [`TemperatureConverterConstraintSystem`].
 #[wasm_bindgen]
 pub fn temperature_converter_cs() -> TemperatureConverterConstraintSystem {
     let mut cs = ConstraintSystem::new();

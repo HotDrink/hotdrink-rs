@@ -1,3 +1,5 @@
+//! A constraint system example that shows off multiple features.
+
 use super::circle::Circle;
 use crate::thread::pool::StaticPool;
 use hotdrink_rs::{
@@ -29,6 +31,7 @@ crate::gen_js_constraint_system!(
     TerminationStrategy::UnusedResultAndNotDone
 );
 
+/// Constructs a new [`ConstraintSystem<MyValue>`].
 pub fn demo_cs_inner() -> ConstraintSystem<MyValue> {
     let arithmetic = component! {
         component Arithmetic {
@@ -150,6 +153,7 @@ pub fn demo_cs_inner() -> ConstraintSystem<MyValue> {
     cs
 }
 
+/// Wraps a [`ConstraintSystem<MyValue>`] so that it can be used from JavaScript.
 #[wasm_bindgen]
 pub fn demo_cs() -> JsConstraintSystem {
     JsConstraintSystem::wrap(demo_cs_inner()).expect("Could not create JsConstraintSystem")

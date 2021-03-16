@@ -1,3 +1,5 @@
+//! A wrapper around [`GenericWorker`] to make it more convenient to use in a thread pool.
+
 use crate::thread::worker::generic_worker::GenericWorker;
 use hotdrink_rs::thread::thread_pool::TerminationStrategy;
 use js_sys::Date;
@@ -15,6 +17,15 @@ use wasm_bindgen::JsValue;
 pub struct Work {
     work: Box<dyn FnOnce() + Send + 'static>,
     result_needed: Arc<AtomicBool>,
+}
+
+impl std::fmt::Debug for Work {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Work")
+            .field("work", &"...")
+            .field("result_needed", &self.result_needed.load(Ordering::SeqCst))
+            .finish()
+    }
 }
 
 impl Work {
@@ -86,6 +97,17 @@ pub struct PoolWorker {
     shared_data: Arc<Mutex<SharedData>>,
     /// A flag set when all workers should terminate.
     terminate_all: Arc<AtomicBool>,
+}
+
+impl std::fmt::Debug for PoolWorker {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("PoolWorker")
+            .field("id", &self.id)
+            .field("worker", &self.worker)
+            .field("shared_data", &"...")
+            .field("terminate_all", &self.terminate_all.load(Ordering::SeqCst))
+            .finish()
+    }
 }
 
 impl PoolWorker {

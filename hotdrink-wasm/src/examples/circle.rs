@@ -1,15 +1,22 @@
+//! A circle type and operations on it.
+
 use wasm_bindgen::prelude::wasm_bindgen;
 
+/// A circle with a position and a radius.
 #[wasm_bindgen]
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Circle {
+    /// The x-coordinate of the circle.
     pub x: i32,
+    /// The y-coordinate of the circle.
     pub y: i32,
+    /// The radius of the circle.
     pub r: usize,
 }
 
 #[wasm_bindgen]
 impl Circle {
+    /// Constructs a new `Circle`.
     #[wasm_bindgen(constructor)]
     pub fn new(x: i32, y: i32, r: usize) -> Self {
         Self { x, y, r }

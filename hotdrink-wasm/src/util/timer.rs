@@ -1,5 +1,9 @@
+//! A struct for counting the time some operation takes.
+
 use web_sys::Performance;
 
+/// A struct for counting the time some operation takes.
+#[derive(Clone, Debug)]
 pub struct Timer {
     start: f64,
     prev: f64,

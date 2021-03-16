@@ -1,3 +1,5 @@
+//! Example constraint systems.
+
 pub mod bench_cs;
 pub mod circle;
 pub mod counter;

@@ -34,12 +34,13 @@
 #[macro_export]
 macro_rules! gen_val {
     (
+        $(#[doc = $doc_pre:expr])?
         $(#[$meta:meta])*
         $vis:vis $type_name:ident { $( $constr:ident ),* }
     ) => {
         // Generate enum
         $(#[$meta])*
-        #[allow(non_camel_case_types)]
+        #[allow(non_camel_case_types, missing_docs)]
         $vis enum $type_name {
             $( $constr($constr) ),*
         }

@@ -1,3 +1,6 @@
+//! A thread pool implementation that has a static number of workers, but can restart any of them should they become stuck,
+//! or if their results are no longer required.
+
 use super::{pool_worker::Work, PoolWorker};
 use hotdrink_rs::thread::thread_pool::{
     TerminationHandle, TerminationStrategy, ThreadPool, WorkerPool,
@@ -10,6 +13,7 @@ use wasm_bindgen::{prelude::wasm_bindgen, JsValue};
 
 /// A worker pool with a static number of workers.
 #[wasm_bindgen]
+#[derive(Debug)]
 pub struct StaticPool {
     workers: Vec<PoolWorker>,
     work_sender: Sender<Work>,

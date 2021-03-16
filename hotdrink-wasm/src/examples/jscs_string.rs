@@ -1,3 +1,5 @@
+//! A constraint system that only contains strings.
+
 use crate::thread::pool::StaticPool;
 use hotdrink_rs::thread::thread_pool::TerminationStrategy;
 

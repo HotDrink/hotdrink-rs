@@ -21,6 +21,7 @@
 //!
 //! This will produce WebAssembly code and JS wrappers in www/pkg, which can then be imported there.
 
+#![warn(missing_debug_implementations, rust_2018_idioms, missing_docs)]
 #![feature(test)]
 #![feature(result_flattening)]
 #![feature(stmt_expr_attributes)]
@@ -38,6 +39,7 @@ use js_sys::Date;
 use thread::worker::generic_worker::GenericWorker;
 use wasm_bindgen::prelude::*;
 
+/// A wrapper for calling `console_log` like `println!`.
 #[macro_export]
 macro_rules! console_log {
     ($($t:tt)*) => (
@@ -49,6 +51,7 @@ macro_rules! console_log {
     )
 }
 
+/// A wrapper for calling `console_error` like `eprintln!`.
 #[macro_export]
 macro_rules! console_error {
     ($($t:tt)*) => (
@@ -91,11 +94,13 @@ pub fn start() {
     });
 }
 
+/// Add two numbers
 #[wasm_bindgen]
 pub fn add(a: i32, b: i32) -> i32 {
     a + b
 }
 
+/// Subtract two numbers
 #[wasm_bindgen]
 pub fn sub(a: i32, b: i32) -> i32 {
     a - b

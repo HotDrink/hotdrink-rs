@@ -1,3 +1,5 @@
+//! A constraint system example that increments a value each update of the system.
+
 use hotdrink_rs::{
     component,
     data::constraint_system::ConstraintSystem,
@@ -26,6 +28,7 @@ crate::gen_js_constraint_system!(
     TerminationStrategy::UnusedResultAndNotDone
 );
 
+/// Constructs a [`CounterConstraintSystem`].
 #[wasm_bindgen]
 pub fn counter_cs() -> CounterConstraintSystem {
     let mut cs = ConstraintSystem::new();

@@ -1,3 +1,10 @@
+//! A macro for generating a [`ConstraintSystem`](hotdrink_rs) that can be compiled to WebAssembly.
+
+/// A macro for generating a [`ConstraintSystem`](hotdrink_rs) that can be compiled to WebAssembly.
+///
+/// By providing an identifier, wrapper type, inner type (the two last generated with [`gen_js_val!`](crate::gen_js_val)),
+/// a thread pool implementation, the number of threads to use, and a termination strategy, it will automatically generate
+/// a wrapper that can be returned to and used from JavaScript.
 #[macro_export]
 macro_rules! gen_js_constraint_system {
     ($cs_name:ident, $wrapper_type:ty, $inner_type:ty, $thread_pool_type:ty, $num_threads:expr, $termination_strategy:expr) => {
@@ -5,6 +12,7 @@ macro_rules! gen_js_constraint_system {
         /// A macro is used to construct the type that the library user wants,
         /// since `wasm_bindgen` requires a concrete type.
         #[wasm_bindgen::prelude::wasm_bindgen]
+        #[allow(missing_debug_implementations)]
         pub struct $cs_name {
             inner: std::sync::Mutex<
                 hotdrink_rs::data::constraint_system::ConstraintSystem<$inner_type>,
@@ -65,6 +73,9 @@ macro_rules! gen_js_constraint_system {
                 self.event_listener.listen(&cb);
             }
 
+            /// Sets the callbacks to call when the specified variable changes state.
+            /// `on_pending` should not have any parameters, `on_ready` will receive the new value,
+            /// and `on_error` will receive information about the error.
             pub fn subscribe(
                 &self,
                 component: &str,
@@ -101,6 +112,7 @@ macro_rules! gen_js_constraint_system {
                 }
             }
 
+            /// Removes the callbacks from the specified variable.
             pub fn unsubscribe(&self, component: &str, variable: &str) {
                 {
                     let mut event_handler = self.event_handler.lock().unwrap();
@@ -142,10 +154,13 @@ macro_rules! gen_js_constraint_system {
                     .set_variable(component, variable, value);
             }
 
+            /// Pins the specified variable, stopping it from changing.
+            /// Note that this can cause the system to be overconstrained.
             pub fn pin(&self, component: &str, variable: &str) {
                 self.inner.lock().unwrap().pin(component, variable);
             }
 
+            /// Unpins the specified variable, allowing it to change again.
             pub fn unpin(&self, component: &str, variable: &str) {
                 self.inner.lock().unwrap().unpin(component, variable);
             }

@@ -1,3 +1,5 @@
+//! A thread pool implementation that changes its number of workers dynamically depending on need.
+
 use crate::thread::worker::generic_worker::GenericWorker;
 use hotdrink_rs::thread::thread_pool::{
     TerminationHandle, TerminationStrategy, ThreadPool, WorkerPool,
@@ -17,6 +19,7 @@ struct Work {
 }
 
 /// Information about a worker.
+#[derive(Debug)]
 struct WorkerInfo {
     /// The worker itself.
     worker: GenericWorker,
@@ -88,6 +91,7 @@ fn spawn_worker(wasm_bindgen_shim_url: &str) -> Result<WorkerInfo, JsValue> {
 }
 
 /// A worker pool that automatically resizes itself when more workers are required.
+#[derive(Debug)]
 pub struct DynamicPool {
     workers: Vec<WorkerInfo>,
     termination_strategy: TerminationStrategy,

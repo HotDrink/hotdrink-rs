@@ -1,3 +1,5 @@
+//! Thread pool implementations.
+
 pub mod dynamic_pool;
 pub mod pool_worker;
 pub mod static_pool;

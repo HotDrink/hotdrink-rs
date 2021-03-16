@@ -22,7 +22,7 @@ use wasm_bindgen::{prelude::wasm_bindgen, JsValue};
 
 /// A callback for handling events.
 #[wasm_bindgen]
-#[derive(Default)]
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct JsCallback {
     on_pending: Option<Function>,
     on_ready: Option<Function>,
@@ -30,6 +30,7 @@ pub struct JsCallback {
 }
 
 /// The main event handler containing the callbacks for variables.
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct EventHandler<T, E> {
     /// The actions to perform when a given variable is updated.
     callbacks: HashMap<Identifier, JsCallback>,
@@ -52,6 +53,7 @@ impl<T: Into<JsValue> + Debug, E: Display + Debug> EventHandler<T, E> {
         Self::default()
     }
 
+    /// Sets the callback to call when the specified variable starts waiting for a new value.
     pub fn set_on_pending(
         &mut self,
         component: &str,
@@ -64,6 +66,7 @@ impl<T: Into<JsValue> + Debug, E: Display + Debug> EventHandler<T, E> {
         Some(())
     }
 
+    /// Sets the callback to call when the specified variable succeeds in getting a new value.
     pub fn set_on_ready(
         &mut self,
         component: &str,
@@ -76,6 +79,7 @@ impl<T: Into<JsValue> + Debug, E: Display + Debug> EventHandler<T, E> {
         Some(())
     }
 
+    /// Sets the callback to call when the specified variable fails to get a new value.
     pub fn set_on_error(
         &mut self,
         component: &str,
