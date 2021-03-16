@@ -1,0 +1,8 @@
+# The standard library must be rebuilt with atomics for threads to work.
+
+[unstable]
+build-std = ['std', 'panic_abort']
+
+[build]
+target = "wasm32-unknown-unknown"
+rustflags = '-Ctarget-feature=+atomics,+bulk-memory'

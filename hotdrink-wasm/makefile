@@ -7,10 +7,8 @@ MODE=release
 
 all: build README.md
 
-build: export RUSTFLAGS = -C target-feature=+atomics,+bulk-memory
 build:
-	@echo RUSTFLAGS=$(RUSTFLAGS)
-	wasm-pack build --out-dir www/pkg --target no-modules --$(MODE) -- -Z build-std=std,panic_abort
+	wasm-pack build --out-dir www/pkg --target no-modules --$(MODE)
 
 watch:
 	cargo watch -w src -s make -d 5

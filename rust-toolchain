@@ -1,0 +1,5 @@
+[toolchain]
+# TODO: Make this build with later nightly versions
+channel = "nightly-2021-01-01"
+components = [ "rust-src" ]
+targets = [ "wasm32-unknown-unknown" ]
