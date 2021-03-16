@@ -2,17 +2,15 @@
 //!
 //! # Prerequisites
 //!
-//! Begin by downloading the prerequisites below.
-//!
-//! * Rust (nightly)
-//!
-//! To use Rust nightly for this project, either set it globally with `rustup default nightly`, or for this project with `rustup override set nightly`.
-//! It is required for the experimental benchmarking features.
+//! The project uses multiple nightly features, and must be built using nightly Rust.
+//! I recommend using `rustup`, which can be downloaded [here](https://rustup.rs/),
 //!
 //! # Build
 //!
+//! If an appropriate version of Rust is installed, it should be as simple as running the following:
+//!
 //! ```bash
-//! cargo build
+//! cargo build --release
 //! ```
 
 #![warn(missing_debug_implementations, rust_2018_idioms, missing_docs)]

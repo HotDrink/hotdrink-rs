@@ -1,9 +1,18 @@
 MODE=release
 
+build:
+	cargo build --$(MODE)
+
 flamegraphs: flamegraphs/simple_planner.svg flamegraphs/hierarchical_planner.svg flamegraphs/constraint_system_update.svg
 
 flamegraphs/%.svg: examples/%.rs
 	cargo flamegraph --example $(basename $(notdir $@)) --output $@
+
+README.md: src/lib.rs
+	cargo readme --input $< > $@
+
+doc: README.md
+	cargo doc
 
 clean:
 	cargo clean
@@ -19,4 +28,4 @@ component-figures: component-dot $(DOTS:%.dot=%.png)
 	dot -Tpng $< -o $@
 
 
-.PHONY: flamegraphs clean component-figures dots
+.PHONY: build flamegraphs clean component-figures dots
