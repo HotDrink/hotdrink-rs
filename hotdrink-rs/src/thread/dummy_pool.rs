@@ -1,3 +1,7 @@
+//! A thread pool with no actual additional threads.
+//! It will execute the work on the main thread.
+//! Commonly used for testing and benchmarking.
+
 use super::thread_pool::{TerminationHandle, TerminationStrategy, ThreadPool, WorkerPool};
 
 /// A thread pool with no actual additional threads.

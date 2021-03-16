@@ -1,4 +1,4 @@
-//! Macros and types for generating components.
+//! Macros and types for easily generating components.
 
 pub mod component_macro;
 pub mod dummy_component;

@@ -1,3 +1,5 @@
+//! A macro for specifying components.
+
 /// A macro for specifying components.
 ///
 /// This can be used to construct constraint systems declaratively by

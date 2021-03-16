@@ -1,3 +1,5 @@
+//! Errors that can happen during solving of a constraint system.
+
 use std::fmt::Display;
 
 use super::traits::MethodFailure;

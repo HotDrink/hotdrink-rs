@@ -1,7 +1,13 @@
+//! Types and operations for creating [`RawComponent`]s that are easier to make manually than [`Component`].
+//! They can then be converted to real [`Component`]s later.
+//!
+//! [`Component`]: crate::Component
+
 use super::raw_constraint::RawConstraint;
 use crate::data::component::Component;
 use std::{collections::HashMap, fmt::Debug};
 
+/// An intermediate struct for constructing [`Component`]s.
 #[derive(PartialEq, Debug)]
 pub struct RawComponent<'a, T> {
     name: &'a str,
@@ -11,6 +17,7 @@ pub struct RawComponent<'a, T> {
 }
 
 impl<'a, T> RawComponent<'a, T> {
+    /// Constructs a new [`RawComponent`].
     pub fn new(
         name: &'a str,
         variables: Vec<&'a str>,
@@ -39,6 +46,7 @@ impl<'a, T> RawComponent<'a, T> {
         self.constraints.push(c);
     }
 
+    /// Converts this [`RawComponent`] into a [`Component`].
     pub fn into_component(self) -> Component<T>
     where
         T: Clone,

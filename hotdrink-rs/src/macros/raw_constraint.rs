@@ -1,3 +1,8 @@
+//! Types and operations for creating [`RawConstraint`]s that are easier to make manually than [`Constraint`].
+//! They can then be converted to real [`Constraint`]s later.
+//!
+//! [`Constraint`]: crate::Constraint
+
 use super::raw_method::RawMethod;
 use crate::data::constraint::Constraint;
 use std::{collections::HashMap, fmt::Debug, sync::Arc};
@@ -7,6 +12,7 @@ use std::{collections::HashMap, fmt::Debug, sync::Arc};
 /// constraint holds, and may also work as documentation.
 pub type Assert<T> = Arc<dyn Fn(&[T]) -> bool>;
 
+/// An intermediate struct for constructing [`Constraint`]s.
 pub struct RawConstraint<'a, T> {
     name: &'a str,
     methods: Vec<RawMethod<'a, T>>,
@@ -14,6 +20,7 @@ pub struct RawConstraint<'a, T> {
 }
 
 impl<'a, T> RawConstraint<'a, T> {
+    /// Constructs a new [`RawConstraint`].
     pub fn new(name: &'a str, methods: Vec<RawMethod<'a, T>>) -> Self {
         Self {
             name,
@@ -22,6 +29,7 @@ impl<'a, T> RawConstraint<'a, T> {
         }
     }
 
+    /// Constructs a new [`RawConstraint`] with an optional assert statement.
     pub fn new_with_assert(
         name: &'a str,
         methods: Vec<RawMethod<'a, T>>,
@@ -34,6 +42,7 @@ impl<'a, T> RawConstraint<'a, T> {
         }
     }
 
+    /// Converts this [`RawConstraint`] into a [`Constraint`].
     pub fn into_constraint(self, var_to_idx: &HashMap<String, usize>) -> Constraint<T>
     where
         T: Clone,

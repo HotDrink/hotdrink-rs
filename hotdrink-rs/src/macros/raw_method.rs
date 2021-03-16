@@ -1,3 +1,8 @@
+//! Types and operations for creating [`RawMethod`]s that are easier to make manually than [`Method`].
+//! They can then be converted to real [`Method`]s later.
+//!
+//! [`Method`]: crate::Method
+
 use std::{collections::HashMap, fmt::Debug};
 
 use crate::data::{
@@ -5,6 +10,7 @@ use crate::data::{
     traits::{MethodFunction, MethodLike},
 };
 
+/// An intermediate struct for constructing [`Method`]s.
 pub struct RawMethod<'a, T> {
     name: &'a str,
     inputs: Vec<&'a str>,
@@ -13,6 +19,7 @@ pub struct RawMethod<'a, T> {
 }
 
 impl<'a, T> RawMethod<'a, T> {
+    /// Constructs a new [`RawMethod`].
     pub fn new(
         name: &'a str,
         inputs: Vec<&'a str>,
@@ -27,6 +34,7 @@ impl<'a, T> RawMethod<'a, T> {
         }
     }
 
+    /// Converts this [`RawMethod`] into a [`Method`].
     #[allow(clippy::expect_fun_call)]
     pub fn into_method(self, var_to_idx: &HashMap<String, usize>) -> Method<T>
     where

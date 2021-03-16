@@ -21,6 +21,7 @@ impl Identifier {
 }
 
 impl Identifier {
+    /// Constructs a new `Identifier`.
     pub fn new(component: &str, variable: &str) -> Self {
         Self {
             component: component.to_string(),

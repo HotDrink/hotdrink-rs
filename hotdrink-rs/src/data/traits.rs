@@ -1,3 +1,5 @@
+//! Useful traits for constraint systems that define the interface required for planning.
+
 use crate::algorithms::hierarchical_planner::Vertex;
 use std::{
     fmt::Debug,

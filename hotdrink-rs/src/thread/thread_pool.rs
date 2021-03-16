@@ -1,3 +1,5 @@
+//! Traits and types for thread pools with cancellation-capabilities.
+
 use std::fmt::Debug;
 use std::sync::{
     atomic::{AtomicBool, Ordering},
