@@ -8,7 +8,7 @@ use wasm_bindgen::prelude::wasm_bindgen;
 
 /// A type with a single value.
 #[wasm_bindgen]
-#[derive(Debug, Clone)]
+#[derive(Copy, Clone, Debug)]
 pub struct Unit;
 
 // The type of value to store in the constraint system.

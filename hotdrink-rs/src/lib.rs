@@ -13,7 +13,12 @@
 //! cargo build --release
 //! ```
 
-#![warn(missing_debug_implementations, rust_2018_idioms, missing_docs)]
+#![warn(
+    missing_copy_implementations,
+    missing_debug_implementations,
+    rust_2018_idioms,
+    missing_docs
+)]
 #![feature(test)]
 #![feature(result_flattening)]
 #![feature(stmt_expr_attributes)]
@@ -33,5 +38,5 @@ pub use data::{
     constraint::Constraint,
     constraint_system::ConstraintSystem,
     method::Method,
-    traits::{ComponentSpec, ConstraintSpec, MethodFailure, MethodSpec, MethodResult},
+    traits::{ComponentSpec, ConstraintSpec, MethodFailure, MethodResult, MethodSpec},
 };

@@ -10,7 +10,7 @@ use wasm_bindgen::{prelude::wasm_bindgen, JsValue};
 
 /// The flight type.
 #[wasm_bindgen]
-#[derive(Debug, Clone)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub enum FlightType {
     /// A one way flight.
     OneWay = 1,

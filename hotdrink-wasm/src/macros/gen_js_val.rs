@@ -73,7 +73,7 @@ pub mod tests {
         use wasm_bindgen::prelude::wasm_bindgen;
 
         #[wasm_bindgen]
-        #[derive(PartialEq, Clone, Debug)]
+        #[derive(Copy, Clone, Debug, PartialEq, Eq)]
         pub struct MyCircle {
             x: usize,
             y: usize,

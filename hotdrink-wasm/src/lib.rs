@@ -21,7 +21,12 @@
 //!
 //! This will produce WebAssembly code and JS wrappers in www/pkg, which can then be imported there.
 
-#![warn(missing_debug_implementations, rust_2018_idioms, missing_docs)]
+#![warn(
+    missing_copy_implementations,
+    missing_debug_implementations,
+    rust_2018_idioms,
+    missing_docs
+)]
 #![feature(test)]
 #![feature(result_flattening)]
 #![feature(stmt_expr_attributes)]

@@ -65,7 +65,7 @@ pub trait ConstraintSpec {
 }
 
 /// Errors that can occur during planning.
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub enum PlanError {
     /// The system was overconstrained, and no plan was found.
     Overconstrained,

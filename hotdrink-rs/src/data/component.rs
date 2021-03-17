@@ -59,7 +59,7 @@ impl<T: Debug> Debug for Component<T> {
 }
 
 /// Errors that can happen in a component.
-#[derive(Debug)]
+#[derive(Copy, Clone, Debug)]
 pub enum ComponentError {
     /// No variable of the specified name exists.
     NoSuchVariable,

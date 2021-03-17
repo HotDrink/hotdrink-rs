@@ -4,7 +4,7 @@ use wasm_bindgen::prelude::wasm_bindgen;
 
 /// A circle with a position and a radius.
 #[wasm_bindgen]
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub struct Circle {
     /// The x-coordinate of the circle.
     pub x: i32,
@@ -55,7 +55,7 @@ impl Circle {
         let old_dist = self.dist(b);
         let new_dist = (self.r + b.r) as f64;
         if old_dist > new_dist {
-            return b.clone();
+            return *b;
         }
 
         // Compute the new position
