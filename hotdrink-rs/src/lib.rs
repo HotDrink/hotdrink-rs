@@ -26,6 +26,7 @@
 #![feature(concat_idents)]
 
 pub mod algorithms;
+pub mod builders;
 pub mod data;
 pub mod event;
 pub mod examples;
@@ -38,5 +39,7 @@ pub use data::{
     constraint::Constraint,
     constraint_system::ConstraintSystem,
     method::Method,
-    traits::{ComponentSpec, ConstraintSpec, MethodFailure, MethodResult, MethodSpec},
+    traits::{
+        ComponentSpec, ConstraintSpec, MethodFailure, MethodFunction, MethodResult, MethodSpec,
+    },
 };
