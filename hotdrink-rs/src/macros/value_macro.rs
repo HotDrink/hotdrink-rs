@@ -34,9 +34,8 @@
 #[macro_export]
 macro_rules! gen_val {
     (
-        $(#[doc = $doc_pre:expr])?
         $(#[$meta:meta])*
-        $vis:vis $type_name:ident { $( $constr:ident ),* }
+        $vis:vis $type_name:ident { $( $constr:ident ),* $(,)? }
     ) => {
         // Generate enum
         $(#[$meta])*

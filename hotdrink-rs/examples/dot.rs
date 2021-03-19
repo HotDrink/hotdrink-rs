@@ -75,8 +75,8 @@ fn main() -> io::Result<()> {
         let component = component.get_component("0").clone();
         component
     })?;
-    write_component("random", size, |nv| make_random::<()>(nv, nv, 5))?;
-    write_component_simple("random_simple", size, |nv| make_random::<()>(nv, nv, 5))?;
+    write_component("random", size, |nv| make_random::<()>(nv, nv))?;
+    write_component_simple("random_simple", size, |nv| make_random::<()>(nv, nv))?;
 
     Ok(())
 }

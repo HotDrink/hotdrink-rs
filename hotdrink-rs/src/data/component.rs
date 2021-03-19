@@ -269,7 +269,7 @@ impl<T: Clone> Component<T> {
         }
 
         for c in self.constraints() {
-            writeln!(buffer, "  subgraph custer_{} {{", c.name())?;
+            writeln!(buffer, "  subgraph {} {{", c.name())?;
             writeln!(buffer, "    color=gray;")?;
             writeln!(buffer, "    style=filled;")?;
             writeln!(buffer, "    style=rounded;")?;

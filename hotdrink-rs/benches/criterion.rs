@@ -152,7 +152,7 @@ fn component_hierarchical_planner(c: &mut Criterion) {
         bench_hierarchical_planner(&mut group, "ladder", i, ladder);
     }
     for i in &[0, 250, 500, 1000] {
-        bench_hierarchical_planner_component(&mut group, "random", i, |nv| make_random(nv, nv, 5));
+        bench_hierarchical_planner_component(&mut group, "random", i, |nv| make_random(nv, nv));
         bench_hierarchical_planner(&mut group, "unprunable", i, unprunable);
     }
     group.finish();
@@ -194,7 +194,7 @@ fn component_simple_planner(c: &mut Criterion) {
         bench_simple_planner(&mut group, "empty", i, make_empty_cs);
         bench_simple_planner(&mut group, "linear/twoway", i, linear_twoway);
         bench_simple_planner(&mut group, "ladder", i, ladder);
-        bench_simple_planner_component(&mut group, "random", i, |nv| make_random(nv, nv, 5));
+        bench_simple_planner_component(&mut group, "random", i, |nv| make_random(nv, nv));
     }
     group.finish();
 }
