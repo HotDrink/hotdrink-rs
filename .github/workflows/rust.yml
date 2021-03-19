@@ -18,6 +18,8 @@ jobs:
 
       - name: Install toolchain
         uses: actions-rs/toolchain@v1
+        with:
+          components: rust-src
 
       - name: Rust cache
         uses: Swatinem/rust-cache@v1
