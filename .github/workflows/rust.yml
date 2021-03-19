@@ -32,9 +32,11 @@ jobs:
         with:
           command: test
 
-      - name: Run wasm-pack build
+      - name: Install wasm-pack
         uses: jetli/wasm-pack-action@v0.3.0
         with:
           version: 'latest'
+
+      - name: Run wasm-pack build
         working-directory: ./hotdrink-wasm
         run: wasm-pack build --target no-modules --out-dir pkg
