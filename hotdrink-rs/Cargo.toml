@@ -20,11 +20,13 @@ futures = "0.3.7"
 
 bitvec = "0.21.0"
 
+getrandom = { version = "0.2.2", features = ["js"] }
+
 [dev-dependencies]
 criterion = { version = "0.3.4", features = [ "html_reports" ] }
-pretty_assertions = "0.6.1"
+pretty_assertions = "0.7.1"
 rand = "0.8.3"
 
 [[bench]]
-name = "constraint_system"
+name = "criterion"
 harness = false

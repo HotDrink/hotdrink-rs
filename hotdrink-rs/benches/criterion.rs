@@ -4,16 +4,20 @@ use criterion::{
 use hotdrink_rs::{
     algorithms::{hierarchical_planner::hierarchical_planner, simple_planner::simple_planner},
     data::{constraint_system::ConstraintSystem, traits::ComponentSpec},
-    examples::constraint_systems::{
-        dense::make_dense_cs,
-        empty::make_empty_cs,
-        ladder::ladder,
-        linear::linear_twoway,
-        linear_oneway,
-        sparse::make_sparse_cs,
-        tree::{multioutput_threeway, unprunable},
+    examples::{
+        components::random::make_random,
+        constraint_systems::{
+            dense::make_dense_cs,
+            empty::make_empty_cs,
+            ladder::ladder,
+            linear::linear_twoway,
+            linear_oneway,
+            sparse::make_sparse_cs,
+            tree::{multioutput_threeway, unprunable},
+        },
     },
     thread::dummy_pool::DummyPool,
+    Component,
 };
 use rand::Rng;
 
@@ -117,6 +121,21 @@ fn bench_hierarchical_planner(
     });
 }
 
+fn bench_hierarchical_planner_component(
+    group: &mut BenchmarkGroup<WallTime>,
+    name: &str,
+    input: &usize,
+    make_component: fn(usize) -> Component<()>,
+) {
+    group.bench_with_input(BenchmarkId::new(name, input), input, |b, input| {
+        let comp = make_component(*input);
+        let ranking: Vec<usize> = (0..comp.n_variables()).collect();
+        b.iter(|| {
+            hierarchical_planner(&comp, &ranking).unwrap();
+        })
+    });
+}
+
 fn component_hierarchical_planner(c: &mut Criterion) {
     let mut group = c.benchmark_group("component_hierarchical_planner");
     for i in &[0, 1000, 5000, 10000, 20000] {
@@ -133,6 +152,7 @@ fn component_hierarchical_planner(c: &mut Criterion) {
         bench_hierarchical_planner(&mut group, "ladder", i, ladder);
     }
     for i in &[0, 250, 500, 1000] {
+        bench_hierarchical_planner_component(&mut group, "random", i, |nv| make_random(nv, nv, 5));
         bench_hierarchical_planner(&mut group, "unprunable", i, unprunable);
     }
     group.finish();
@@ -153,20 +173,28 @@ fn bench_simple_planner(
     });
 }
 
+fn bench_simple_planner_component(
+    group: &mut BenchmarkGroup<WallTime>,
+    name: &str,
+    input: &usize,
+    make_component: fn(usize) -> Component<()>,
+) {
+    group.bench_with_input(BenchmarkId::new(name, input), input, |b, input| {
+        let comp = make_component(*input);
+        b.iter(|| {
+            simple_planner(&comp).unwrap();
+        })
+    });
+}
+
 fn component_simple_planner(c: &mut Criterion) {
     let mut group = c.benchmark_group("component_simple_planner");
     for i in &[0, 1000, 5000, 10000, 20000] {
         bench_simple_planner(&mut group, "dense", i, make_dense_cs);
         bench_simple_planner(&mut group, "empty", i, make_empty_cs);
         bench_simple_planner(&mut group, "linear/twoway", i, linear_twoway);
-        // bench_simple_planner(&mut group, "sparse", i, make_sparse_cs);
-        // bench_simple_planner(
-        //     &mut group,
-        //     "tree/multioutput/threeway",
-        //     i,
-        //     multioutput_threeway,
-        // );
         bench_simple_planner(&mut group, "ladder", i, ladder);
+        bench_simple_planner_component(&mut group, "random", i, |nv| make_random(nv, nv, 5));
     }
     group.finish();
 }
