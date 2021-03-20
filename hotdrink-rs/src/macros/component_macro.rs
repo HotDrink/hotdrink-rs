@@ -87,7 +87,7 @@ macro_rules! component {
                                         let $inp = std::convert::TryInto::<$inp_ty>::try_into($inp.unwrap());
                                         // Verify that it worked
                                         if $inp.is_err() {
-                                            return Err($crate::data::traits::MethodFailure::TypeConversionFailure(stringify!($inp).to_owned(), stringify!($inp_ty).to_string()));
+                                            return Err($crate::data::traits::MethodFailure::TypeConversionFailure(stringify!($inp), stringify!($inp_ty)));
                                         }
                                         let $inp = $inp.unwrap();
 
@@ -300,10 +300,7 @@ mod tests {
         let m = constr.methods()[0].clone();
         assert_eq!(
             m.apply(all_into![0]),
-            Err(MethodFailure::TypeConversionFailure(
-                "s".to_string(),
-                "&i32".to_string()
-            ))
+            Err(MethodFailure::TypeConversionFailure("s", "&i32"))
         );
     }
 

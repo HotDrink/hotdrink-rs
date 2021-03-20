@@ -43,6 +43,9 @@ impl Display for SolveError {
                     format!("Method takes {} output(s), but got {}.", expected, actual)
                 }
                 MethodFailure::Custom(msg) => msg.to_string(),
+                MethodFailure::MutabilityMismatch => {
+                    "Wrong mutability of an argument.".to_string()
+                }
             },
         };
         write!(

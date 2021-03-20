@@ -13,13 +13,15 @@ pub enum MethodFailure {
     /// An attempt to use a variable that does not exist.
     NoSuchVariable(String),
     /// Failure to convert a variable into the specified type.
-    TypeConversionFailure(String, String),
+    TypeConversionFailure(&'static str, &'static str),
     /// The constraint satisfaction method received too few or too many values as input.
     WrongInputCount(usize, usize),
     /// The constraint satisfaction method returned too few or too many values as output.
     WrongOutputCount(usize, usize),
     /// A custom error from the programmer.
     Custom(String),
+    /// Unexpected mutability of an argument.
+    MutabilityMismatch,
 }
 
 /// The result of calling a method's function.

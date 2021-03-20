@@ -1,53 +1,7 @@
 //! A builder-struct for programmatically creating constraints.
 
-use super::value_experiments::Value;
-use crate::MethodResult;
-use itertools::Itertools;
-use std::{fmt::Debug, sync::Arc};
-
-/// A builder for making programmatic construction of methods easier.
-#[derive(Clone)]
-pub struct MethodBuilder<T> {
-    name: String,
-    inputs: Vec<String>,
-    outputs: Vec<String>,
-    apply: Arc<dyn Fn(&[Value<T>]) -> MethodResult<T>>,
-}
-
-impl<T> MethodBuilder<T> {
-    /// Constructs a new `MethodBuilder`.
-    pub fn new<S: Into<String>>(
-        name: S,
-        inputs: Vec<S>,
-        outputs: Vec<S>,
-        apply: impl Fn(&[Value<T>]) -> MethodResult<T> + Send + 'static,
-    ) -> Self {
-        Self {
-            name: name.into(),
-            inputs: inputs.into_iter().map_into().collect(),
-            outputs: outputs.into_iter().map_into().collect(),
-            apply: Arc::new(apply),
-        }
-    }
-}
-
-impl<T> Debug for MethodBuilder<T> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(
-            f,
-            "Method {}({:?}) -> [{:?}]",
-            self.name, self.inputs, self.outputs
-        )
-    }
-}
-
-impl<T> PartialEq for MethodBuilder<T> {
-    fn eq(&self, other: &Self) -> bool {
-        (&self.name, &self.inputs, &self.outputs) == (&other.name, &other.inputs, &other.outputs)
-    }
-}
-
-impl<T> Eq for MethodBuilder<T> {}
+use super::method_builder::MethodBuilder;
+use std::fmt::Debug;
 
 /// A builder for making programmatic construction of constraints easier.
 #[derive(Clone, Debug)]
@@ -75,14 +29,35 @@ impl<T> ConstraintBuilder<T> {
 #[macro_export]
 macro_rules! method {
     ( $method_name:ident ( $( $input:ident $(as $mutability:ident)? : $input_type:ty ),* ) $( -> [ $( $output:ident ),* ] )? $e:block ) => {{
-        use $crate::builders::constraint_builder::MethodBuilder;
+        use $crate::builders::MethodBuilder;
+        let fun = $crate::fun!( ( $( $input $( as $mutability )?: $input_type ),* ) { $e });
         MethodBuilder::new(
             stringify!($method_name),
             vec![ $( stringify!($input) ),* ],
             vec![ $( $( stringify!($output) ),* )? ],
-            $crate::fun!( ( $( $input $( as $mutability )?: $input_type ),* ) { $e }),
+            fun,
         )
     }}
+}
+
+/// Detects if a type is a mutable reference or not.
+/// Note that the type must be a reference.
+///
+/// # Examples
+///
+/// ```rust
+/// # use crate::is_mut_ref;
+/// assert_eq!(is_mut_ref!(&i32), false);
+/// assert_eq!(is_mut_ref!(&mut i32), true);
+/// ```
+#[macro_export]
+macro_rules! is_mut_ref {
+    (&mut $t:ty) => {
+        true
+    };
+    (&$t:ty) => {
+        false
+    };
 }
 
 /// Introduce the specified variable to scope, with the specified mutability.
@@ -128,7 +103,13 @@ macro_rules! fun {
                 let value: &Value<_> = value.unwrap();
 
                 // Introduce variable to scope
-                $crate::define_ref!( $input: $input_type = value $(, $mutability)? );
+                if $crate::is_mut_ref!( $input_type ) {
+                    let read_guard = value.read();
+                    let $input: $input_type = &*read_guard;
+                } else {
+                    let mut write_guard = value.write().unwrap_or_else(|| panic!("Variable {} was not readable", stringify!($name)));
+                    let $input: $input_type = &mut *write_guard;
+                }
 
                 #[allow(unused_assignments)]
                 counter += 1;
@@ -141,15 +122,14 @@ macro_rules! fun {
 
 #[cfg(test)]
 mod tests {
-    use std::sync::{Arc, RwLock};
-
     use super::ConstraintBuilder;
     use crate::{builders::value_experiments::Value, method, MethodFailure};
+    use std::sync::{Arc, RwLock};
 
     #[test]
     fn make_constraint() {
         let _ = ConstraintBuilder::new("Sum")
-            .method(method!(m1(a as mut: &i32, b: &i32) -> [c] { Ok(vec![a + b]) }))
+            .method(method!(m1(a: &i32, b: &i32) -> [c] { Ok(vec![a + b]) }))
             .method(method!(m2(a: &i32, c: &i32) -> [b] { Ok(vec![c - a]) }))
             .method(method!(m3(b: &i32, c: &i32) -> [a] { Ok(vec![c - b]) }));
     }
@@ -195,5 +175,20 @@ mod tests {
         let output: Result<Vec<()>, MethodFailure> = f(&[value.clone()]);
         assert_eq!(output, Ok(vec![]));
         assert_eq!(&*value.read(), &3);
+    }
+
+    #[test]
+    fn detect_mut() {
+        assert_eq!(crate::is_mut_ref!(&mut i32), true);
+        assert_eq!(crate::is_mut_ref!(&i32), false);
+
+        assert_eq!(crate::is_mut_ref!(&mut String), true);
+        assert_eq!(crate::is_mut_ref!(&String), false);
+
+        #[allow(dead_code)]
+        struct Foo;
+
+        assert_eq!(crate::is_mut_ref!(&mut Foo), true);
+        assert_eq!(crate::is_mut_ref!(&Foo), false);
     }
 }

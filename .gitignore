@@ -12,3 +12,4 @@ dot
 *.svg
 hotdrink-wasm/www/package-lock.json
 hotdrink-wasm/www/yarn.lock
+.actrc
