@@ -115,25 +115,25 @@ impl<T> MethodBuilder<T> {
     }
 
     /// Add an immutable input to the method.
-    pub fn input<S: Into<String>>(&mut self, input: S) -> &mut Self {
+    pub fn input<S: Into<String>>(mut self, input: S) -> Self {
         self.inputs.push(MethodParam::Ref(input.into()));
         self
     }
 
     /// Add a mutable input to the method.
-    pub fn input_mut<S: Into<String>>(&mut self, input: S) -> &mut Self {
+    pub fn input_mut<S: Into<String>>(mut self, input: S) -> Self {
         self.inputs.push(MethodParam::MutRef(input.into()));
         self
     }
 
     /// Set the inputs of the method.
-    pub fn inputs(&mut self, inputs: Vec<MethodParam>) -> &mut Self {
+    pub fn inputs(mut self, inputs: Vec<MethodParam>) -> Self {
         self.inputs = inputs;
         self
     }
 
     /// Set the outputs of the method.
-    pub fn outputs<S: Into<String>>(&mut self, outputs: Vec<S>) -> &mut Self {
+    pub fn outputs<S: Into<String>>(mut self, outputs: Vec<S>) -> Self {
         self.outputs = outputs.into_iter().map_into().collect();
         self
     }
@@ -142,9 +142,9 @@ impl<T> MethodBuilder<T> {
     /// This function takes a slice with a length corresponding to its inputs as input,
     /// and should return a vector of length corresponding to its outputs.
     pub fn apply(
-        &mut self,
+        mut self,
         apply: impl for<'a> Fn(Vec<MethodArg<'a, T>>) -> MethodResult<T> + 'static,
-    ) -> &mut Self {
+    ) -> Self {
         self.apply = Some(Arc::new(apply));
         self
     }
@@ -204,8 +204,8 @@ mod tests {
 
     #[test]
     fn builder_builds() {
-        let mut mb = MethodBuilder::new("m");
-        mb.input("a")
+        let mb = MethodBuilder::new("m")
+            .input("a")
             .input_mut("b")
             .outputs(vec!["c"])
             .apply(|mut v: Vec<MethodArg<'_, i32>>| {
