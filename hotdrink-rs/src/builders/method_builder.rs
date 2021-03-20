@@ -52,12 +52,17 @@ impl<'a, T> From<&'a mut T> for MethodArg<'a, T> {
 
 /// The mutability of the argument did not match
 /// the mutability that the method expected.
-#[derive(Copy, Clone, Debug, Default, PartialEq, Eq)]
-pub struct MutabilityMismatch;
+#[derive(Copy, Clone, Debug, PartialEq, Eq)]
+pub enum MutabilityMismatch {
+    /// Expected an immutable reference, but got a mutable one.
+    ExpectedImmutableGotMutable,
+    /// Expected a mutable reference, but got an immutable one.
+    ExpectedMutableGotImmutable,
+}
 
 impl From<MutabilityMismatch> for MethodFailure {
-    fn from(_: MutabilityMismatch) -> Self {
-        MethodFailure::MutabilityMismatch
+    fn from(mm: MutabilityMismatch) -> Self {
+        MethodFailure::MutabilityMismatch(mm)
     }
 }
 
@@ -71,7 +76,7 @@ impl<'a, T> TryGetRef<&'a T> for MethodArg<'a, T> {
     fn try_get_ref(self) -> Result<&'a T, MutabilityMismatch> {
         match self {
             MethodArg::Ref(r) => Ok(r),
-            _ => Err(MutabilityMismatch),
+            _ => Err(MutabilityMismatch::ExpectedImmutableGotMutable),
         }
     }
 }
@@ -80,7 +85,7 @@ impl<'a, T> TryGetRef<&'a mut T> for MethodArg<'a, T> {
     fn try_get_ref(self) -> Result<&'a mut T, MutabilityMismatch> {
         match self {
             MethodArg::MutRef(mr) => Ok(mr),
-            _ => Err(MutabilityMismatch),
+            _ => Err(MutabilityMismatch::ExpectedMutableGotImmutable),
         }
     }
 }
@@ -178,7 +183,9 @@ impl<T> Eq for MethodBuilder<T> {}
 
 #[cfg(test)]
 mod tests {
-    use super::{MethodArg, MethodBuilder, MethodFailure, MethodFunctionInner, TryGetRef};
+    use super::{
+        MethodArg, MethodBuilder, MethodFailure, MethodFunctionInner, MutabilityMismatch, TryGetRef,
+    };
     use std::{convert::TryInto, sync::Arc};
 
     // Define a wrapper struct
@@ -222,7 +229,12 @@ mod tests {
             Ok(vec![*a])
         });
         let result = f(vec![MethodArg::from(&0)]);
-        assert_eq!(result, Err(MethodFailure::MutabilityMismatch));
+        assert_eq!(
+            result,
+            Err(MethodFailure::MutabilityMismatch(
+                MutabilityMismatch::ExpectedMutableGotImmutable
+            ))
+        );
 
         // Tries to get immutable reference when it is mutable
         let f: MethodFunctionInner<i32> = Arc::new(|mut v| {
@@ -230,7 +242,12 @@ mod tests {
             Ok(vec![*a])
         });
         let result = f(vec![MethodArg::from(&mut 0)]);
-        assert_eq!(result, Err(MethodFailure::MutabilityMismatch));
+        assert_eq!(
+            result,
+            Err(MethodFailure::MutabilityMismatch(
+                MutabilityMismatch::ExpectedImmutableGotMutable
+            ))
+        );
     }
 
     #[test]

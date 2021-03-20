@@ -1,6 +1,8 @@
 //! Useful traits for constraint systems that define the interface required for planning.
 
-use crate::algorithms::hierarchical_planner::Vertex;
+use crate::{
+    algorithms::hierarchical_planner::Vertex, builders::method_builder::MutabilityMismatch,
+};
 use std::{
     fmt::Debug,
     ops::{Index, IndexMut},
@@ -12,16 +14,16 @@ use std::{
 pub enum MethodFailure {
     /// An attempt to use a variable that does not exist.
     NoSuchVariable(String),
-    /// Failure to convert a variable into the specified type.
-    TypeConversionFailure(&'static str, &'static str),
     /// The constraint satisfaction method received too few or too many values as input.
     WrongInputCount(usize, usize),
     /// The constraint satisfaction method returned too few or too many values as output.
     WrongOutputCount(usize, usize),
+    /// Unexpected mutability of an argument.
+    MutabilityMismatch(MutabilityMismatch),
+    /// Failure to convert a variable into the specified type.
+    TypeConversionFailure(&'static str, &'static str),
     /// A custom error from the programmer.
     Custom(String),
-    /// Unexpected mutability of an argument.
-    MutabilityMismatch,
 }
 
 /// The result of calling a method's function.

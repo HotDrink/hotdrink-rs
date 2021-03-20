@@ -1,8 +1,8 @@
 //! Errors that can happen during solving of a constraint system.
 
-use std::fmt::Display;
-
 use super::traits::MethodFailure;
+use crate::builders::method_builder::MutabilityMismatch;
+use std::fmt::Display;
 
 /// Information about an error that occured during solving.
 #[derive(Clone, Debug, PartialEq)]
@@ -43,9 +43,14 @@ impl Display for SolveError {
                     format!("Method takes {} output(s), but got {}.", expected, actual)
                 }
                 MethodFailure::Custom(msg) => msg.to_string(),
-                MethodFailure::MutabilityMismatch => {
-                    "Wrong mutability of an argument.".to_string()
-                }
+                MethodFailure::MutabilityMismatch(mm) => match mm {
+                    MutabilityMismatch::ExpectedImmutableGotMutable => {
+                        "Expected immutable reference, got mutable".to_string()
+                    }
+                    MutabilityMismatch::ExpectedMutableGotImmutable => {
+                        "Expected mutable reference, got immutable".to_string()
+                    }
+                },
             },
         };
         write!(
