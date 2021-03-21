@@ -5,7 +5,7 @@ use hotdrink_rs::{
     algorithms::{hierarchical_planner::hierarchical_planner, simple_planner::simple_planner},
     data::{constraint_system::ConstraintSystem, traits::ComponentSpec},
     examples::{
-        components::random::make_random,
+        components::random::{make_random, new_make_random},
         constraint_systems::{
             dense::make_dense_cs,
             empty::make_empty_cs,
@@ -153,6 +153,12 @@ fn component_hierarchical_planner(c: &mut Criterion) {
     }
     for i in &[0, 250, 500, 1000] {
         bench_hierarchical_planner_component(&mut group, "random", i, |nv| make_random(nv, nv));
+        bench_hierarchical_planner_component(&mut group, "new_random_low_clustering", i, |nv| {
+            new_make_random(nv / 5, 5, -100)
+        });
+        bench_hierarchical_planner_component(&mut group, "new_random_high_clustering", i, |nv| {
+            new_make_random(nv / 5, 5, 100)
+        });
         bench_hierarchical_planner(&mut group, "unprunable", i, unprunable);
     }
     group.finish();
