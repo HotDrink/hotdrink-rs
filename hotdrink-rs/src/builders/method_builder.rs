@@ -2,8 +2,8 @@
 
 use crate::{MethodFailure, MethodResult};
 use itertools::Itertools;
-use std::fmt::Debug;
 use std::sync::Arc;
+use std::{convert::TryFrom, fmt::Debug};
 
 /// A parameter for a method.
 /// This can either be an immutable reference, or a mutable one.
@@ -50,6 +50,15 @@ impl<'a, T> From<&'a mut T> for MethodArg<'a, T> {
     }
 }
 
+/// The actual value could not be converted to the desired one.
+#[derive(Copy, Clone, Debug, PartialEq, Eq)]
+pub enum ConversionError {
+    /// The mutability was wrong.
+    MutabilityMismatch(MutabilityMismatch),
+    /// The type could not be converted.
+    TypeConversionFailure,
+}
+
 /// The mutability of the argument did not match
 /// the mutability that the method expected.
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
@@ -66,26 +75,47 @@ impl From<MutabilityMismatch> for MethodFailure {
     }
 }
 
-/// A trait for getting references from method arguments.
-pub trait TryGetRef<T> {
-    /// Try to get the required kind of reference.
-    fn try_get_ref(self) -> Result<T, MutabilityMismatch>;
-}
-
-impl<'a, T> TryGetRef<&'a T> for MethodArg<'a, T> {
-    fn try_get_ref(self) -> Result<&'a T, MutabilityMismatch> {
-        match self {
-            MethodArg::Ref(r) => Ok(r),
-            _ => Err(MutabilityMismatch::ExpectedImmutableGotMutable),
+impl From<ConversionError> for MethodFailure {
+    fn from(ce: ConversionError) -> Self {
+        match ce {
+            ConversionError::MutabilityMismatch(mm) => MethodFailure::MutabilityMismatch(mm),
+            ConversionError::TypeConversionFailure => {
+                MethodFailure::TypeConversionFailure("<VARIABLE>", "<TYPE>")
+            }
         }
     }
 }
 
-impl<'a, T> TryGetRef<&'a mut T> for MethodArg<'a, T> {
-    fn try_get_ref(self) -> Result<&'a mut T, MutabilityMismatch> {
+impl<'a, T> MethodArg<'a, T> {
+    /// Try to convert his `MethorArg<'a, T>` to a `&'a T`.
+    pub fn try_into_ref<U>(self) -> Result<&'a U, ConversionError>
+    where
+        &'a U: TryFrom<&'a T>,
+    {
         match self {
-            MethodArg::MutRef(mr) => Ok(mr),
-            _ => Err(MutabilityMismatch::ExpectedMutableGotImmutable),
+            MethodArg::Ref(r) => match TryFrom::try_from(r) {
+                Ok(r) => Ok(r),
+                Err(_) => Err(ConversionError::TypeConversionFailure),
+            },
+            _ => Err(ConversionError::MutabilityMismatch(
+                MutabilityMismatch::ExpectedImmutableGotMutable,
+            )),
+        }
+    }
+
+    /// Try to convert his `MethorArg<'a, T>` to a `&'a mut T`.
+    pub fn try_into_mut<U>(self) -> Result<&'a mut U, ConversionError>
+    where
+        &'a mut U: TryFrom<&'a mut T>,
+    {
+        match self {
+            MethodArg::MutRef(r) => match TryFrom::try_from(r) {
+                Ok(r) => Ok(r),
+                Err(_) => Err(ConversionError::TypeConversionFailure),
+            },
+            _ => Err(ConversionError::MutabilityMismatch(
+                MutabilityMismatch::ExpectedMutableGotImmutable,
+            )),
         }
     }
 }
@@ -183,10 +213,9 @@ impl<T> Eq for MethodBuilder<T> {}
 
 #[cfg(test)]
 mod tests {
-    use super::{
-        MethodArg, MethodBuilder, MethodFailure, MethodFunctionInner, MutabilityMismatch, TryGetRef,
-    };
-    use std::{convert::TryInto, sync::Arc};
+    use super::{MethodArg, MethodBuilder, MethodFunctionInner, MutabilityMismatch};
+    use crate::MethodFailure;
+    use std::sync::Arc;
 
     // Define a wrapper struct
     #[derive(Copy, Clone, Debug, PartialEq)]
@@ -208,10 +237,10 @@ mod tests {
             .input("a")
             .input_mut("b")
             .outputs(vec!["c"])
-            .apply(|mut v: Vec<MethodArg<'_, i32>>| {
-                let a: &i32 = v.remove(0).try_get_ref()?;
+            .apply(|mut v: Vec<MethodArg<'_, _>>| {
+                let a: &_ = v.remove(0).try_into_ref()?;
                 assert_eq!(a, &3);
-                let b: &mut i32 = v.remove(0).try_get_ref()?;
+                let b: &mut _ = v.remove(0).try_into_mut()?;
                 assert_eq!(b, &4);
                 Ok(vec![*a + *b])
             });
@@ -225,7 +254,7 @@ mod tests {
     fn wrong_mutability_gives_error() {
         // Tries to get mutable reference when it is immutable
         let f: MethodFunctionInner<i32> = Arc::new(|mut v| {
-            let a: &mut i32 = v.remove(0).try_get_ref()?;
+            let a: &mut i32 = v.remove(0).try_into_mut()?;
             Ok(vec![*a])
         });
         let result = f(vec![MethodArg::from(&0)]);
@@ -238,7 +267,7 @@ mod tests {
 
         // Tries to get immutable reference when it is mutable
         let f: MethodFunctionInner<i32> = Arc::new(|mut v| {
-            let a: &i32 = v.remove(0).try_get_ref()?;
+            let a: &i32 = v.remove(0).try_into_ref()?;
             Ok(vec![*a])
         });
         let result = f(vec![MethodArg::from(&mut 0)]);
@@ -254,11 +283,9 @@ mod tests {
     fn auto_conversion_in_apply() {
         // Create a function that automatically does conversions.
         let f: MethodFunctionInner<AB> = Arc::new(|mut v| {
-            let a: &_ = v.remove(0).try_get_ref()?;
-            let a: &A = a.try_into()?;
+            let a: &A = v.remove(0).try_into_ref::<A>()?;
             assert_eq!(a, &A);
-            let b: &mut _ = v.remove(0).try_get_ref()?;
-            let b: &mut B = b.try_into()?;
+            let b: &mut B = v.remove(0).try_into_mut::<B>()?;
             assert_eq!(b, &B);
             Ok(vec![A.into(), B.into()])
         });
@@ -275,8 +302,7 @@ mod tests {
     fn auto_conversion_may_fail() {
         // Function that tries to get a B
         let f: MethodFunctionInner<AB> = Arc::new(|mut v| {
-            let a: &_ = v.remove(0).try_get_ref()?;
-            let b: &B = a.try_into()?;
+            let b: &B = v.remove(0).try_into_ref()?;
             Ok(vec![(*b).into()])
         });
 
@@ -284,6 +310,9 @@ mod tests {
         let result = f(vec![MethodArg::from(&AB::A(A))]);
 
         // Should be type conversion error
-        assert_eq!(result, Err(MethodFailure::TypeConversionFailure("AB", "B")));
+        assert_eq!(
+            result,
+            Err(MethodFailure::TypeConversionFailure("<VARIABLE>", "<TYPE>"))
+        );
     }
 }

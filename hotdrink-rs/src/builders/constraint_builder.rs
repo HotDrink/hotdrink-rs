@@ -28,167 +28,98 @@ impl<T> ConstraintBuilder<T> {
 /// A macro for creating a `MethodBuilder`.
 #[macro_export]
 macro_rules! method {
-    ( $method_name:ident ( $( $input:ident $(as $mutability:ident)? : $input_type:ty ),* ) $( -> [ $( $output:ident ),* ] )? $e:block ) => {{
-        use $crate::builders::MethodBuilder;
-        let fun = $crate::fun!( ( $( $input $( as $mutability )?: $input_type ),* ) { $e });
-        MethodBuilder::new(
-            stringify!($method_name),
-            vec![ $( stringify!($input) ),* ],
-            vec![ $( $( stringify!($output) ),* )? ],
-            fun,
-        )
+    (
+        $method_name:ident
+            ( $( $params:tt )* )
+            $( -> [ $( $output:ident ),* ] )?
+            $e:block
+    ) => {{
+        use $crate::builders::{MethodBuilder, method_builder::{MethodParam}};
+        MethodBuilder::new(stringify!($method_name))
+            .inputs( crate::make_params!( $( $params )* ) )
+            .outputs( vec![ $( $( stringify!($output) ),* )? ] )
+            .apply(|mut values| {
+                $crate::define_refs!(values, $($params)*);
+                $e
+            })
     }}
 }
 
-/// Detects if a type is a mutable reference or not.
-/// Note that the type must be a reference.
-///
-/// # Examples
-///
-/// ```rust
-/// # use crate::is_mut_ref;
-/// assert_eq!(is_mut_ref!(&i32), false);
-/// assert_eq!(is_mut_ref!(&mut i32), true);
-/// ```
+/// Turn a parameter list into a list of [`MethodParam`].
 #[macro_export]
-macro_rules! is_mut_ref {
-    (&mut $t:ty) => {
-        true
-    };
-    (&$t:ty) => {
-        false
-    };
+macro_rules! make_params {
+    () => {{ Vec::new() }};
+    ( $name:ident: & $t:ty $(, $($rest:tt)* )? ) => {{
+        let mut v = vec![MethodParam::make_ref(stringify!($name))];
+        v.extend($crate::make_params!( $( $( $rest )* )? ));
+        v
+    }};
+    ( $name:ident: &mut $t:ty $(, $($rest:tt)* )? ) => {{
+        let mut v = vec![MethodParam::make_mut_ref(stringify!($name))];
+        v.extend($crate::make_params!( $( $( $rest )* )? ));
+        v
+    }};
 }
 
-/// Introduce the specified variable to scope, with the specified mutability.
+/// Introduce references to the specified parameters.
 #[macro_export]
-macro_rules! define_ref {
-    ( $name:ident: $type:ty = $value:expr ) => {
-        let read_guard = $value.read();
-        let $name: $type = &*read_guard;
+macro_rules! define_refs {
+    ( $values:expr ) => {{}};
+    ( $values:expr, $name:ident: & $t:ty $(, $($rest:tt)* )? ) => {
+        // Get reference and try to convert it
+        let $name: &$t = $values.remove(0).try_into_ref()?;
+        $crate::define_refs!($values $(, $($rest)*)?);
     };
-    ( $name:ident: $type:ty = $value:expr, mut ) => {
-        let mut write_guard = $value
-            .write()
-            .unwrap_or_else(|| panic!("Variable {} was not readable", stringify!($name)));
-        let $name: $type = &mut *write_guard;
-    };
-}
-
-/// A macro for creating a closure that takes a vector as input,
-/// while introducing its inputs to the scope automatically.
-///
-/// # Examples
-///
-/// ```rust
-/// # use hotdrink_rs::fun;
-/// assert!(false);
-/// ```
-#[macro_export]
-macro_rules! fun {
-    (
-        ( $( $input:ident $( as $mutability:ident )? : $input_type:ty ),* ) $e:block ) => {{
-        use $crate::builders::value_experiments::Value;
-        |values: &[Value<_>]| {
-            use $crate::MethodFailure;
-
-            #[allow(unused_mut)]
-            let mut counter = 0;
-            $(
-                // Extract argument
-                let value: Option<&Value<_>> = values.get(counter);
-                if value.is_none() {
-                    return Err(MethodFailure::NoSuchVariable(stringify!($input).to_owned()));
-                }
-                let value: &Value<_> = value.unwrap();
-
-                // Introduce variable to scope
-                if $crate::is_mut_ref!( $input_type ) {
-                    let read_guard = value.read();
-                    let $input: $input_type = &*read_guard;
-                } else {
-                    let mut write_guard = value.write().unwrap_or_else(|| panic!("Variable {} was not readable", stringify!($name)));
-                    let $input: $input_type = &mut *write_guard;
-                }
-
-                #[allow(unused_assignments)]
-                counter += 1;
-            )*
-
-            $e
-        }}
+    ( $values:expr, $name:ident: &mut $t:ty $(, $($rest:tt)* )? ) => {
+        // Get reference and try to convert it
+        let $name: &mut $t = $values.remove(0).try_into_mut()?;
+        $crate::define_refs!($values $(, $($rest)*)?);
     };
 }
 
 #[cfg(test)]
 mod tests {
-    use super::ConstraintBuilder;
-    use crate::{builders::value_experiments::Value, method, MethodFailure};
-    use std::sync::{Arc, RwLock};
+    use crate::builders::{method_builder::MethodParam, ConstraintBuilder};
 
     #[test]
     fn make_constraint() {
-        let _ = ConstraintBuilder::new("Sum")
-            .method(method!(m1(a: &i32, b: &i32) -> [c] { Ok(vec![a + b]) }))
-            .method(method!(m2(a: &i32, c: &i32) -> [b] { Ok(vec![c - a]) }))
-            .method(method!(m3(b: &i32, c: &i32) -> [a] { Ok(vec![c - b]) }));
+        let _: ConstraintBuilder<i32> = ConstraintBuilder::new("Sum")
+            .method(crate::method!(m1(a: &i32, b: &i32) -> [c] { Ok(vec![*a + *b]) } ))
+            .method(crate::method!(m2(a: &i32, c: &i32) -> [b] { Ok(vec![*c - *a]) } ))
+            .method(crate::method!(m3(b: &i32, c: &i32) -> [a] { Ok(vec![*c - *b]) } ));
     }
 
     #[test]
-    fn fun_macro() {
-        let add = fun!((a: &i32, b: &i32) { Ok(vec![*a + *b]) });
-        let result: Result<Vec<i32>, MethodFailure> =
-            add(&[Value::Ref(Arc::new(1)), Value::Ref(Arc::new(2))]);
-        assert_eq!(result, Ok(vec![3]));
-    }
+    fn make_params() {
+        let _: Vec<MethodParam> = make_params!();
+        assert_eq!(make_params!(a: &i32), vec![MethodParam::make_ref("a")]);
+        assert_eq!(
+            make_params!(a: &mut i32),
+            vec![MethodParam::make_mut_ref("a")]
+        );
+        assert_eq!(
+            make_params!(a: &i32, b: &mut i32),
+            vec![MethodParam::make_ref("a"), MethodParam::make_mut_ref("b")]
+        );
 
-    #[test]
-    fn apply_macro_no_copy() {
-        let concat = fun!((a: &String, b: &String) { Ok(vec![a.to_owned() + b.as_str()]) });
-        let result: Result<Vec<String>, MethodFailure> = concat(&[
-            Value::Ref(Arc::new(String::from("Hello"))),
-            Value::Ref(Arc::new(String::from(" World"))),
-        ]);
-        assert_eq!(result, Ok(vec![String::from("Hello World")]));
-    }
-
-    #[test]
-    fn define_ref() {
-        let value = Value::Ref(Arc::new(3));
-        {
-            define_ref!(x: &i32 = value);
-            assert_eq!(*x, 3);
-        }
-        {
-            define_ref!(x: &mut i32 = value, mut);
-            assert_eq!(*x, 3);
-        }
-    }
-
-    #[test]
-    fn modify_mutable_ref() {
-        let value = Value::MutRef(Arc::new(RwLock::new(0)));
-        let f = fun!((x as mut: &mut i32) {
-            *x += 3;
-            Ok(vec![])
-        });
-        let output: Result<Vec<()>, MethodFailure> = f(&[value.clone()]);
-        assert_eq!(output, Ok(vec![]));
-        assert_eq!(&*value.read(), &3);
-    }
-
-    #[test]
-    fn detect_mut() {
-        assert_eq!(crate::is_mut_ref!(&mut i32), true);
-        assert_eq!(crate::is_mut_ref!(&i32), false);
-
-        assert_eq!(crate::is_mut_ref!(&mut String), true);
-        assert_eq!(crate::is_mut_ref!(&String), false);
-
-        #[allow(dead_code)]
-        struct Foo;
-
-        assert_eq!(crate::is_mut_ref!(&mut Foo), true);
-        assert_eq!(crate::is_mut_ref!(&Foo), false);
+        let many = make_params!(
+            a: &i32,
+            b: &mut i32,
+            c: &i32,
+            d: &mut String,
+            e: &std::collections::HashMap,
+            f: &mut std::collections::HashMap
+        );
+        assert_eq!(
+            many,
+            vec![
+                MethodParam::make_ref("a"),
+                MethodParam::make_mut_ref("b"),
+                MethodParam::make_ref("c"),
+                MethodParam::make_mut_ref("d"),
+                MethodParam::make_ref("e"),
+                MethodParam::make_mut_ref("f")
+            ]
+        );
     }
 }
