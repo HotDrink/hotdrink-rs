@@ -28,21 +28,19 @@ impl<T> ConstraintBuilder<T> {
 /// A macro for creating a `MethodBuilder`.
 #[macro_export]
 macro_rules! method {
+    ( @impure $( $rest:tt )*) => { $crate::method!($($rest)*).pure(false) };
     (
-        $method_name:ident
-            ( $( $params:tt )* )
-            $( -> [ $( $output:ident ),* ] )?
-            $e:block
+        $method_name:ident ( $( $params:tt )* ) $( -> [ $( $output:ident ),* ] )? $e:block
     ) => {{
         use $crate::builders::{MethodBuilder, method_builder::{MethodParam}};
         MethodBuilder::new(stringify!($method_name))
-            .inputs( crate::make_params!( $( $params )* ) )
+            .inputs( $crate::make_params!( $( $params )* ) )
             .outputs( vec![ $( $( stringify!($output) ),* )? ] )
             .apply(|mut values| {
                 $crate::define_refs!(values, $($params)*);
                 $e
             })
-    }}
+    }};
 }
 
 /// Turn a parameter list into a list of [`MethodParam`].
@@ -86,7 +84,7 @@ mod tests {
         let _: ConstraintBuilder<i32> = ConstraintBuilder::new("Sum")
             .method(crate::method!(m1(a: &i32, b: &i32) -> [c] { Ok(vec![*a + *b]) } ))
             .method(crate::method!(m2(a: &i32, c: &i32) -> [b] { Ok(vec![*c - *a]) } ))
-            .method(crate::method!(m3(b: &i32, c: &i32) -> [a] { Ok(vec![*c - *b]) } ));
+            .method(crate::method!(m3(b: &i32, c: &mut i32) -> [a] { Ok(vec![*c - *b]) } ));
     }
 
     #[test]

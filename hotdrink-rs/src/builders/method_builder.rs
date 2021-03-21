@@ -187,7 +187,7 @@ impl<T> MethodBuilder<T> {
     /// If it is not pure, it will be re-run every update.
     /// Set this to false if the method reads from or writes to something other than
     /// its inputs and outputs.
-    pub fn pure(&mut self, pure: bool) -> &mut Self {
+    pub fn pure(mut self, pure: bool) -> Self {
         self.pure = pure;
         self
     }
@@ -314,5 +314,16 @@ mod tests {
             result,
             Err(MethodFailure::TypeConversionFailure("<VARIABLE>", "<TYPE>"))
         );
+    }
+
+    #[test]
+    fn make_method() {
+        let _: MethodBuilder<AB> = crate::method! {
+            @impure m(a: &A, b: &mut B) -> [c, d] {
+                let a: &A = a;
+                let b: &B = b;
+                crate::ret![*a, *b]
+            }
+        };
     }
 }
