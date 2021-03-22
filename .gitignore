@@ -10,6 +10,7 @@ perf.data.old
 node_modules
 dot
 *.svg
+*.png
 hotdrink-wasm/www/package-lock.json
 hotdrink-wasm/www/yarn.lock
 .actrc

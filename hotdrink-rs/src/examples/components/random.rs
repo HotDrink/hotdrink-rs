@@ -21,6 +21,7 @@ fn random_inclusive(min: usize, max: usize) -> Option<usize> {
     Some(num % (max - min + 1) + min)
 }
 
+/// Choose a random element from the input-vector, then remove it.
 fn choose<T>(v: &mut Vec<T>) -> Option<T> {
     if v.is_empty() {
         return None;
@@ -29,24 +30,13 @@ fn choose<T>(v: &mut Vec<T>) -> Option<T> {
     Some(v.swap_remove(index))
 }
 
-fn random_distinct<T>(mut v: Vec<T>, n: usize) -> Option<Vec<T>> {
-    if n >= v.len() {
-        return None;
-    }
-    let mut result = Vec::new();
-    while result.len() < n {
-        let value = choose(&mut v)?;
-        result.push(value);
-    }
-    Some(result)
-}
-
 /// Assign a cluster to a constraint based on its index.
 fn assign_cluster(constraint: usize, n_clusters: usize) -> usize {
     constraint % n_clusters
 }
 
-fn randoms_with_cluster(
+/// Pick random variables, but prefer ones in the cluster of the constraint.
+fn randoms_with_clustering(
     values: Vec<usize>,
     n_values: usize,
     constraint: usize,
@@ -97,7 +87,7 @@ macro_rules! unwrap_or_break {
 }
 
 /// Create a random component.
-pub fn new_make_random<T>(
+pub fn make_random<T>(
     n_constraints: usize,
     max_vars_per_constraint: usize,
     n_clusters: usize,
@@ -110,13 +100,19 @@ where
         panic!("Must have two or more variables per constraint");
     }
 
-    let n_variables = n_constraints;
+    let mut n_variables = n_constraints;
     let mut variable_usage = vec![0; n_variables];
     let mut used_variables: HashSet<usize> = std::iter::once(0).collect();
     let mut unused_variables: HashSet<usize> = (0..n_variables).collect();
     let mut constraints = Vec::new();
 
     while constraints.len() < n_constraints {
+        // If no more unused, add one
+        if unused_variables.is_empty() {
+            unused_variables.insert(n_variables);
+            n_variables += 1;
+            variable_usage.push(0);
+        }
         // Get used and unused as owned vectors
         let mut used_variables_vec = used_variables.iter().collect();
         let mut unused_variables_vec = unused_variables.iter().collect();
@@ -131,7 +127,7 @@ where
         // The number of additional variables, 0 to max, minus 2 since we already got two.
         let n_other_variables = unwrap_or_break!(random_inclusive(0, max_vars_per_constraint - 2));
         // Select the other variables with bias according to `clustering`
-        let actual_variables = randoms_with_cluster(
+        let actual_variables = randoms_with_clustering(
             (0..n_variables).collect(),
             n_other_variables,
             constraints.len(),
@@ -164,20 +160,24 @@ where
         );
         methods.push(write_to_unused);
 
-        let n_methods = actual_variables.len();
+        // Does not have to write to all variables.
+        let n_methods = random_inclusive(0, actual_variables.len()).unwrap();
+        // May write to all of them
+        let outputs_per_method = random_inclusive(1, actual_variables.len()).unwrap();
+
         // Create additional methods
-        for (&output, i) in actual_variables.iter().zip(1..n_methods) {
-            let outputs = vec![output];
+        for (outputs, i) in actual_variables
+            .chunks(outputs_per_method)
+            .zip(1..n_methods)
+        {
             let mut inputs = Vec::new();
             for &input in &actual_variables {
-                if input != output {
-                    inputs.push(input);
-                }
+                inputs.push(input);
             }
             let method = Method::new(
                 format!("m{}", i),
                 inputs,
-                outputs,
+                outputs.to_vec(),
                 Arc::new(|_| Ok(vec![T::default()])),
             );
             methods.push(method);
@@ -197,131 +197,9 @@ where
     )
 }
 
-/// Create a random component.
-pub fn make_random<T>(n_constraints: usize, n_variables: usize) -> Component<T>
-where
-    T: Clone + Default + 'static,
-{
-    let n_vars_per_constraint = n_variables.min(5);
-
-    // The variables that are not yet involved in a constraint
-    let mut free_variables: HashSet<usize> = (0..n_variables).collect();
-    // The constraints added so far
-    let mut constraints = Vec::new();
-
-    // Add constraints until done
-    let mut constraints_added = 0;
-    while constraints_added < n_constraints {
-        log::debug!("Adding constraint");
-
-        // How many variables should this constraint contain?
-        // We want at least one variable, anything less does not make sense.
-        // One makes sense if it is a constant value.
-        let actual_n_variables = random_inclusive(1, n_vars_per_constraint).unwrap();
-        // Get the random indices we want to include in the constraint.
-        let mut variables = random_distinct(
-            (0..n_variables).collect(),
-            actual_n_variables.min(n_variables) - 1,
-        )
-        .unwrap();
-
-        log::debug!("Selecting {:?}", variables);
-
-        // If all have been used before, get a guaranteed free one
-        if !variables.iter().any(|v| free_variables.contains(v)) {
-            let free_variable = free_variables.iter().next();
-            if let Some(free_variable) = free_variable {
-                log::debug!("All were used, replacing one with {}", free_variable);
-                variables.pop();
-                variables.push(*free_variable);
-            } else {
-                log::debug!("No more free variables");
-                break;
-            }
-        }
-
-        let mut free_idx = None;
-        // Remove variables that are now used, but store index of a free variable
-        for v in &variables {
-            if free_variables.contains(v) {
-                free_idx = Some(*v);
-            }
-            free_variables.remove(v);
-        }
-        let free_idx = free_idx.expect("One must have been free, or loop should have broken");
-
-        // Figure out how many methods to create
-        let n_methods = random_inclusive(1, actual_n_variables).unwrap();
-        let mut methods = Vec::new();
-
-        log::debug!("Adding {} methods", n_methods);
-
-        // Add a method that writes to the guaranteed free variable
-        {
-            let outputs = vec![free_idx];
-            let mut inputs = Vec::new();
-            for &input in &variables {
-                if input != free_idx {
-                    inputs.push(input);
-                }
-            }
-            let method = Method::new(
-                format!("m{}", 0),
-                inputs,
-                outputs,
-                Arc::new(|_| Ok(vec![T::default()])),
-            );
-            log::debug!("Adding {:?}", method);
-            methods.push(method);
-        }
-
-        // Create n methods.
-        for (&output, i) in variables.iter().zip(1..n_methods) {
-            // Skip free variable, we already wrote to it
-            if output == free_idx {
-                continue;
-            }
-            let outputs = vec![output];
-            let mut inputs = Vec::new();
-            for &input in &variables {
-                if input != output {
-                    inputs.push(input);
-                }
-            }
-            let method = Method::new(
-                format!("m{}", i),
-                inputs,
-                outputs,
-                Arc::new(|_| Ok(vec![T::default()])),
-            );
-            log::debug!("Adding {:?}", method);
-            methods.push(method);
-        }
-
-        constraints.push(Constraint::new_with_name(
-            format!("c{}", constraints_added),
-            methods,
-        ));
-
-        constraints_added += 1;
-    }
-
-    let name_to_idx = (0..n_variables).map(|i| (format!("v{}", i), i)).collect();
-
-    Component::new_with_map(
-        "random".to_string(),
-        name_to_idx,
-        vec![T::default(); n_variables],
-        constraints,
-    )
-}
-
 #[cfg(test)]
 mod tests {
-    use super::{
-        assign_cluster, choose, make_random, new_make_random, random_inclusive,
-        randoms_with_cluster,
-    };
+    use super::{choose, make_random, random_inclusive};
     use crate::Component;
 
     #[test]
@@ -346,15 +224,6 @@ mod tests {
     }
 
     #[test]
-    fn random_is_solvable() {
-        for _ in 0..1000 {
-            let size = random_inclusive(0, 100).unwrap();
-            let random: Component<i32> = make_random(size, size);
-            assert!(crate::algorithms::simple_planner::simple_planner(&random).is_some())
-        }
-    }
-
-    #[test]
     fn choose_test() {
         let x: Option<i32> = choose(&mut vec![]);
         assert_eq!(x, None);
@@ -367,21 +236,26 @@ mod tests {
     }
 
     #[test]
-    fn new_random_is_solvable() {
+    fn random_is_solvable() {
         for _ in 0..100 {
             for &clustering in &[0.0, 0.25, 0.5, 0.75, 1.0] {
                 let size = random_inclusive(0, 100).unwrap();
-                let random: Component<i32> = new_make_random(size, 5, 5, clustering);
+                let random: Component<i32> = make_random(size, 5, 5, clustering);
                 assert!(crate::algorithms::simple_planner::simple_planner(&random).is_some())
             }
         }
     }
 
     #[test]
-    fn foo() {
-        let cluster = assign_cluster(0, 5);
-        dbg!(cluster);
-        let values = randoms_with_cluster((0..1000).collect(), 100, 0, 5, 2.5);
-        dbg!(values);
+    // #[ignore = "TODO: Should this work? Would be nice for benchmarks to guarantee it."]
+    fn random_makes_enough_constraints() {
+        use crate::ComponentSpec;
+        for _ in 0..100 {
+            for &clustering in &[0.0, 0.25, 0.5, 0.75, 1.0] {
+                let size = random_inclusive(0, 100).unwrap();
+                let random: Component<i32> = make_random(size, 5, 5, clustering);
+                assert_eq!(random.constraints().len(), size);
+            }
+        }
     }
 }

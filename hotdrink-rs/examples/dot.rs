@@ -1,9 +1,6 @@
 use hotdrink_rs::{
     examples::{
-        components::{
-            ladder::ladder,
-            random::{make_random, new_make_random},
-        },
+        components::{ladder::ladder, random::make_random},
         constraint_systems::{
             linear::linear_twoway,
             linear_oneway, make_dense_cs, multioutput_singleway,
@@ -78,17 +75,24 @@ fn main() -> io::Result<()> {
         let component = component.get_component("0").clone();
         component
     })?;
-    write_component("random", size, |nv| make_random::<()>(nv, nv))?;
-    write_component_simple("random_simple", size, |nv| make_random::<()>(nv, nv))?;
     let max_vars_per_constraint = 5;
     write_component("new_random_low_clustering", size, |nv| {
-        new_make_random::<()>(nv, max_vars_per_constraint, 1, 1.0)
+        make_random::<()>(nv, max_vars_per_constraint, 1, 1.0)
     })?;
     write_component("new_random_medium_clustering", size, |nv| {
-        new_make_random::<()>(nv, max_vars_per_constraint, 5, 1.5)
+        make_random::<()>(nv, max_vars_per_constraint, 5, 1.5)
     })?;
     write_component("new_random_high_clustering", size, |nv| {
-        new_make_random::<()>(nv, max_vars_per_constraint, 10, 2.0)
+        make_random::<()>(nv, max_vars_per_constraint, 10, 2.0)
+    })?;
+    write_component_simple("new_random_low_clustering_simple", size, |nv| {
+        make_random::<()>(nv, max_vars_per_constraint, 1, 1.0)
+    })?;
+    write_component_simple("new_random_medium_clustering_simple", size, |nv| {
+        make_random::<()>(nv, max_vars_per_constraint, 5, 1.5)
+    })?;
+    write_component_simple("new_random_high_clustering_simple", size, |nv| {
+        make_random::<()>(nv, max_vars_per_constraint, 10, 2.0)
     })?;
 
     Ok(())
