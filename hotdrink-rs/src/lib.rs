@@ -26,10 +26,10 @@
 //! # Examples
 //!
 //! ```
-//! use hotdrink_rs::{component, ret, ConstraintSystem};
+//! use hotdrink_rs::{component, ret, ConstraintSystem, event::Event};
 //!
 //! // Define a set of variables and relations between them
-//! let component = component! {
+//! let mut component = component! {
 //!     // Define the component
 //!     component Component {
 //!         // Define variables and their default values
@@ -45,6 +45,17 @@
 //!         }
 //!     }
 //! };
+//!
+//! // Describe what should happen when `a` changes
+//! component.subscribe("a", |event| match event {
+//!         Event::Pending => println!("A new value for `a` is being computed"),
+//!         Event::Ready(new_value) => println!("New value for `a`: {}", new_value),
+//!         Event::Error(errors) => println!("Computation for `a` failed: {:?}", errors),
+//!     }
+//! );
+//!
+//! // Change the value of `a`
+//! component.set_variable("a", 3);
 //!
 //! // Add the component to a constraint system.
 //! // One constraint system can contain many components.

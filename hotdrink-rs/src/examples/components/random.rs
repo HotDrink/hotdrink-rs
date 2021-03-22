@@ -247,7 +247,7 @@ mod tests {
     }
 
     #[test]
-    // #[ignore = "TODO: Should this work? Would be nice for benchmarks to guarantee it."]
+    #[ignore = "TODO: Should this work? Would be nice for benchmarks to guarantee it."]
     fn random_makes_enough_constraints() {
         use crate::ComponentSpec;
         for _ in 0..100 {
