@@ -154,10 +154,13 @@ fn component_hierarchical_planner(c: &mut Criterion) {
     for i in &[0, 250, 500, 1000] {
         bench_hierarchical_planner_component(&mut group, "random", i, |nv| make_random(nv, nv));
         bench_hierarchical_planner_component(&mut group, "new_random_low_clustering", i, |nv| {
-            new_make_random(nv / 5, 5, -100)
+            new_make_random(nv / 5, 5, 1, 1.0)
+        });
+        bench_hierarchical_planner_component(&mut group, "new_random_medium_clustering", i, |nv| {
+            new_make_random(nv / 5, 5, 5, 1.2)
         });
         bench_hierarchical_planner_component(&mut group, "new_random_high_clustering", i, |nv| {
-            new_make_random(nv / 5, 5, 100)
+            new_make_random(nv / 5, 5, 10, 2.0)
         });
         bench_hierarchical_planner(&mut group, "unprunable", i, unprunable);
     }

@@ -80,12 +80,15 @@ fn main() -> io::Result<()> {
     })?;
     write_component("random", size, |nv| make_random::<()>(nv, nv))?;
     write_component_simple("random_simple", size, |nv| make_random::<()>(nv, nv))?;
-    let max_vars_per_constraint = 2;
+    let max_vars_per_constraint = 5;
     write_component("new_random_low_clustering", size, |nv| {
-        new_make_random::<()>(nv, max_vars_per_constraint, -1)
+        new_make_random::<()>(nv, max_vars_per_constraint, 1, 1.0)
+    })?;
+    write_component("new_random_medium_clustering", size, |nv| {
+        new_make_random::<()>(nv, max_vars_per_constraint, 5, 1.5)
     })?;
     write_component("new_random_high_clustering", size, |nv| {
-        new_make_random::<()>(nv, max_vars_per_constraint, 1)
+        new_make_random::<()>(nv, max_vars_per_constraint, 10, 2.0)
     })?;
 
     Ok(())
