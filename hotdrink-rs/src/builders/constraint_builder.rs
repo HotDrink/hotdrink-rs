@@ -30,15 +30,17 @@ impl<T> ConstraintBuilder<T> {
 macro_rules! method {
     ( @impure $( $rest:tt )*) => { $crate::method!($($rest)*).pure(false) };
     (
-        $method_name:ident ( $( $params:tt )* ) $( -> [ $( $output:ident ),* ] )? $e:block
+        $method_name:ident $(<$t:ty>)? ( $( $params:tt )* ) $( -> [ $( $output:ident ),* ] )? $e:block
     ) => {{
-        use $crate::builders::{MethodBuilder, method_builder::{MethodParam}};
-        MethodBuilder::new(stringify!($method_name))
+        use $crate::builders::MethodBuilder;
+        MethodBuilder $(::<$t>)? ::new(stringify!($method_name))
             .inputs( $crate::make_params!( $( $params )* ) )
-            .outputs( vec![ $( $( stringify!($output) ),* )? ] )
-            .apply(|mut values| {
-                $crate::define_refs!(values, $($params)*);
-                $e
+            .outputs( vec![ $( $( $crate::builders::method_builder::MethodOutput::new(stringify!($output)) ),* )? ] )
+            .apply(
+                #[allow(unused_mut, unused_variables)]
+                |mut values| {
+                    $crate::define_refs!(values, $($params)*);
+                    $e
             })
     }};
 }
@@ -48,12 +50,14 @@ macro_rules! method {
 macro_rules! make_params {
     () => {{ Vec::new() }};
     ( $name:ident: & $t:ty $(, $($rest:tt)* )? ) => {{
-        let mut v = vec![MethodParam::make_ref(stringify!($name))];
+        use crate::builders::method_builder::MethodInput;
+        let mut v = vec![MethodInput::make_ref(stringify!($name))];
         v.extend($crate::make_params!( $( $( $rest )* )? ));
         v
     }};
     ( $name:ident: &mut $t:ty $(, $($rest:tt)* )? ) => {{
-        let mut v = vec![MethodParam::make_mut_ref(stringify!($name))];
+        use crate::builders::method_builder::MethodInput;
+        let mut v = vec![MethodInput::make_mut_ref(stringify!($name))];
         v.extend($crate::make_params!( $( $( $rest )* )? ));
         v
     }};
@@ -62,7 +66,7 @@ macro_rules! make_params {
 /// Introduce references to the specified parameters.
 #[macro_export]
 macro_rules! define_refs {
-    ( $values:expr ) => {{}};
+    ( $values:expr $(,)? ) => {{}};
     ( $values:expr, $name:ident: & $t:ty $(, $($rest:tt)* )? ) => {
         // Get reference and try to convert it
         let $name: &$t = $values.remove(0).try_into_ref()?;
@@ -70,14 +74,14 @@ macro_rules! define_refs {
     };
     ( $values:expr, $name:ident: &mut $t:ty $(, $($rest:tt)* )? ) => {
         // Get reference and try to convert it
-        let $name: &mut $t = $values.remove(0).try_into_mut()?;
+        let $name: &mut $t = $values.remove(0).try_into_mut::<$t>()?;
         $crate::define_refs!($values $(, $($rest)*)?);
     };
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::builders::{method_builder::MethodParam, ConstraintBuilder};
+    use crate::builders::{method_builder::MethodInput, ConstraintBuilder};
 
     #[test]
     fn make_constraint() {
@@ -89,15 +93,15 @@ mod tests {
 
     #[test]
     fn make_params() {
-        let _: Vec<MethodParam> = make_params!();
-        assert_eq!(make_params!(a: &i32), vec![MethodParam::make_ref("a")]);
+        let _: Vec<MethodInput> = make_params!();
+        assert_eq!(make_params!(a: &i32), vec![MethodInput::make_ref("a")]);
         assert_eq!(
             make_params!(a: &mut i32),
-            vec![MethodParam::make_mut_ref("a")]
+            vec![MethodInput::make_mut_ref("a")]
         );
         assert_eq!(
             make_params!(a: &i32, b: &mut i32),
-            vec![MethodParam::make_ref("a"), MethodParam::make_mut_ref("b")]
+            vec![MethodInput::make_ref("a"), MethodInput::make_mut_ref("b")]
         );
 
         let many = make_params!(
@@ -111,12 +115,12 @@ mod tests {
         assert_eq!(
             many,
             vec![
-                MethodParam::make_ref("a"),
-                MethodParam::make_mut_ref("b"),
-                MethodParam::make_ref("c"),
-                MethodParam::make_mut_ref("d"),
-                MethodParam::make_ref("e"),
-                MethodParam::make_mut_ref("f")
+                MethodInput::make_ref("a"),
+                MethodInput::make_mut_ref("b"),
+                MethodInput::make_ref("c"),
+                MethodInput::make_mut_ref("d"),
+                MethodInput::make_ref("e"),
+                MethodInput::make_mut_ref("f")
             ]
         );
     }

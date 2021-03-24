@@ -3,28 +3,42 @@
 use crate::{MethodFailure, MethodResult};
 use itertools::Itertools;
 use std::sync::Arc;
-use std::{convert::TryFrom, fmt::Debug};
+use std::{convert::TryInto, fmt::Debug};
 
 /// A parameter for a method.
 /// This can either be an immutable reference, or a mutable one.
 /// Using this type allows for specifying the type a method expects.
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub enum MethodParam {
+pub enum MethodInput {
     /// The method expects an immutable reference.
     Ref(String),
     /// The method expects a mutable reference.
     MutRef(String),
 }
 
-impl MethodParam {
+impl MethodInput {
     /// Make a parameter representing an immutable reference.
     pub fn make_ref<S: Into<String>>(name: S) -> Self {
-        MethodParam::Ref(name.into())
+        MethodInput::Ref(name.into())
     }
 
     /// Make a parameter representing a mutable reference.
     pub fn make_mut_ref<S: Into<String>>(name: S) -> Self {
-        MethodParam::MutRef(name.into())
+        MethodInput::MutRef(name.into())
+    }
+}
+
+/// An output of a method.
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
+pub struct MethodOutput {
+    /// The name of the output variable.
+    name: String,
+}
+
+impl MethodOutput {
+    /// Constructs a new `MethodOutput`.
+    pub fn new<S: Into<String>>(name: S) -> Self {
+        Self { name: name.into() }
     }
 }
 
@@ -90,10 +104,10 @@ impl<'a, T> MethodArg<'a, T> {
     /// Try to convert his `MethorArg<'a, T>` to a `&'a T`.
     pub fn try_into_ref<U>(self) -> Result<&'a U, ConversionError>
     where
-        &'a U: TryFrom<&'a T>,
+        &'a T: TryInto<&'a U>,
     {
         match self {
-            MethodArg::Ref(r) => match TryFrom::try_from(r) {
+            MethodArg::Ref(r) => match r.try_into() {
                 Ok(r) => Ok(r),
                 Err(_) => Err(ConversionError::TypeConversionFailure),
             },
@@ -106,10 +120,10 @@ impl<'a, T> MethodArg<'a, T> {
     /// Try to convert his `MethorArg<'a, T>` to a `&'a mut T`.
     pub fn try_into_mut<U>(self) -> Result<&'a mut U, ConversionError>
     where
-        &'a mut U: TryFrom<&'a mut T>,
+        &'a mut T: TryInto<&'a mut U>,
     {
         match self {
-            MethodArg::MutRef(r) => match TryFrom::try_from(r) {
+            MethodArg::MutRef(r) => match r.try_into() {
                 Ok(r) => Ok(r),
                 Err(_) => Err(ConversionError::TypeConversionFailure),
             },
@@ -126,8 +140,8 @@ type MethodFunctionInner<T> = Arc<dyn for<'a> Fn(Vec<MethodArg<'a, T>>) -> Metho
 #[derive(Clone)]
 pub struct MethodBuilder<T> {
     name: String,
-    inputs: Vec<MethodParam>,
-    outputs: Vec<String>,
+    inputs: Vec<MethodInput>,
+    outputs: Vec<MethodOutput>,
     apply: Option<MethodFunctionInner<T>>,
     pure: bool,
 }
@@ -146,24 +160,24 @@ impl<T> MethodBuilder<T> {
 
     /// Add an immutable input to the method.
     pub fn input<S: Into<String>>(mut self, input: S) -> Self {
-        self.inputs.push(MethodParam::Ref(input.into()));
+        self.inputs.push(MethodInput::Ref(input.into()));
         self
     }
 
     /// Add a mutable input to the method.
     pub fn input_mut<S: Into<String>>(mut self, input: S) -> Self {
-        self.inputs.push(MethodParam::MutRef(input.into()));
+        self.inputs.push(MethodInput::MutRef(input.into()));
         self
     }
 
     /// Set the inputs of the method.
-    pub fn inputs(mut self, inputs: Vec<MethodParam>) -> Self {
+    pub fn inputs(mut self, inputs: Vec<MethodInput>) -> Self {
         self.inputs = inputs;
         self
     }
 
     /// Set the outputs of the method.
-    pub fn outputs<S: Into<String>>(mut self, outputs: Vec<S>) -> Self {
+    pub fn outputs(mut self, outputs: Vec<MethodOutput>) -> Self {
         self.outputs = outputs.into_iter().map_into().collect();
         self
     }
@@ -213,7 +227,7 @@ impl<T> Eq for MethodBuilder<T> {}
 
 #[cfg(test)]
 mod tests {
-    use super::{MethodArg, MethodBuilder, MethodFunctionInner, MutabilityMismatch};
+    use super::{MethodArg, MethodBuilder, MethodFunctionInner, MethodOutput, MutabilityMismatch};
     use crate::MethodFailure;
     use std::sync::Arc;
 
@@ -236,7 +250,7 @@ mod tests {
         let mb = MethodBuilder::new("m")
             .input("a")
             .input_mut("b")
-            .outputs(vec!["c"])
+            .outputs(vec![MethodOutput::new("c")])
             .apply(|mut v: Vec<MethodArg<'_, _>>| {
                 let a: &_ = v.remove(0).try_into_ref()?;
                 assert_eq!(a, &3);

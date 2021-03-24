@@ -28,6 +28,7 @@ macro_rules! sum_type {
         }
     ) => {
         $( #[$meta] )*
+        #[allow(non_camel_case_types)]
         $visibility enum $name {
             $( $variant($variant) ),*
         }

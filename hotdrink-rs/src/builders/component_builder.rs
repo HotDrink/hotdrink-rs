@@ -64,15 +64,17 @@ impl<T> ComponentBuilder<T> {
 /// A macro for declaratively making components.
 #[macro_export]
 macro_rules! build_component {
+    (@value_or_default: $t:ty ) => {{ <$t>::default() }};
+    (@value_or_default: $t:ty = $value:expr) => {{ $value }};
     (
-        component $component_name:ident<$component_type:ty> {
-            $( let $( $let_variable:ident : $let_variable_type:ty = $let_value:expr ),*; )?
-            $( mut $( $mut_variable:ident : $mut_variable_type:ty = $mut_value:expr ),*; )?
+        component $component_name:ident<$sum_type:ty> {
+            $( let $( $let_variable:ident : $let_variable_type:ty $( = $let_value:expr )? ),* ; )?
+            $( mut $( $mut_variable:ident : $mut_variable_type:ty $( = $mut_value:expr )? ),* ; )?
             $(
                 constraint $constraint_name:ident {
                     $(
                         $method_name:ident
-                            ( $( $input:ident $(as $mutability:ident)? : $input_type:ty ),* )
+                            ( $( $param:tt )* )
                             $( -> [ $( $output:ident ),* ] )?
                             $e:block
                     )*
@@ -80,32 +82,35 @@ macro_rules! build_component {
             )*
         }
     ) => {{
-        use $crate::builders::{component_builder::ComponentBuilder, constraint_builder::{ConstraintBuilder}};
-        let mut component_builder: ComponentBuilder<$component_type> = ComponentBuilder::new(stringify!($component_name));
+        use $crate::builders::{ComponentBuilder, ConstraintBuilder, MethodBuilder};
+
+        #[allow(unused_mut)]
+        let mut component_builder: ComponentBuilder<$sum_type> = ComponentBuilder::new(stringify!($component_name));
 
         // Add immutable variables
         $( $(
-            let let_value: $let_variable_type = $let_value.into();
+            let let_value: $let_variable_type = ($crate::build_component!(@value_or_default: $let_variable_type $( = $let_value )?)).into();
             component_builder.variable(stringify!($let_variable), let_value.into());
         )* )?
         // Add mutable variables
         $( $(
-            let mut_value: $mut_variable_type = $mut_value.into();
+            let mut_value: $mut_variable_type = ($crate::build_component!(@value_or_default: $mut_variable_type $( = $mut_value )?)).into();
             component_builder.variable_mut(stringify!($mut_variable), mut_value.into());
         )* )?
 
         // Add constraints
         $(
-            let constraint: ConstraintBuilder<$component_type> = ConstraintBuilder::new(stringify!($constraint_name));
+            #[allow(unused_mut)]
+            let mut constraint: ConstraintBuilder<$sum_type> = ConstraintBuilder::new(stringify!($constraint_name));
             $(
                 // let method = MethodBuilder::new(stringify!($method_name), vec![ $(stringify!($input))* ], vec![ $( $(stringify!($output))* )? ]);
-                let method: MethodBuilder<$component_type> = $crate::method!(
-                        $method_name
-                            ( $( $input$ (as $mutability)? : $input_type ),* )
+                let method: MethodBuilder<$sum_type> = $crate::method!(
+                        $method_name <$sum_type>
+                            ( $( $param )* )
                             $( -> [ $( $output ),* ] )?
                             $e
                 );
-                constraint.method(method);
+                constraint = constraint.method(method);
             )*
 
             component_builder.constraint(constraint);
@@ -118,8 +123,7 @@ macro_rules! build_component {
 #[cfg(test)]
 mod tests {
     use super::ComponentBuilder;
-    use crate::builders::value_experiments::Value;
-    use crate::builders::{ConstraintBuilder, MethodBuilder};
+    use crate::builders::ConstraintBuilder;
     use crate::method;
 
     #[test]
@@ -129,41 +133,36 @@ mod tests {
             .variable_mut("c", 10)
             .constraint(
                 ConstraintBuilder::new("Sum")
-                    .method(method!(m1(a: &i32) -> [a] { Ok(vec![*a]) }))
-                    .method(method!(m2(a: &i32) -> [a] { Ok(vec![*a]) }))
-                    .method(MethodBuilder::new(
-                        "m3",
-                        vec!["a"],
-                        vec!["a"],
-                        |v: &[Value<i32>]| {
-                            let x = v[0].read();
-                            Ok(vec![*x + 2])
-                        },
-                    )),
+                    .method(method!(m1(a: &i32) -> [b] { Ok(vec![*a]) }))
+                    .method(method!(m2(b: &mut i32) -> [a] { Ok(vec![*b]) })),
             )
             .constraint(ConstraintBuilder::new("Product"));
     }
 
     #[test]
     fn make_component() {
-        // crate::gen_val! {
-        //     Foo {
-        //         i32,
-        //         String,
-        //     }
-        // }
-        // let _ = build_component! {
-        //     component Component<Foo> {
-        //         let x: i32 = 0, y: i32 = 0, z: i32 = 0;
-        //         mut s: String = "abc";
-        //         constraint Constraint {
-        //             add(x: &i32, y: &i32) -> [] { Ok(vec![]) }
-        //             append(s as mut: &mut String) {
-        //                 s.push_str("def");
-        //                 Ok(vec![])
-        //             }
-        //         }
-        //     }
-        // };
+        crate::sum_type! {
+            #[derive(Debug)]
+            enum Foo {
+                i32,
+                f64,
+                String,
+            }
+        }
+        let comp = build_component! {
+            component Component<Foo> {
+                let x: i32 = 0, y: i32, z: f64;
+                mut s: String;
+                constraint Constraint {
+                    m() -> [] { Ok(vec![]) }
+                    add(x: &i32, y: &i32) -> [] { Ok(vec![]) }
+                    append(s: &mut String) {
+                        s.push_str("def");
+                        Ok(vec![])
+                    }
+                }
+            }
+        };
+        dbg!(comp);
     }
 }
