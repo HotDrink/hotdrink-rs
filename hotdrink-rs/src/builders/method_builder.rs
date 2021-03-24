@@ -333,7 +333,8 @@ mod tests {
     #[test]
     fn make_method() {
         let _: MethodBuilder<AB> = crate::method! {
-            @impure m(a: &A, b: &mut B) -> [c, d] {
+            @impure
+            fn m(a: &A, b: &mut B) -> [c, d] {
                 let a: &A = a;
                 let b: &B = b;
                 crate::ret![*a, *b]
