@@ -153,14 +153,8 @@ fn component_hierarchical_planner(c: &mut Criterion) {
     }
     for i in &[0, 250, 500, 1000] {
         bench_hierarchical_planner(&mut group, "unprunable", i, unprunable);
-        bench_hierarchical_planner_component(&mut group, "random_low_clustering", i, |nv| {
-            make_random((nv as f64 * 0.75) as usize, 3, 1, 1.0)
-        });
-        bench_hierarchical_planner_component(&mut group, "random_medium_clustering", i, |nv| {
-            make_random((nv as f64 * 0.75) as usize, 3, 5, 1.2)
-        });
-        bench_hierarchical_planner_component(&mut group, "random_high_clustering", i, |nv| {
-            make_random((nv as f64 * 0.75) as usize, 3, 10, 2.0)
+        bench_hierarchical_planner_component(&mut group, "random", i, |nv| {
+            make_random((nv as f64 * 0.75) as usize, 3)
         });
     }
     group.finish();
@@ -203,14 +197,8 @@ fn component_simple_planner(c: &mut Criterion) {
         bench_simple_planner(&mut group, "linear/twoway", i, linear_twoway);
         bench_simple_planner(&mut group, "ladder", i, ladder);
         bench_simple_planner(&mut group, "unprunable", i, unprunable);
-        bench_simple_planner_component(&mut group, "random_low_clustering", i, |nv| {
-            make_random((nv as f64 * 0.75) as usize, 3, 1, 1.0)
-        });
-        bench_simple_planner_component(&mut group, "random_medium_clustering", i, |nv| {
-            make_random((nv as f64 * 0.75) as usize, 3, 5, 1.2)
-        });
-        bench_simple_planner_component(&mut group, "random_high_clustering", i, |nv| {
-            make_random((nv as f64 * 0.75) as usize, 3, 10, 2.0)
+        bench_simple_planner_component(&mut group, "random", i, |nv| {
+            make_random((nv as f64 * 0.75) as usize, 3)
         });
     }
     group.finish();

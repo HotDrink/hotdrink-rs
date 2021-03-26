@@ -3,7 +3,6 @@
 
 use crate::{Component, Constraint, Method, MethodSpec};
 use std::{
-    collections::{BinaryHeap, HashSet},
     sync::Arc,
 };
 
@@ -21,6 +20,26 @@ fn random_inclusive(min: usize, max: usize) -> Option<usize> {
     Some(num % (max - min + 1) + min)
 }
 
+/// Generate `n` random `usize`s in the specified range [`min`, `max`).
+fn randoms(min: usize, max: usize, n: usize) -> Vec<usize> {
+    // Fill buffer with random data
+    let ratio = std::mem::size_of::<usize>() / std::mem::size_of::<u8>();
+    let mut buf = vec![0; n*ratio];
+    getrandom::getrandom(&mut buf).expect("Could not get random numbers");
+
+    // Convert from Vec<u8> to Vec<usize>
+    let (ptr, length, capacity) = buf.into_raw_parts();
+    let ptr = ptr as *mut usize;
+    let mut result: Vec<usize> = unsafe { Vec::from_raw_parts(ptr, length/ratio, capacity/ratio) };
+
+    // Place in correct range
+    for v in &mut result {
+        *v = *v % (max - min) + min;
+    }
+
+    result
+}
+
 /// Choose a random element from the input-vector, then remove it.
 fn choose<T>(v: &mut Vec<T>) -> Option<T> {
     if v.is_empty() {
@@ -28,53 +47,6 @@ fn choose<T>(v: &mut Vec<T>) -> Option<T> {
     }
     let index = random_inclusive(0, v.len() - 1)?;
     Some(v.swap_remove(index))
-}
-
-/// Assign a cluster to a constraint based on its index.
-fn assign_cluster(constraint: usize, n_clusters: usize) -> usize {
-    constraint % n_clusters
-}
-
-/// Pick random variables, but prefer ones in the cluster of the constraint.
-fn randoms_with_clustering(
-    values: Vec<usize>,
-    n_values: usize,
-    constraint: usize,
-    n_clusters: usize,
-    clustering_strength: f32,
-) -> Option<Vec<usize>> {
-    // Assign cluster to constraint
-    let cluster_id = assign_cluster(constraint, n_clusters);
-    let cluster_size = values.len() / n_clusters;
-    // Get random value for each variable, with a bias towards the ones in the cluster
-    let random_values: Vec<usize> = (0..values.len())
-        .map(|i| {
-            // Get random value
-            let mut value = random_inclusive(0, 999).unwrap();
-            // Check if it is in the constraint's cluster
-            if cluster_size == 0 || i / cluster_size == cluster_id {
-                // Give bias according to clustering strength
-                value = (value as f32 * clustering_strength) as usize;
-            }
-            value
-        })
-        .collect();
-
-    // Push all the values and corresponding indices to a binary heap
-    // Value first to compare on that, not index.
-    let mut bh = BinaryHeap::new();
-    for (i, rv) in random_values.into_iter().enumerate() {
-        bh.push((rv, i));
-    }
-
-    // Get the n greatest values
-    let mut result = Vec::new();
-    for _ in 0..n_values {
-        let (_, i) = bh.pop()?;
-        result.push(i);
-    }
-
-    Some(result)
 }
 
 macro_rules! unwrap_or_break {
@@ -90,8 +62,6 @@ macro_rules! unwrap_or_break {
 pub fn make_random<T>(
     n_constraints: usize,
     max_vars_per_constraint: usize,
-    n_clusters: usize,
-    clustering: f32,
 ) -> Component<T>
 where
     T: Clone + Default + 'static,
@@ -101,48 +71,39 @@ where
     }
 
     let mut n_variables = n_constraints;
-    let mut variable_usage = vec![0; n_variables];
-    let mut used_variables: HashSet<usize> = std::iter::once(0).collect();
-    let mut unused_variables: HashSet<usize> = (0..n_variables).collect();
+    let mut used_variables: Vec<usize> = vec![0];
+    let mut unused_variables: Vec<usize> = (1..n_variables).collect();
     let mut constraints = Vec::new();
 
     while constraints.len() < n_constraints {
         // If no more unused, add one
         if unused_variables.is_empty() {
-            unused_variables.insert(n_variables);
+            unused_variables.push(n_variables);
             n_variables += 1;
-            variable_usage.push(0);
         }
-        // Get used and unused as owned vectors
-        let mut used_variables_vec = used_variables.iter().collect();
-        let mut unused_variables_vec = unused_variables.iter().collect();
 
         // Get one used and one unused variable
-        let used = *unwrap_or_break!(choose(&mut used_variables_vec));
-        let unused = *unwrap_or_break!(choose(&mut unused_variables_vec));
-        used_variables.insert(unused);
-        unused_variables.remove(&unused);
-        variable_usage[unused] += 1;
+        let used = unwrap_or_break!(choose(&mut used_variables));
+        let unused = unwrap_or_break!(choose(&mut unused_variables));
+        used_variables.push(used);
+        used_variables.push(unused);
 
         // The number of additional variables, 0 to max, minus 2 since we already got two.
         let n_other_variables = unwrap_or_break!(random_inclusive(0, max_vars_per_constraint - 2));
-        // Select the other variables with bias according to `clustering`
-        let actual_variables = randoms_with_clustering(
-            (0..n_variables).collect(),
-            n_other_variables,
-            constraints.len(),
-            n_clusters,
-            clustering,
-        );
-        let mut actual_variables = unwrap_or_break!(actual_variables);
+        let mut actual_variables = randoms(0, n_variables, n_other_variables);
         actual_variables.push(used);
-
-        // Set them to used
-        for &v in &actual_variables {
-            variable_usage[v] += 1;
-            used_variables.insert(v);
-            unused_variables.remove(&v);
+        
+        // Manual drain filter with swap_remove
+        let mut i = 0;
+        while i != unused_variables.len() {
+            if actual_variables.contains(&i) {
+                let removed = unused_variables.swap_remove(i);
+                used_variables.push(removed);
+            } else {
+                i += 1;
+            }
         }
+        // unused_variables.drain_filter(|i| actual_variables.contains(i));
 
         // Start making methods
         let mut methods = Vec::new();
@@ -237,12 +198,10 @@ mod tests {
 
     #[test]
     fn random_is_solvable() {
-        for _ in 0..100 {
-            for &clustering in &[0.0, 0.25, 0.5, 0.75, 1.0] {
-                let size = random_inclusive(0, 100).unwrap();
-                let random: Component<i32> = make_random(size, 5, 5, clustering);
-                assert!(crate::algorithms::simple_planner::simple_planner(&random).is_some())
-            }
+        for _ in 0..1000 {
+            let size = random_inclusive(0, 100).unwrap();
+            let random: Component<i32> = make_random(size, 5);
+            assert!(crate::algorithms::simple_planner::simple_planner(&random).is_some())
         }
     }
 
@@ -250,12 +209,18 @@ mod tests {
     #[ignore = "TODO: Should this work? Would be nice for benchmarks to guarantee it."]
     fn random_makes_enough_constraints() {
         use crate::ComponentSpec;
-        for _ in 0..100 {
-            for &clustering in &[0.0, 0.25, 0.5, 0.75, 1.0] {
-                let size = random_inclusive(0, 100).unwrap();
-                let random: Component<i32> = make_random(size, 5, 5, clustering);
-                assert_eq!(random.constraints().len(), size);
-            }
+        for _ in 0..1000 {
+            let size = random_inclusive(0, 100).unwrap();
+            let random: Component<i32> = make_random(size, 5);
+            assert_eq!(random.constraints().len(), size);
+        }
+    }
+
+    #[test]
+    fn randoms() {
+        let random_usize = super::randoms(5, 100, 500);
+        for r in random_usize {
+            assert!((5..100).contains(&r));
         }
     }
 }
