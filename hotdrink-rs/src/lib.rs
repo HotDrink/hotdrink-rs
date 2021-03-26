@@ -89,6 +89,7 @@
 #![feature(stmt_expr_attributes)]
 #![feature(drain_filter)]
 #![feature(concat_idents)]
+#![feature(vec_into_raw_parts)]
 
 pub mod algorithms;
 pub mod builders;
