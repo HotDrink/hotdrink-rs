@@ -64,6 +64,28 @@ impl<'a, T> From<&'a mut T> for MethodArg<'a, T> {
     }
 }
 
+struct Ref<T>(pub T);
+
+impl<'a, T> TryInto<Ref<&'a T>> for MethodArg<'a, T> {
+    type Error = MutabilityMismatch;
+    fn try_into(self) -> Result<Ref<&'a T>, Self::Error> {
+        match self {
+            MethodArg::Ref(r) => Ok(Ref(r)),
+            MethodArg::MutRef(_) => Err(MutabilityMismatch::ExpectedImmutableGotMutable),
+        }
+    }
+}
+
+impl<'a, T> TryInto<Ref<&'a mut T>> for MethodArg<'a, T> {
+    type Error = MutabilityMismatch;
+    fn try_into(self) -> Result<Ref<&'a mut T>, Self::Error> {
+        match self {
+            MethodArg::Ref(_) => Err(MutabilityMismatch::ExpectedMutableGotImmutable),
+            MethodArg::MutRef(r) => Ok(Ref(r)),
+        }
+    }
+}
+
 /// The actual value could not be converted to the desired one.
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub enum ConversionError {
