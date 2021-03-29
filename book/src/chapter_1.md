@@ -1,4 +1,4 @@
-# HotDrink Rust
+# Chapter 1
 
 ```rust
 fn main() {

@@ -4,3 +4,6 @@ language = "en"
 multilingual = false
 src = "src"
 title = "HotDrink Rust"
+
+[build]
+build-dir = "../docs"

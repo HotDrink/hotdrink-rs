@@ -3,7 +3,6 @@ target
 Cargo.lock
 pkg/
 wasm-pack.log
-!*.html
 .vscode
 perf.data
 perf.data.old
