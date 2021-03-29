@@ -3,4 +3,4 @@ authors = ["Rudi B. Svartveit"]
 language = "en"
 multilingual = false
 src = "src"
-title = "WasmDrink Tutorial"
+title = "HotDrink Rust"
