@@ -99,6 +99,10 @@ pub trait ComponentSpec: Index<&'static str> + IndexMut<&'static str> {
     fn get(&self, i: usize) -> &Self::Variable;
     /// Sets the value of a variable.
     fn set(&mut self, i: usize, value: impl Into<Self::Value>);
+    /// Returns the number of constraints in the component.
+    fn n_constraints(&self) -> usize {
+        self.constraints().len()
+    }
     /// Returns a slice of the constraints in the component.
     fn constraints(&self) -> &[Self::Constraint];
     /// Returns a mutable slice of the constraints in the component.
