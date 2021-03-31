@@ -1,6 +1,6 @@
 //! Adjust priorities of variables according to a plan and the previous priorities.
-//! This is to avoid unexpected behavior where variables are updates in
-//! unexpected ways, not according to the most recent input.
+//! This is to avoid unexpected behavior where variables are updated in
+//! unexpected ways (not according to the most recent input).
 
 use std::{cmp::Ordering, collections::BinaryHeap};
 

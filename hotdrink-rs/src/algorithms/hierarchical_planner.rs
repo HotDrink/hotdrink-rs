@@ -1,4 +1,5 @@
-//! An implementation of the hierarchical planner from QuickPlan (<https://dl.acm.org/doi/abs/10.1145/225540.225543?casa_token=bNBt7g-IvVQAAAAA:qHTNWG2wtiEUZXDGFOu2ooj8TGl5yJbKf3OiDmv1mnnuy6VdvrsZuAmcQZbtdjyn0MA4WALYavk>).
+//! An implementation of a hierarchical planner based on `constraint_hierarchy_planner` from
+//! [QuickPlan](https://dl.acm.org/doi/abs/10.1145/225540.225543?casa_token=bNBt7g-IvVQAAAAA:qHTNWG2wtiEUZXDGFOu2ooj8TGl5yJbKf3OiDmv1mnnuy6VdvrsZuAmcQZbtdjyn0MA4WALYavk).
 //! This will create a solution graph for a [`Component`], where
 //! a priority order for variables can be included.
 //! The algorithm will attempt to avoid modifying variables with higher priorities.

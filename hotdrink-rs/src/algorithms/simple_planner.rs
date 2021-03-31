@@ -1,4 +1,5 @@
-//! An implementation of the multioutput planner from QuickPlan (<https://dl.acm.org/doi/abs/10.1145/225540.225543?casa_token=bNBt7g-IvVQAAAAA:qHTNWG2wtiEUZXDGFOu2ooj8TGl5yJbKf3OiDmv1mnnuy6VdvrsZuAmcQZbtdjyn0MA4WALYavk>).
+//! An implementation of a simple planner based on the `multi_output_planner` from
+//! [QuickPlan](https://dl.acm.org/doi/abs/10.1145/225540.225543?casa_token=bNBt7g-IvVQAAAAA:qHTNWG2wtiEUZXDGFOu2ooj8TGl5yJbKf3OiDmv1mnnuy6VdvrsZuAmcQZbtdjyn0MA4WALYavk).
 //! Given a component, it will find one method per constraint to enforce it, such that the methods and the variables they
 //! read from and write to form a directed acyclic graph.
 

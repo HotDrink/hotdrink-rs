@@ -109,3 +109,4 @@ pub use data::{
         ComponentSpec, ConstraintSpec, MethodFailure, MethodFunction, MethodResult, MethodSpec,
     },
 };
+pub use event::Event;
