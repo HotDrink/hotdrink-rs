@@ -137,7 +137,7 @@ function make_random(n_constraints) {
 
     // Add all current variables
     let used = [0];
-    let unused = variables.slice();
+    let unused = variables.slice(1);
     while (current_constraints < n_constraints) {
         // If there are no more unused variables, add a new one
         if (unused.length == 0) {
@@ -168,6 +168,7 @@ function make_random(n_constraints) {
         // Add back to variables
         variables.push(...buffer);
         buffer = buffer.filter(x => x != used_val && x != unused_val);
+        unused = unused.filter(x => !buffer.includes(x));
 
         // console.log("Buffer", buffer);
         // console.log("Used", used_val);
@@ -210,7 +211,7 @@ function make_random(n_constraints) {
         current_constraints++;
     }
 
-    return model;
+    return model.component();
 }
 
 function bench_component(name, make_component, n_variables) {
@@ -251,22 +252,41 @@ function bench_component_update_variable(name, make_component, n_variables) {
 }
 
 function bench_components(entries) {
-    for (let n_variables of [100]) {
+    for (let n_variables of [1250, 2500, 5000]) {
         for (let entry of entries) {
             let name = entry.name;
             let make_component = entry.make_component;
-            // bench_component(name, make_component, n_variables);
+            bench_component(name, make_component, n_variables);
+        }
+    }
+}
+
+function bench_components_update_variable(entries) {
+    for (let n_variables of [1250, 2500, 5000]) {
+        for (let entry of entries) {
+            let name = entry.name;
+            let make_component = entry.make_component;
             bench_component_update_variable(name, make_component, n_variables);
         }
     }
 }
 
 bench_components([
-    // { name: "empty", make_component: make_empty },
-    // { name: "dense", make_component: make_dense },
+    { name: "empty", make_component: make_empty },
+    { name: "dense", make_component: make_dense },
     { name: "linear-oneway", make_component: make_linear_oneway },
     { name: "linear-twoway", make_component: make_linear_twoway },
     { name: "ladder", make_component: make_ladder },
     { name: "unprunable", make_component: make_unprunable },
-    { name: "random", make_component: x => make_random(x).component() },
+    { name: "random", make_component: make_random },
+]);
+
+bench_components_update_variable([
+    { name: "empty", make_component: make_empty },
+    { name: "dense", make_component: make_dense },
+    { name: "linear-oneway", make_component: make_linear_oneway },
+    { name: "linear-twoway", make_component: make_linear_twoway },
+    { name: "ladder", make_component: make_ladder },
+    { name: "unprunable", make_component: make_unprunable },
+    { name: "random", make_component: make_random },
 ]);
