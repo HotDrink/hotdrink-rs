@@ -1,8 +1,9 @@
 //! A module for generating random components.
 //! The goal is to have them approximate what the average user would need.
 
+use super::factory::ComponentFactory;
 use crate::{Component, Constraint, Method, MethodSpec};
-use std::sync::Arc;
+use std::{fmt::Debug, sync::Arc};
 
 fn random_inclusive(min: usize, max: usize) -> Option<usize> {
     if min > max {
@@ -152,6 +153,20 @@ where
         vec![T::default(); n_variables],
         constraints,
     )
+}
+
+struct RandomComponentFactory;
+
+impl ComponentFactory for RandomComponentFactory {
+    fn build_component<S, T>(name: S, n_constraints: usize) -> Component<T>
+    where
+        S: Into<String>,
+        T: Clone + Debug + Default + 'static,
+    {
+        let mut component = make_random(n_constraints, 5);
+        component.set_name(name);
+        component
+    }
 }
 
 #[cfg(test)]
