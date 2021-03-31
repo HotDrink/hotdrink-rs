@@ -97,7 +97,7 @@
 
         <nav id="sidebar" class="sidebar" aria-label="Table of contents">
             <div class="sidebar-scrollbox">
-                <ol class="chapter"><li class="chapter-item expanded "><a href="chapter_1.html"><strong aria-hidden="true">1.</strong> Chapter 1</a></li><li class="chapter-item expanded "><a href="chapter_2.html"><strong aria-hidden="true">2.</strong> Chapter 2</a></li></ol>
+                <ol class="chapter"><li class="chapter-item expanded "><a href="introduction.html"><strong aria-hidden="true">1.</strong> Introduction</a></li><li class="chapter-item expanded "><a href="hotdrink-rs.html"><strong aria-hidden="true">2.</strong> hotdrink-rs</a></li><li class="chapter-item expanded "><a href="hotdrink-wasm.html"><strong aria-hidden="true">3.</strong> hotdrink-wasm</a></li></ol>
             </div>
             <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
         </nav>
@@ -165,12 +165,96 @@
 
                 <div id="content" class="content">
                     <main>
-                        <h1 id="chapter-1"><a class="header" href="#chapter-1">Chapter 1</a></h1>
-<pre><pre class="playground"><code class="language-rust">fn main() {
-    println!(&quot;Hello World!&quot;);
-}
-</code></pre></pre>
-<h1 id="chapter-2"><a class="header" href="#chapter-2">Chapter 2</a></h1>
+                        <h1><a class="header" href="#introduction" id="introduction">Introduction</a></h1>
+<p>Before getting started with the library, it will likely help to know what constraint systems do, and if they will help you.
+While the original intent is for them to be used in GUIs, there is nothing stopping you from using it in any other program.</p>
+<ul>
+<li>If you are just using Rust, then take a look at <a href="./hotdrink-rs.html"><code>hotdrink-rs</code></a>, and use it as any other Rust-dependency.
+This will be easier to work with than the WebAssembly wrapper.</li>
+<li>If you want to use the library on the web, take a look at <a href="hotdrink-wasm.html"><code>hotdrink-wasm</code></a>, which provides wrappers for defining constraint systems that can be used from JavaScript (or anything else that is able to interact with WebAssembly).</li>
+</ul>
+<h2><a class="header" href="#example" id="example">Example</a></h2>
+<p>If you have a set of variables that have specific relations between them, then this library may be of use for you.
+Imagine that we have the variables <code>a</code>, <code>b</code> and <code>c</code>, where some <code>a</code> and <code>b</code> have some relation <code>R1</code>, while <code>b</code> and <code>c</code> have some relation <code>R2</code>.
+Whenever <code>a</code> updates, we must also update <code>b</code> to maintain the relation, or vice versa.
+This quickly becomes difficult to keep track of when we also have to maintain the relations transatively.
+In a simple chain like this with <code>n</code> variables, there are suddenly <code>n-1</code> other variables that must be updated every time one changes,
+and this is the simplest case (other than one with no relations that must be maintained).</p>
+<p>With this library, you define <em>constraints</em> between the variables that should be enforced.
+If you additionally specify how each constraint is enforced, you can automatically enforce all relations in one go.
+The following example may clarify.</p>
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use hotdrink_rs::{component, ret};
+
+let component = component! {
+    component Rectangle {
+        // The variables we are interested in
+        let height: i32 = 0, width: i32 = 0, area: i32 = 0, perimeter: i32 = 0;
+
+        // Enforces area = height * width
+        constraint Area {
+            height_width_to_area(height: &amp;i32, width: &amp;i32) -&gt; [area] {
+                ret![*height * *width]
+            }
+            area_height_to_width(area: &amp;i32: height: &amp;i32) -&gt; [width] {
+                ret![*area / *height]
+            }
+            area_width_to_height(area: &amp;i32: width: &amp;i32) -&gt; [height] {
+                ret![*area / *width]
+            }
+        }
+
+        // Enforces perimeter = 2* height + 2 * width
+        constraint Perimeter {
+            height_width_to_perimeter(height: &amp;i32, width: &amp;i32) -&gt; [perimeter] {
+                ret![2 * *height + 2 * *width]
+            }
+            perimeter_height_to_width(perimeter: &amp;i32: height: &amp;i32) -&gt; [width] {
+                ret![*perimeter - 2 * *height]
+            }
+            perimeter_width_to_height(perimeter: &amp;i32: width: &amp;i32) -&gt; [height] {
+                ret![*perimeter - 2 * *width]
+            }
+        }
+    }
+};
+
+// Update the value of height
+component.set_variable(&quot;height&quot;, 3);
+
+// Automatically solve the system by calling one method per constraint.
+component.update();
+<span class="boring">}
+</span></code></pre></pre>
+<p>In the example above, the system could be solved by
+calling <code>heigh_width_to_area</code> to update the area,
+followed by <code>height_width_to_perimeter</code> to update the perimeter.
+The code above would work no matter which one of the variables were updated,
+and solves the system in any &quot;direction&quot;, for instance if the area is updated with <code>component.set_variable(&quot;area&quot;, 40)</code>.</p>
+<p>The system will also pick the method depending on which variables were updated last.
+If the height was updated, then the area, then the width and perimeter would be automatically modified
+in order to maintain the recently edited variables.
+This is to avoid clobbering updates that were provided to the constraint system.</p>
+<p>For this to be useful, we must also be able to retrieve the new values,
+which can be done by <em>subscribing</em> to variables.</p>
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use hotdrink_rs::Event;
+
+component.subscribe(&quot;area&quot;, event =&gt; match event {
+    Event::Pending =&gt; println!(&quot;A new value for `area` is being computed&quot;),
+    Event::Ready(value) =&gt; println!(&quot;The new value for `area` is {}&quot;, value),
+    Event::Error(errors) =&gt; println!(&quot;The computation failed: {:?}&quot;, errors),
+});
+<span class="boring">}
+</span></code></pre></pre>
+<p>Now the appropriate callback will be called when changes happen in the constraint system,
+and this could for instance be used to set GUI elements to the new values.</p>
+<h1><a class="header" href="#hotdrink-rs" id="hotdrink-rs">hotdrink-rs</a></h1>
+<h1><a class="header" href="#hotdrink-wasm" id="hotdrink-wasm">hotdrink-wasm</a></h1>
 
                     </main>
 
