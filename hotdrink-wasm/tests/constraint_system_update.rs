@@ -1,11 +1,14 @@
 use hotdrink_rs::{
     data::constraint_system::ConstraintSystem,
-    examples::constraint_systems::{
-        empty::make_empty_cs,
-        ladder::ladder,
-        linear::{linear_oneway, linear_twoway},
-        make_dense_cs,
-        tree::unprunable,
+    examples::{
+        components::random::make_random,
+        constraint_systems::{
+            empty::make_empty_cs,
+            ladder::ladder,
+            linear::{linear_oneway, linear_twoway},
+            make_dense_cs,
+            tree::unprunable,
+        },
     },
     thread::dummy_pool::DummyPool,
 };
@@ -95,6 +98,17 @@ fn bench_constraint_system_update() {
         constraint_system_update("linear-twoway", linear_twoway::<i32>, i);
         constraint_system_update("ladder", ladder::<i32>, i);
         constraint_system_update("unprunable", unprunable::<i32>, i);
+        constraint_system_update(
+            "random",
+            |_, nv| {
+                let mut comp = make_random::<i32>(nv, 5);
+                comp.set_name("0");
+                let mut cs = ConstraintSystem::new();
+                cs.add_component(comp);
+                cs
+            },
+            i,
+        );
     }
 }
 
@@ -107,5 +121,16 @@ fn bench_constraint_system_update_with_modified_variable() {
         constraint_system_update_with_modified_variable("linear-twoway", linear_twoway::<i32>, i);
         constraint_system_update_with_modified_variable("ladder", ladder::<i32>, i);
         constraint_system_update_with_modified_variable("unprunable", unprunable::<i32>, i);
+        constraint_system_update_with_modified_variable(
+            "random",
+            |_, nv| {
+                let mut comp = make_random::<i32>(nv, 5);
+                comp.set_name("0");
+                let mut cs = ConstraintSystem::new();
+                cs.add_component(comp);
+                cs
+            },
+            i,
+        );
     }
 }

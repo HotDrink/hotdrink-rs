@@ -2,9 +2,7 @@
 //! The goal is to have them approximate what the average user would need.
 
 use crate::{Component, Constraint, Method, MethodSpec};
-use std::{
-    sync::Arc,
-};
+use std::sync::Arc;
 
 fn random_inclusive(min: usize, max: usize) -> Option<usize> {
     if min > max {
@@ -24,13 +22,14 @@ fn random_inclusive(min: usize, max: usize) -> Option<usize> {
 fn randoms(min: usize, max: usize, n: usize) -> Vec<usize> {
     // Fill buffer with random data
     let ratio = std::mem::size_of::<usize>() / std::mem::size_of::<u8>();
-    let mut buf = vec![0; n*ratio];
+    let mut buf = vec![0; n * ratio];
     getrandom::getrandom(&mut buf).expect("Could not get random numbers");
 
     // Convert from Vec<u8> to Vec<usize>
     let (ptr, length, capacity) = buf.into_raw_parts();
     let ptr = ptr as *mut usize;
-    let mut result: Vec<usize> = unsafe { Vec::from_raw_parts(ptr, length/ratio, capacity/ratio) };
+    let mut result: Vec<usize> =
+        unsafe { Vec::from_raw_parts(ptr, length / ratio, capacity / ratio) };
 
     // Place in correct range
     for v in &mut result {
@@ -59,10 +58,7 @@ macro_rules! unwrap_or_break {
 }
 
 /// Create a random component.
-pub fn make_random<T>(
-    n_constraints: usize,
-    max_vars_per_constraint: usize,
-) -> Component<T>
+pub fn make_random<T>(n_constraints: usize, max_vars_per_constraint: usize) -> Component<T>
 where
     T: Clone + Default + 'static,
 {
@@ -92,7 +88,7 @@ where
         let n_other_variables = unwrap_or_break!(random_inclusive(0, max_vars_per_constraint - 2));
         let mut actual_variables = randoms(0, n_variables, n_other_variables);
         actual_variables.push(used);
-        
+
         // Manual drain filter with swap_remove
         let mut i = 0;
         while i != unused_variables.len() {
@@ -149,7 +145,7 @@ where
         constraints.push(constraint);
     }
 
-    let name_to_idx = (0..n_variables).map(|i| (format!("v{}", i), i)).collect();
+    let name_to_idx = (0..n_variables).map(|i| (format!("var{}", i), i)).collect();
     Component::new_with_map(
         "random".to_string(),
         name_to_idx,

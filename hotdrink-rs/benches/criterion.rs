@@ -48,7 +48,7 @@ fn bench_cs_update_with_modified_variable(
         let mut cs: ConstraintSystem<()> = make_cs(1, *input);
         let mut dummy_pool = DummyPool;
         let mut rng = rand::thread_rng();
-        let uniform = rand::distributions::Uniform::new_inclusive(0, input.saturating_sub(1));
+        let uniform = rand::distributions::Uniform::new(0, cs.get_component("0").n_variables());
         b.iter(|| {
             if *input > 0 {
                 let random_number: usize = rng.sample(uniform);
@@ -153,9 +153,7 @@ fn component_hierarchical_planner(c: &mut Criterion) {
     }
     for i in &[0, 250, 500, 1000] {
         bench_hierarchical_planner(&mut group, "unprunable", i, unprunable);
-        bench_hierarchical_planner_component(&mut group, "random", i, |nv| {
-            make_random((nv as f64 * 0.75) as usize, 3)
-        });
+        bench_hierarchical_planner_component(&mut group, "random", i, |nv| make_random(nv, 5));
     }
     group.finish();
 }
@@ -262,6 +260,41 @@ fn max_update_with_modified_variable(c: &mut Criterion) {
     group.finish();
 }
 
+fn thesis_update_without_modification(c: &mut Criterion) {
+    let mut group = c.benchmark_group("thesis_update_without_modification");
+    for i in &[1250, 2500, 5000] {
+        bench_cs_update(&mut group, "linear/oneway", i, linear_oneway);
+        bench_cs_update(&mut group, "linear/twoway", i, linear_twoway);
+        bench_cs_update(&mut group, "ladder", i, ladder);
+        bench_cs_update(&mut group, "unprunable", i, unprunable);
+        bench_cs_update(&mut group, "random", i, |_, nv| {
+            let comp = make_random(nv, 5);
+            let mut cs = ConstraintSystem::new();
+            cs.add_component(comp);
+            cs
+        });
+    }
+    group.finish();
+}
+
+fn thesis_update_with_modification(c: &mut Criterion) {
+    let mut group = c.benchmark_group("thesis_update_with_modification");
+    for i in &[1250, 2500, 5000] {
+        bench_cs_update_with_modified_variable(&mut group, "linear/oneway", i, linear_oneway);
+        bench_cs_update_with_modified_variable(&mut group, "linear/twoway", i, linear_twoway);
+        bench_cs_update_with_modified_variable(&mut group, "ladder", i, ladder);
+        bench_cs_update_with_modified_variable(&mut group, "unprunable", i, unprunable);
+        bench_cs_update_with_modified_variable(&mut group, "random", i, |_, nv| {
+            let mut comp = make_random(nv, 5);
+            comp.set_name("0");
+            let mut cs = ConstraintSystem::new();
+            cs.add_component(comp);
+            cs
+        });
+    }
+    group.finish();
+}
+
 criterion_group!(
     benches,
     constraint_system_update,
@@ -271,7 +304,9 @@ criterion_group!(
     max_simple_planner,
     max_hierarchical_planner,
     max_update,
-    max_update_with_modified_variable
+    max_update_with_modified_variable,
+    thesis_update_without_modification,
+    thesis_update_with_modification
 );
 
 criterion_main!(benches);

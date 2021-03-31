@@ -134,6 +134,11 @@ impl<T: Clone> Component<T> {
         &self.name
     }
 
+    /// Sets the name of the component.
+    pub fn set_name<S: Into<String>>(&mut self, name: S) {
+        self.name = name.into();
+    }
+
     /// Returns a [`Vec<&str>`] of names of variables in this component.
     pub fn variable_names(&self) -> Vec<&str> {
         self.name_to_index.keys().map(String::as_str).collect()
