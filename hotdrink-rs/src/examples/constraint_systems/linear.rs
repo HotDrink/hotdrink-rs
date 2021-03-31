@@ -8,7 +8,7 @@ use crate::{
 };
 
 /// Constructs a constraint system with long chains of constraints between variables.
-pub fn linear_oneway<T>(n_components: usize, n_variables: usize) -> ConstraintSystem<T>
+pub fn linear_oneway<T>(_: usize, n_variables: usize) -> ConstraintSystem<T>
 where
     T: Debug + Clone + Default + Send + 'static,
 {
@@ -25,41 +25,39 @@ where
 
     let mut cs = ConstraintSystem::new();
 
-    for comp_id in 0..n_components {
-        // Create constraints between each consecutive variable
-        let mut constraints = Vec::new();
-        for constraint_id in 1..n_variables {
-            let prev: &str = &variable_names[constraint_id - 1];
-            let current = &variable_names[constraint_id];
-            let constraint: RawConstraint<'_, T> = RawConstraint::new(
-                &constraint_names[constraint_id],
-                vec![RawMethod::new(
-                    "right",
-                    vec![prev],
-                    vec![current],
-                    apply.clone(),
-                )],
-            );
-            constraints.push(constraint);
-        }
-
-        // Construct component
-        let name = "".to_string() + &comp_id.to_string();
-        let comp = RawComponent::new(
-            &name,
-            variable_names.iter().map(|s| s.as_str()).collect(),
-            vec![T::default(); n_variables],
-            constraints,
+    // Create constraints between each consecutive variable
+    let mut constraints = Vec::new();
+    for constraint_id in 1..n_variables {
+        let prev: &str = &variable_names[constraint_id - 1];
+        let current = &variable_names[constraint_id];
+        let constraint: RawConstraint<T> = RawConstraint::new(
+            &constraint_names[constraint_id],
+            vec![RawMethod::new(
+                "right",
+                vec![prev],
+                vec![current],
+                apply.clone(),
+            )],
         );
-
-        cs.add_component(comp.into_component());
+        constraints.push(constraint);
     }
+
+    // Construct component
+    let name = "0".to_string();
+    let comp = RawComponent::new(
+        name,
+        variable_names,
+        vec![T::default(); n_variables],
+        constraints,
+    );
+
+    cs.add_component(comp.into_component());
 
     cs
 }
 
 /// Constructs a constraint system with long chains of constraints between variables.
-pub fn linear_twoway<T>(n_components: usize, n_variables: usize) -> ConstraintSystem<T>
+pub fn linear_twoway<T>(_: usize, n_variables: usize) -> ConstraintSystem<T>
 where
     T: Debug + Clone + Default + Send + 'static,
 {
@@ -76,33 +74,31 @@ where
 
     let mut cs = ConstraintSystem::new();
 
-    for comp_id in 0..n_components {
-        // Create constraints between each consecutive variable
-        let mut constraints = Vec::new();
-        for constraint_id in 1..n_variables {
-            let prev: &str = &variable_names[constraint_id - 1];
-            let current = &variable_names[constraint_id];
-            let constraint: RawConstraint<'_, T> = RawConstraint::new(
-                &constraint_names[constraint_id],
-                vec![
-                    RawMethod::new("left", vec![prev], vec![current], apply.clone()),
-                    RawMethod::new("right", vec![current], vec![prev], apply.clone()),
-                ],
-            );
-            constraints.push(constraint);
-        }
-
-        // Construct component
-        let name = "".to_string() + &comp_id.to_string();
-        let comp = RawComponent::new(
-            &name,
-            variable_names.iter().map(|s| s.as_str()).collect(),
-            vec![T::default(); n_variables],
-            constraints,
+    // Create constraints between each consecutive variable
+    let mut constraints = Vec::new();
+    for constraint_id in 1..n_variables {
+        let prev: &str = &variable_names[constraint_id - 1];
+        let current = &variable_names[constraint_id];
+        let constraint: RawConstraint<T> = RawConstraint::new(
+            &constraint_names[constraint_id],
+            vec![
+                RawMethod::new("left", vec![prev], vec![current], apply.clone()),
+                RawMethod::new("right", vec![current], vec![prev], apply.clone()),
+            ],
         );
-
-        cs.add_component(comp.into_component());
+        constraints.push(constraint);
     }
+
+    // Construct component
+    let name = "0".to_string();
+    let comp = RawComponent::new(
+        name,
+        variable_names,
+        vec![T::default(); n_variables],
+        constraints,
+    );
+
+    cs.add_component(comp.into_component());
 
     cs
 }

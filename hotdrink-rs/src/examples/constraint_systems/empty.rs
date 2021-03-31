@@ -20,12 +20,11 @@ where
         let variables: Vec<String> = (0..n_variables)
             .map(|n| "var".to_string() + &n.to_string())
             .collect();
-        let variables: Vec<&str> = variables.iter().map(|s| s.as_str()).collect();
 
         // Construct the component
-        let comp_name = &comp_id.to_string();
+        let comp_name = comp_id.to_string();
         let raw_comp = RawComponent::new(
-            &comp_name,
+            comp_name,
             variables,
             vec![T::default(); n_variables],
             vec![],

@@ -3,30 +3,32 @@
 //!
 //! [`Component`]: crate::Component
 
+use itertools::Itertools;
+
 use super::raw_constraint::RawConstraint;
 use crate::data::component::Component;
 use std::{collections::HashMap, fmt::Debug};
 
 /// An intermediate struct for constructing [`Component`]s.
 #[derive(PartialEq, Debug)]
-pub struct RawComponent<'a, T> {
-    name: &'a str,
-    variables: Vec<&'a str>,
+pub struct RawComponent<T> {
+    name: String,
+    variables: Vec<String>,
     values: Vec<T>,
-    constraints: Vec<RawConstraint<'a, T>>,
+    constraints: Vec<RawConstraint<T>>,
 }
 
-impl<'a, T> RawComponent<'a, T> {
+impl<T> RawComponent<T> {
     /// Constructs a new [`RawComponent`].
-    pub fn new(
-        name: &'a str,
-        variables: Vec<&'a str>,
+    pub fn new<S: Into<String>>(
+        name: S,
+        variables: Vec<S>,
         values: Vec<T>,
-        constraints: Vec<RawConstraint<'a, T>>,
+        constraints: Vec<RawConstraint<T>>,
     ) -> Self {
         Self {
-            name,
-            variables,
+            name: name.into(),
+            variables: variables.into_iter().map_into().collect(),
             values,
             constraints,
         }
@@ -42,7 +44,7 @@ impl<'a, T> RawComponent<'a, T> {
     }
 
     /// Add a new constraint to the component.
-    pub fn add_constraint(&mut self, c: RawConstraint<'a, T>) {
+    pub fn add_constraint(&mut self, c: RawConstraint<T>) {
         self.constraints.push(c);
     }
 

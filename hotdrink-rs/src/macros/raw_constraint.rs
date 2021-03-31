@@ -13,30 +13,30 @@ use std::{collections::HashMap, fmt::Debug, sync::Arc};
 pub type Assert<T> = Arc<dyn Fn(&[T]) -> bool>;
 
 /// An intermediate struct for constructing [`Constraint`]s.
-pub struct RawConstraint<'a, T> {
-    name: &'a str,
-    methods: Vec<RawMethod<'a, T>>,
+pub struct RawConstraint<T> {
+    name: String,
+    methods: Vec<RawMethod<T>>,
     assert: Option<Assert<T>>,
 }
 
-impl<'a, T> RawConstraint<'a, T> {
+impl<T> RawConstraint<T> {
     /// Constructs a new [`RawConstraint`].
-    pub fn new(name: &'a str, methods: Vec<RawMethod<'a, T>>) -> Self {
+    pub fn new<S: Into<String>>(name: S, methods: Vec<RawMethod<T>>) -> Self {
         Self {
-            name,
+            name: name.into(),
             methods,
             assert: None,
         }
     }
 
     /// Constructs a new [`RawConstraint`] with an optional assert statement.
-    pub fn new_with_assert(
-        name: &'a str,
-        methods: Vec<RawMethod<'a, T>>,
+    pub fn new_with_assert<S: Into<String>>(
+        name: S,
+        methods: Vec<RawMethod<T>>,
         assert: Option<Assert<T>>,
     ) -> Self {
         Self {
-            name,
+            name: name.into(),
             methods,
             assert,
         }
@@ -58,7 +58,7 @@ impl<'a, T> RawConstraint<'a, T> {
     }
 }
 
-impl<T> Debug for RawConstraint<'_, T> {
+impl<T> Debug for RawConstraint<T> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("RawConstraint")
             .field("name", &self.name)
@@ -67,8 +67,8 @@ impl<T> Debug for RawConstraint<'_, T> {
     }
 }
 
-impl<T> PartialEq for RawConstraint<'_, T> {
+impl<T> PartialEq for RawConstraint<T> {
     fn eq(&self, other: &Self) -> bool {
-        (self.name, &self.methods) == (other.name, &other.methods)
+        (&self.name, &self.methods) == (&other.name, &other.methods)
     }
 }

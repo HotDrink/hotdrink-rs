@@ -5,31 +5,33 @@
 
 use std::{collections::HashMap, fmt::Debug};
 
+use itertools::Itertools;
+
 use crate::data::{
     method::Method,
     traits::{MethodFunction, MethodSpec},
 };
 
 /// An intermediate struct for constructing [`Method`]s.
-pub struct RawMethod<'a, T> {
-    name: &'a str,
-    inputs: Vec<&'a str>,
-    outputs: Vec<&'a str>,
+pub struct RawMethod<T> {
+    name: String,
+    inputs: Vec<String>,
+    outputs: Vec<String>,
     apply: MethodFunction<T>,
 }
 
-impl<'a, T> RawMethod<'a, T> {
+impl<T> RawMethod<T> {
     /// Constructs a new [`RawMethod`].
-    pub fn new(
-        name: &'a str,
-        inputs: Vec<&'a str>,
-        outputs: Vec<&'a str>,
+    pub fn new<S: Into<String>>(
+        name: S,
+        inputs: Vec<S>,
+        outputs: Vec<S>,
         apply: MethodFunction<T>,
     ) -> Self {
         Self {
-            name,
-            inputs,
-            outputs,
+            name: name.into(),
+            inputs: inputs.into_iter().map_into().collect(),
+            outputs: outputs.into_iter().map_into().collect(),
             apply,
         }
     }
@@ -46,7 +48,7 @@ impl<'a, T> RawMethod<'a, T> {
                 .into_iter()
                 .map(|i| {
                     var_to_idx
-                        .get(i)
+                        .get(&i)
                         .expect(&format!("Undefined variable {}", i))
                 })
                 .copied()
@@ -55,7 +57,7 @@ impl<'a, T> RawMethod<'a, T> {
                 .into_iter()
                 .map(|o| {
                     var_to_idx
-                        .get(o)
+                        .get(&o)
                         .expect(&format!("Undefined variable {}", o))
                 })
                 .copied()
@@ -65,15 +67,15 @@ impl<'a, T> RawMethod<'a, T> {
     }
 }
 
-impl<T> PartialEq for RawMethod<'_, T> {
+impl<T> PartialEq for RawMethod<T> {
     fn eq(&self, other: &Self) -> bool {
         self.name == other.name && self.inputs == other.inputs && self.outputs == other.outputs
     }
 }
 
-impl<T> Eq for RawMethod<'_, T> {}
+impl<T> Eq for RawMethod<T> {}
 
-impl<T> Debug for RawMethod<'_, T> {
+impl<T> Debug for RawMethod<T> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
             f,

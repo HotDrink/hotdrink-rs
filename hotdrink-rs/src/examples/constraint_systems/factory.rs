@@ -10,9 +10,9 @@ use crate::{
 /// Construct a constraint system with the specified number of components and variables,
 /// and creates constraints using the the provided function.
 pub fn make_cs<T>(
-    n_components: usize,
+    _: usize,
     n_variables: usize,
-    make_constraints: impl for<'a> Fn(&'a [String], &'a [String]) -> Vec<RawConstraint<'a, T>>,
+    make_constraints: impl Fn(&[String], &[String]) -> Vec<RawConstraint<T>>,
 ) -> ConstraintSystem<T>
 where
     T: Debug + Clone + Default + Send + 'static,
@@ -27,22 +27,19 @@ where
 
     let mut cs = ConstraintSystem::new();
 
-    for comp_id in 0..n_components {
-        // Create constraints between each consecutive variable
-        let constraints: Vec<RawConstraint<'_, T>> =
-            make_constraints(&constraint_names, &variable_names);
+    // Create constraints between each consecutive variable
+    let constraints: Vec<RawConstraint<T>> = make_constraints(&constraint_names, &variable_names);
 
-        // Construct component
-        let name = comp_id.to_string();
-        let comp = RawComponent::new(
-            &name,
-            variable_names.iter().map(|s| s.as_str()).collect(),
-            vec![T::default(); n_variables],
-            constraints,
-        );
+    // Construct component
+    let name = "0".to_string();
+    let comp = RawComponent::new(
+        name,
+        variable_names,
+        vec![T::default(); n_variables],
+        constraints,
+    );
 
-        cs.add_component(comp.into_component());
-    }
+    cs.add_component(comp.into_component());
 
     cs
 }

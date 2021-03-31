@@ -13,7 +13,7 @@ pub fn singleoutput_singleway<T>(n_components: usize, n_variables: usize) -> Con
 where
     T: Debug + Clone + Default + Send + 'static,
 {
-    let make_constraints: for<'a> fn(&'a [String], &'a [String]) -> Vec<RawConstraint<'a, T>> =
+    let make_constraints: fn(&[String], &[String]) -> Vec<RawConstraint<T>> =
         |constraint_names, variable_names| {
             let n_variables = variable_names.len();
             let apply = Arc::new(Ok);
@@ -57,7 +57,7 @@ pub fn singleoutput_multiway<T>(n_components: usize, n_variables: usize) -> Cons
 where
     T: Debug + Clone + Default + Send + 'static,
 {
-    let make_constraints: for<'a> fn(&'a [String], &'a [String]) -> Vec<RawConstraint<'a, T>> =
+    let make_constraints: fn(&[String], &[String]) -> Vec<RawConstraint<T>> =
         |constraint_names, variable_names| {
             let n_variables = variable_names.len();
             let apply = Arc::new(Ok);
@@ -116,7 +116,7 @@ pub fn multioutput_singleway<T>(n_components: usize, n_variables: usize) -> Cons
 where
     T: Debug + Clone + Default + Send + 'static,
 {
-    let make_constraints: for<'a> fn(&'a [String], &'a [String]) -> Vec<RawConstraint<'a, T>> =
+    let make_constraints: fn(&[String], &[String]) -> Vec<RawConstraint<T>> =
         |constraint_names, variable_names| {
             let n_variables = variable_names.len();
             let apply = Arc::new(|v: Vec<T>| {
@@ -154,7 +154,7 @@ pub fn multioutput_twoway<T>(n_components: usize, n_variables: usize) -> Constra
 where
     T: Debug + Clone + Default + Send + 'static,
 {
-    let make_constraints: for<'a> fn(&'a [String], &'a [String]) -> Vec<RawConstraint<'a, T>> =
+    let make_constraints: fn(&[String], &[String]) -> Vec<RawConstraint<T>> =
         |constraint_names, variable_names| {
             let n_variables = variable_names.len();
             let apply = Arc::new(|v: Vec<T>| {
@@ -200,7 +200,7 @@ pub fn multioutput_threeway<T>(n_components: usize, n_variables: usize) -> Const
 where
     T: Debug + Clone + Default + Send + 'static,
 {
-    let make_constraints: for<'a> fn(&'a [String], &'a [String]) -> Vec<RawConstraint<'a, T>> =
+    let make_constraints: fn(&[String], &[String]) -> Vec<RawConstraint<T>> =
         |constraint_names, variable_names| {
             let n_variables = variable_names.len();
             let apply = Arc::new(|v: Vec<T>| {
@@ -252,7 +252,7 @@ pub fn unprunable<T>(n_components: usize, n_variables: usize) -> ConstraintSyste
 where
     T: Debug + Clone + Default + Send + 'static,
 {
-    let make_constraints: for<'a> fn(&'a [String], &'a [String]) -> Vec<RawConstraint<'a, T>> =
+    let make_constraints: fn(&[String], &[String]) -> Vec<RawConstraint<T>> =
         |constraint_names, variable_names| {
             let n_variables = variable_names.len();
             let apply = Arc::new(|v: Vec<T>| {
