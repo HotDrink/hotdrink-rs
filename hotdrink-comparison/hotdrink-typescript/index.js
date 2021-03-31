@@ -215,12 +215,13 @@ function make_random(n_constraints) {
 }
 
 function bench_component(name, make_component, n_variables) {
-    var pm = new hd.PropertyModel();
-    pm.add(make_component(n_variables));
-
     let total = 0;
-    let n_samples = 1;
+    let n_samples = 5;
     for (let i = 0; i < n_samples; i++) {
+        // Generate a new component (for random)
+        var pm = new hd.PropertyModel();
+        pm.add(make_component(n_variables));
+
         let start = performance.now();
         pm.update();
         total += performance.now() - start;
@@ -230,12 +231,14 @@ function bench_component(name, make_component, n_variables) {
 }
 
 function bench_component_update_variable(name, make_component, n_variables) {
-    var pm = new hd.PropertyModel();
-    pm.add(make_component(n_variables));
 
     let total = 0;
     let n_samples = 5;
     for (let i = 0; i < n_samples; i++) {
+        // Generate a new component (for random)
+        var pm = new hd.PropertyModel();
+        pm.add(make_component(n_variables));
+
         let entries = Object.entries(pm.variables);
         let random_number = Math.floor(Math.random() * entries.length);
         for (let [k, v] of entries) {
