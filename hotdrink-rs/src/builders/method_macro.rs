@@ -20,7 +20,7 @@ macro_rules! method {
     }};
 }
 
-/// Turn a parameter list into a list of [`MethodParam`](crate::builders::method_builder::MethodParam).
+/// Turn a parameter list into a list of [`MethodInput`](crate::builders::method_builder::MethodInput).
 #[macro_export]
 macro_rules! make_params {
     () => {{ Vec::new() }};
