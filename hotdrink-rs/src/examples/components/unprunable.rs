@@ -60,16 +60,13 @@ where
 pub struct Unprunable;
 
 impl ComponentFactory for Unprunable {
-    fn build_component<S, T>(name: S, n_constraints: usize) -> Component<T>
+    fn build_component<T>(n_constraints: usize) -> Component<T>
     where
-        S: Into<String>,
         T: Clone + Debug + Default + 'static,
     {
         let depth = (n_constraints as f64).log2();
         let n_variables = 2f64.powf(depth + 1.0);
-        let mut component = unprunable(n_variables as usize);
-        component.set_name(name);
-        component
+        unprunable(n_variables as usize)
     }
 }
 
@@ -82,7 +79,7 @@ mod tests {
     #[test]
     fn right_number_of_variables() {
         for n_constraints in 0..100 {
-            let component: Component<()> = Unprunable::build_component("unprunable", n_constraints);
+            let component: Component<()> = Unprunable::build_component(n_constraints);
             assert!(
                 n_constraints.saturating_sub(1) <= component.n_constraints()
                     && component.n_constraints() <= n_constraints

@@ -16,7 +16,7 @@ fn rev<T: Default>(_: Vec<T>) -> Result<Vec<T>, MethodFailure> {
 }
 
 /// Generate a component with the "ladder"-shape.
-pub fn ladder<T>(name: String, n_variables: usize) -> Component<T>
+pub fn ladder<T>(n_variables: usize) -> Component<T>
 where
     T: Clone + Default + 'static,
 {
@@ -51,7 +51,7 @@ where
     for i in 0..n_variables {
         name_to_index.insert(format!("var{}", i), i);
     }
-    Component::new_with_map(name, name_to_index, values, constraints)
+    Component::new_with_map("ladder".to_string(), name_to_index, values, constraints)
 }
 
 /// A component factory for creating ladder-like components.
@@ -59,12 +59,11 @@ where
 pub struct Ladder;
 
 impl ComponentFactory for Ladder {
-    fn build_component<S, T>(name: S, n_constraints: usize) -> Component<T>
+    fn build_component<T>(n_constraints: usize) -> Component<T>
     where
-        S: Into<String>,
         T: Clone + std::fmt::Debug + Default + 'static,
     {
-        ladder(name.into(), n_constraints + 2)
+        ladder(n_constraints + 2)
     }
 }
 
@@ -77,7 +76,7 @@ mod tests {
     #[test]
     fn constructs_without_error() {
         for i in 0..20 {
-            let mut ladder = ladder::<()>("ladder".to_string(), i);
+            let mut ladder = ladder::<()>(i);
             let result = ladder.update();
             assert_eq!(result, Ok(()));
         }
@@ -86,7 +85,7 @@ mod tests {
     #[test]
     fn right_number_of_constraints() {
         for nc in (2..20).step_by(2) {
-            let comp: Component<()> = Ladder::build_component("", nc);
+            let comp: Component<()> = Ladder::build_component(nc);
             assert_eq!(comp.constraints().len(), nc);
         }
     }

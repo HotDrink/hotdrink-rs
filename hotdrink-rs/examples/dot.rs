@@ -39,7 +39,7 @@ fn main() -> io::Result<()> {
     let mut args = std::env::args();
     let size: usize = args.nth(1).map(|s| s.parse().ok()).flatten().unwrap_or(10);
 
-    write_component("ladder", size, |nv| ladder::<()>("ladder".to_string(), nv))?;
+    write_component("ladder", size, ladder::<()>)?;
     write_component("linear-oneway", size, |nv| {
         let cs = linear_oneway::<()>(1, nv);
         let component = cs.get_component("0").clone();

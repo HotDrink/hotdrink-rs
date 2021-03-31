@@ -386,8 +386,7 @@ mod tests {
             .filter_level(log::LevelFilter::Debug)
             .is_test(true)
             .init();
-        let component: Component<()> =
-            crate::examples::components::ladder::ladder("ladder".to_string(), 12);
+        let component: Component<()> = crate::examples::components::ladder::ladder(12);
         pretty_assertions::assert_eq!(
             hierarchical_planner(&component, &(0..12).collect::<Vec<_>>()),
             Ok(vec![

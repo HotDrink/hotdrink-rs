@@ -12,9 +12,8 @@ use std::{fmt::Debug, sync::Arc};
 pub struct LinearOneway;
 
 impl ComponentFactory for LinearOneway {
-    fn build_component<S, T>(name: S, n_constraints: usize) -> Component<T>
+    fn build_component<T>(n_constraints: usize) -> Component<T>
     where
-        S: Into<String>,
         T: Clone + Debug + Default + 'static,
     {
         let n_variables = n_constraints + 1;
@@ -43,9 +42,8 @@ impl ComponentFactory for LinearOneway {
         }
 
         // Construct component
-        let name = name.into();
         let comp = RawComponent::new(
-            name,
+            "linear-oneway".to_string(),
             variable_names,
             vec![T::default(); n_variables],
             constraints,
@@ -60,9 +58,8 @@ impl ComponentFactory for LinearOneway {
 pub struct LinearTwoway;
 
 impl ComponentFactory for LinearTwoway {
-    fn build_component<S, T>(name: S, n_constraints: usize) -> Component<T>
+    fn build_component<T>(n_constraints: usize) -> Component<T>
     where
-        S: Into<String>,
         T: Clone + Debug + Default + 'static,
     {
         let n_variables = n_constraints + 1;
@@ -89,9 +86,8 @@ impl ComponentFactory for LinearTwoway {
         }
 
         // Construct component
-        let name = name.into();
         let comp = RawComponent::new(
-            name,
+            "linear-twoway".to_string(),
             variable_names,
             vec![T::default(); n_variables],
             constraints,
@@ -109,8 +105,7 @@ mod tests {
     #[test]
     fn linear_oneway_right_number_of_constraints() {
         for nc in 0..20 {
-            let ladder: Component<()> =
-                LinearOneway::build_component("linear-oneway".to_string(), nc);
+            let ladder: Component<()> = LinearOneway::build_component(nc);
             assert_eq!(ladder.n_constraints(), nc);
         }
     }
@@ -118,8 +113,7 @@ mod tests {
     #[test]
     fn linear_twoway_right_number_of_constraints() {
         for nc in 0..20 {
-            let ladder: Component<()> =
-                LinearOneway::build_component("linear-twoway".to_string(), nc);
+            let ladder: Component<()> = LinearOneway::build_component(nc);
             assert_eq!(ladder.n_constraints(), nc);
         }
     }

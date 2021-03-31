@@ -160,14 +160,11 @@ where
 pub struct RandomComponentFactory;
 
 impl ComponentFactory for RandomComponentFactory {
-    fn build_component<S, T>(name: S, n_constraints: usize) -> Component<T>
+    fn build_component<T>(n_constraints: usize) -> Component<T>
     where
-        S: Into<String>,
         T: Clone + Debug + Default + 'static,
     {
-        let mut component = make_random(n_constraints, 5);
-        component.set_name(name);
-        component
+        make_random(n_constraints, 5)
     }
 }
 
