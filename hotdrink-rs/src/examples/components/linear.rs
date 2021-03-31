@@ -7,7 +7,9 @@ use crate::{
 };
 use std::{fmt::Debug, sync::Arc};
 
-struct LinearOneway;
+/// A component factory for creating linear-oneway components.
+#[derive(Copy, Clone, Debug, Default, PartialEq, Eq)]
+pub struct LinearOneway;
 
 impl ComponentFactory for LinearOneway {
     fn build_component<S, T>(name: S, n_constraints: usize) -> Component<T>
@@ -53,7 +55,9 @@ impl ComponentFactory for LinearOneway {
     }
 }
 
-struct LinearTwoway;
+/// A component factory for creating linear-twoway components.
+#[derive(Copy, Clone, Debug, Default, PartialEq, Eq)]
+pub struct LinearTwoway;
 
 impl ComponentFactory for LinearTwoway {
     fn build_component<S, T>(name: S, n_constraints: usize) -> Component<T>

@@ -55,7 +55,9 @@ where
     make_component(n_variables, make_constraints)
 }
 
-struct Unprunable;
+/// A component factory for creating unprunable components.
+#[derive(Copy, Clone, Debug, Default, PartialEq, Eq)]
+pub struct Unprunable;
 
 impl ComponentFactory for Unprunable {
     fn build_component<S, T>(name: S, n_constraints: usize) -> Component<T>

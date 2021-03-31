@@ -1,9 +1,9 @@
 //! An example component used in benchmarking.
 //! It was originally defined [here](https://github.com/HotDrink/hotdrink/blob/3f9bc25751079c69f8277918521a75dd1163bee4/test/models/ladder-10.js).
 
+use super::factory::ComponentFactory;
 use crate::{Component, Constraint, Method, MethodFailure, MethodSpec};
 use std::{collections::HashMap, sync::Arc};
-use super::factory::ComponentFactory;
 
 fn avg<T: Default>(_: Vec<T>) -> Result<Vec<T>, MethodFailure> {
     // Ok(vec![(args[0] + args[1]) / 2.0])
@@ -54,7 +54,9 @@ where
     Component::new_with_map(name, name_to_index, values, constraints)
 }
 
-struct Ladder;
+/// A component factory for creating ladder-like components.
+#[derive(Copy, Clone, Debug, Default, PartialEq, Eq)]
+pub struct Ladder;
 
 impl ComponentFactory for Ladder {
     fn build_component<S, T>(name: S, n_constraints: usize) -> Component<T>

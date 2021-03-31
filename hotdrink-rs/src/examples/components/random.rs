@@ -155,7 +155,9 @@ where
     )
 }
 
-struct RandomComponentFactory;
+/// A component factory for creating random components.
+#[derive(Copy, Clone, Debug, Default, PartialEq, Eq)]
+pub struct RandomComponentFactory;
 
 impl ComponentFactory for RandomComponentFactory {
     fn build_component<S, T>(name: S, n_constraints: usize) -> Component<T>
