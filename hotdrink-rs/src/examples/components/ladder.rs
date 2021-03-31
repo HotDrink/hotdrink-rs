@@ -3,6 +3,7 @@
 
 use crate::{Component, Constraint, Method, MethodFailure, MethodSpec};
 use std::{collections::HashMap, sync::Arc};
+use super::factory::ComponentFactory;
 
 fn avg<T: Default>(_: Vec<T>) -> Result<Vec<T>, MethodFailure> {
     // Ok(vec![(args[0] + args[1]) / 2.0])
@@ -53,10 +54,23 @@ where
     Component::new_with_map(name, name_to_index, values, constraints)
 }
 
+struct Ladder;
+
+impl ComponentFactory for Ladder {
+    fn build_component<S, T>(name: S, n_constraints: usize) -> Component<T>
+    where
+        S: Into<String>,
+        T: Clone + std::fmt::Debug + Default + 'static,
+    {
+        ladder(name.into(), n_constraints + 2)
+    }
+}
+
 #[cfg(test)]
 mod tests {
-    use super::ladder;
-    use crate::data::traits::ComponentSpec;
+    use super::{ladder, Ladder};
+    use crate::examples::components::factory::ComponentFactory;
+    use crate::{Component, ComponentSpec};
 
     #[test]
     fn constructs_without_error() {
@@ -64,6 +78,14 @@ mod tests {
             let mut ladder = ladder::<()>("ladder".to_string(), i);
             let result = ladder.update();
             assert_eq!(result, Ok(()));
+        }
+    }
+
+    #[test]
+    fn right_number_of_constraints() {
+        for nc in (2..20).step_by(2) {
+            let comp: Component<()> = Ladder::build_component("", nc);
+            assert_eq!(comp.constraints().len(), nc);
         }
     }
 }

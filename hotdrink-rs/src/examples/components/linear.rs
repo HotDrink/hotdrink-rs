@@ -96,3 +96,27 @@ impl ComponentFactory for LinearTwoway {
         comp.into_component()
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::{super::factory::ComponentFactory, LinearOneway};
+    use crate::{Component, ComponentSpec};
+
+    #[test]
+    fn linear_oneway_right_number_of_constraints() {
+        for nc in 0..20 {
+            let ladder: Component<()> =
+                LinearOneway::build_component("linear-oneway".to_string(), nc);
+            assert_eq!(ladder.n_constraints(), nc);
+        }
+    }
+
+    #[test]
+    fn linear_twoway_right_number_of_constraints() {
+        for nc in 0..20 {
+            let ladder: Component<()> =
+                LinearOneway::build_component("linear-twoway".to_string(), nc);
+            assert_eq!(ladder.n_constraints(), nc);
+        }
+    }
+}
