@@ -109,7 +109,7 @@ fn hierarchical_planner_benches(c: &mut Criterion) {
 }
 
 fn simple_planner_benches(c: &mut Criterion) {
-    let mut group = c.benchmark_group("component_simple_planner");
+    let mut group = c.benchmark_group("simple_planner");
     for i in &[0, 1000, 5000, 10000, 20000] {
         bench_simple_planner(&mut group, "linear-oneway", i, LINEAR_TWOWAY);
         bench_simple_planner(&mut group, "linear-twoway", i, LINEAR_TWOWAY);
@@ -123,10 +123,10 @@ fn simple_planner_benches(c: &mut Criterion) {
 // Benchmarks for testing the limits of the library
 
 fn update_benches_max(c: &mut Criterion) {
-    let mut group = c.benchmark_group("max_update_with_modified_variable");
+    let mut group = c.benchmark_group("update_max");
     for i in &[20000] {
-        bench_update(&mut group, "linear/oneway", i, LINEAR_ONEWAY);
-        bench_update(&mut group, "linear/twoway", i, LINEAR_TWOWAY);
+        bench_update(&mut group, "linear-oneway", i, LINEAR_ONEWAY);
+        bench_update(&mut group, "linear-twoway", i, LINEAR_TWOWAY);
     }
     for i in &[750] {
         bench_update(&mut group, "ladder", i, LADDER);
@@ -137,10 +137,10 @@ fn update_benches_max(c: &mut Criterion) {
 }
 
 fn hierarchical_planner_benches_max(c: &mut Criterion) {
-    let mut group = c.benchmark_group("max_hierarchical_planner");
+    let mut group = c.benchmark_group("hierarchical_planner_max");
     for i in &[30000] {
-        bench_hierarchical_planner(&mut group, "linear/oneway", i, LINEAR_ONEWAY);
-        bench_hierarchical_planner(&mut group, "linear/twoway", i, LINEAR_TWOWAY);
+        bench_hierarchical_planner(&mut group, "linear-oneway", i, LINEAR_ONEWAY);
+        bench_hierarchical_planner(&mut group, "linear-twoway", i, LINEAR_TWOWAY);
         bench_hierarchical_planner(&mut group, "ladder", i, LADDER);
     }
     for i in &[500] {
@@ -151,10 +151,10 @@ fn hierarchical_planner_benches_max(c: &mut Criterion) {
 }
 
 fn simple_planner_benches_max(c: &mut Criterion) {
-    let mut group = c.benchmark_group("max_simple_planner");
+    let mut group = c.benchmark_group("simple_planner_max");
     for i in &[150000] {
-        bench_simple_planner(&mut group, "linear/oneway", i, LINEAR_ONEWAY);
-        bench_simple_planner(&mut group, "linear/twoway", i, LINEAR_TWOWAY);
+        bench_simple_planner(&mut group, "linear-oneway", i, LINEAR_ONEWAY);
+        bench_simple_planner(&mut group, "linear-twoway", i, LINEAR_TWOWAY);
         bench_simple_planner(&mut group, "ladder", i, LADDER);
         bench_simple_planner(&mut group, "unprunable", i, UNPRUNABLE);
         bench_simple_planner(&mut group, "random", i, RANDOM);
@@ -167,8 +167,8 @@ fn simple_planner_benches_max(c: &mut Criterion) {
 fn thesis_update(c: &mut Criterion) {
     let mut group = c.benchmark_group("thesis_update");
     for i in &[250, 500, 1000] {
-        bench_update(&mut group, "linear/oneway", i, LINEAR_ONEWAY);
-        bench_update(&mut group, "linear/twoway", i, LINEAR_TWOWAY);
+        bench_update(&mut group, "linear-oneway", i, LINEAR_ONEWAY);
+        bench_update(&mut group, "linear-twoway", i, LINEAR_TWOWAY);
         bench_update(&mut group, "ladder", i, LADDER);
         bench_update(&mut group, "unprunable", i, UNPRUNABLE);
         bench_update(&mut group, "random", i, RANDOM);
