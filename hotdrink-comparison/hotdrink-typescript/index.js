@@ -6,33 +6,8 @@ function vname(i) {
     return "v" + i;
 }
 
-function make_empty(n_variables) {
-    var model = new hd.ComponentBuilder();
-    for (let i = 0; i < n_variables; i++) {
-        model.variable(vname(i), 0);
-    }
-    return model.component();
-}
-
-function make_dense(n_variables) {
-    var model = new hd.ComponentBuilder();
-    for (let i = 0; i < n_variables; i++) {
-        model.variable(vname(i), 0);
-    }
-    for (let i = 0; i < n_variables - 4; i += 4) {
-        for (let offset = 1; offset <= 4; offset++) {
-            let from = vname(i);
-            let to = vname(i + offset);
-
-            model.constraint(`${from}, ${to}`);
-            model.method(`${from} -> ${to}`, id);
-            model.method(`${to} -> ${from}`, id);
-        }
-    }
-    return model.component();
-}
-
-function make_linear_twoway(n_variables) {
+function make_linear_twoway(n_constraints) {
+    let n_variables = n_constraints + 1;
     var model = new hd.ComponentBuilder();
     for (let i = 0; i < n_variables; i++) {
         model.variable(vname(i), 0);
@@ -47,7 +22,8 @@ function make_linear_twoway(n_variables) {
     return model.component();
 }
 
-function make_linear_oneway(n_variables) {
+function make_linear_oneway(n_constraints) {
+    let n_variables = n_constraints + 1;
     var model = new hd.ComponentBuilder();
     for (let i = 0; i < n_variables; i++) {
         model.variable(vname(i), 0);
@@ -61,7 +37,9 @@ function make_linear_oneway(n_variables) {
     return model.component();
 }
 
-function make_unprunable(n_variables) {
+function make_unprunable(n_constraints) {
+    let depth = Math.log2(n_constraints);
+    let n_variables = Math.pow(2, depth + 1.0);
     var model = new hd.ComponentBuilder();
     for (let i = 0; i < n_variables; i++) {
         model.variable(vname(i), 0);
@@ -77,7 +55,8 @@ function make_unprunable(n_variables) {
     return model.component();
 }
 
-function make_ladder(n_variables) {
+function make_ladder(n_constraints) {
+    let n_variables = n_constraints + 2;
     var model = new hd.ComponentBuilder();
     for (let i = 0; i < n_variables; i++) {
         model.variable(vname(i), 0);
@@ -215,22 +194,6 @@ function make_random(n_constraints) {
 }
 
 function bench_component(name, make_component, n_variables) {
-    let total = 0;
-    let n_samples = 5;
-    for (let i = 0; i < n_samples; i++) {
-        // Generate a new component (for random)
-        var pm = new hd.PropertyModel();
-        pm.add(make_component(n_variables));
-
-        let start = performance.now();
-        pm.update();
-        total += performance.now() - start;
-    }
-
-    console.log(name, "&", n_variables, "&", total / n_samples);
-}
-
-function bench_component_update_variable(name, make_component, n_variables) {
 
     let total = 0;
     let n_samples = 5;
@@ -255,7 +218,7 @@ function bench_component_update_variable(name, make_component, n_variables) {
 }
 
 function bench_components(entries) {
-    for (let n_variables of [1250, 2500, 5000]) {
+    for (let n_variables of [250, 500, 1000]) {
         for (let entry of entries) {
             let name = entry.name;
             let make_component = entry.make_component;
@@ -264,29 +227,7 @@ function bench_components(entries) {
     }
 }
 
-function bench_components_update_variable(entries) {
-    for (let n_variables of [1250, 2500, 5000]) {
-        for (let entry of entries) {
-            let name = entry.name;
-            let make_component = entry.make_component;
-            bench_component_update_variable(name, make_component, n_variables);
-        }
-    }
-}
-
 bench_components([
-    { name: "empty", make_component: make_empty },
-    { name: "dense", make_component: make_dense },
-    { name: "linear-oneway", make_component: make_linear_oneway },
-    { name: "linear-twoway", make_component: make_linear_twoway },
-    { name: "ladder", make_component: make_ladder },
-    { name: "unprunable", make_component: make_unprunable },
-    { name: "random", make_component: make_random },
-]);
-
-bench_components_update_variable([
-    { name: "empty", make_component: make_empty },
-    { name: "dense", make_component: make_dense },
     { name: "linear-oneway", make_component: make_linear_oneway },
     { name: "linear-twoway", make_component: make_linear_twoway },
     { name: "ladder", make_component: make_ladder },
