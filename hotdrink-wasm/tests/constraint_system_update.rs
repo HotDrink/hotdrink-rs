@@ -1,28 +1,29 @@
 use hotdrink_rs::{
-    data::constraint_system::ConstraintSystem,
-    examples::{
-        components::random::make_random,
-        constraint_systems::{
-            empty::make_empty_cs,
-            ladder::ladder,
-            linear::{linear_oneway, linear_twoway},
-            make_dense_cs,
-            tree::unprunable,
-        },
+    examples::components::{
+        ladder::Ladder,
+        linear::{LinearOneway, LinearTwoway},
+        random::Random,
+        unprunable::Unprunable,
+        ComponentFactory,
     },
     thread::dummy_pool::DummyPool,
+    Component,
 };
 use std::fmt::Debug;
 use wasm_bindgen_test::*;
 
 wasm_bindgen_test_configure!(run_in_browser);
 
-fn constraint_system_update<T>(
-    name: &str,
-    make_cs: impl Fn(usize, usize) -> ConstraintSystem<T>,
-    n_variables: usize,
-) where
+const LINEAR_ONEWAY: fn(usize) -> Component<()> = LinearOneway::build_component;
+const LINEAR_TWOWAY: fn(usize) -> Component<()> = LinearTwoway::build_component;
+const LADDER: fn(usize) -> Component<()> = Ladder::build_component;
+const UNPRUNABLE: fn(usize) -> Component<()> = Unprunable::build_component;
+const RANDOM: fn(usize) -> Component<()> = Random::build_component;
+
+fn bench_update<T, F>(name: &str, make_cs: F, n_constraints: usize)
+where
     T: Debug + Clone + Default + Send + 'static,
+    F: Fn(usize) -> Component<T>,
 {
     let performance = web_sys::window()
         .expect("should have a Window")
@@ -32,12 +33,13 @@ fn constraint_system_update<T>(
     let n_samples = 5;
     let mut total_time: f64 = 0.0;
     for _ in 0..n_samples {
-        let mut cs = make_cs(1, n_variables);
+        let mut cs = make_cs(n_constraints);
         // web_sys::console::time_with_label(&format!("{} & {}", name, n_variables));
         let start = performance.now();
-        if n_variables > 0 {
-            let random_number = (js_sys::Math::random() * n_variables as f64) as usize;
-            cs.set_variable("0", &format!("var{}", random_number), T::default());
+        if n_constraints > 0 {
+            let random_number = (js_sys::Math::random() * n_constraints as f64) as usize;
+            cs.set_variable(&format!("var{}", random_number), T::default())
+                .unwrap();
         }
         let result = cs.par_update(&mut DummyPool);
         total_time += performance.now() - start;
@@ -48,89 +50,18 @@ fn constraint_system_update<T>(
     console_log!(
         "{} & {} & {}",
         name,
-        n_variables,
-        total_time / n_samples as f64
-    );
-}
-
-fn constraint_system_update_with_modified_variable<T>(
-    name: &str,
-    make_cs: impl Fn(usize, usize) -> ConstraintSystem<T>,
-    n_variables: usize,
-) where
-    T: Debug + Clone + Default + Send + 'static,
-{
-    let performance = web_sys::window()
-        .expect("should have a Window")
-        .performance()
-        .expect("should have a Performance");
-
-    let n_samples = 5;
-    let mut total_time: f64 = 0.0;
-    for _ in 0..n_samples {
-        let mut cs = make_cs(1, n_variables);
-        // web_sys::console::time_with_label(&format!("{} & {}", name, n_variables));
-        let start = performance.now();
-        if n_variables > 0 {
-            let random_number = (js_sys::Math::random() * n_variables as f64) as usize;
-            cs.set_variable("0", &format!("var{}", random_number), T::default());
-        }
-        let result = cs.par_update(&mut DummyPool);
-        total_time += performance.now() - start;
-        // web_sys::console::time_end_with_label(&format!("{} & {}", name, n_variables));
-        assert_eq!(result, Ok(()));
-    }
-
-    console_log!(
-        "{} & {} & {}",
-        name,
-        n_variables,
+        n_constraints,
         total_time / n_samples as f64
     );
 }
 
 #[wasm_bindgen_test]
-fn bench_constraint_system_update() {
+fn thesis_update() {
     for &i in &[1250, 2500, 5000] {
-        constraint_system_update("empty", make_empty_cs::<i32>, i);
-        constraint_system_update("dense", make_dense_cs::<i32>, i);
-        constraint_system_update("linear-oneway", linear_oneway::<i32>, i);
-        constraint_system_update("linear-twoway", linear_twoway::<i32>, i);
-        constraint_system_update("ladder", ladder::<i32>, i);
-        constraint_system_update("unprunable", unprunable::<i32>, i);
-        constraint_system_update(
-            "random",
-            |_, nv| {
-                let mut comp = make_random::<i32>(nv, 5);
-                comp.set_name("0");
-                let mut cs = ConstraintSystem::new();
-                cs.add_component(comp);
-                cs
-            },
-            i,
-        );
-    }
-}
-
-#[wasm_bindgen_test]
-fn bench_constraint_system_update_with_modified_variable() {
-    for &i in &[1250, 2500, 5000] {
-        constraint_system_update_with_modified_variable("empty", make_empty_cs::<i32>, i);
-        constraint_system_update_with_modified_variable("dense", make_dense_cs::<i32>, i);
-        constraint_system_update_with_modified_variable("linear-oneway", linear_oneway::<i32>, i);
-        constraint_system_update_with_modified_variable("linear-twoway", linear_twoway::<i32>, i);
-        constraint_system_update_with_modified_variable("ladder", ladder::<i32>, i);
-        constraint_system_update_with_modified_variable("unprunable", unprunable::<i32>, i);
-        constraint_system_update_with_modified_variable(
-            "random",
-            |_, nv| {
-                let mut comp = make_random::<i32>(nv, 5);
-                comp.set_name("0");
-                let mut cs = ConstraintSystem::new();
-                cs.add_component(comp);
-                cs
-            },
-            i,
-        );
+        bench_update("linear-oneway", LINEAR_ONEWAY, i);
+        bench_update("linear-twoway", LINEAR_TWOWAY, i);
+        bench_update("ladder", LADDER, i);
+        bench_update("unprunable", UNPRUNABLE, i);
+        bench_update("random", RANDOM, i);
     }
 }
