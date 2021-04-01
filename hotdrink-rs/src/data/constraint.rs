@@ -56,7 +56,7 @@ impl<T: Clone> ConstraintSpec for Constraint<T> {
     ///
     /// # Panics
     ///
-    /// Panics if the method name is ambiguous.
+    /// Panics if the method does not exit, or if the name is ambiguous.
     fn remove_method(&mut self, name: &str) {
         let removed: Vec<_> = self.methods.drain_filter(|m| m.name() == name).collect();
         match removed.len() {
