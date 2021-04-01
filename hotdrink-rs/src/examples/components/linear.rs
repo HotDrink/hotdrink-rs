@@ -12,7 +12,7 @@ use std::{fmt::Debug, sync::Arc};
 pub struct LinearOneway;
 
 impl ComponentFactory for LinearOneway {
-    fn build_component<T>(n_constraints: usize) -> Component<T>
+    fn build<T>(n_constraints: usize) -> Component<T>
     where
         T: Clone + Debug + Default + 'static,
     {
@@ -58,7 +58,7 @@ impl ComponentFactory for LinearOneway {
 pub struct LinearTwoway;
 
 impl ComponentFactory for LinearTwoway {
-    fn build_component<T>(n_constraints: usize) -> Component<T>
+    fn build<T>(n_constraints: usize) -> Component<T>
     where
         T: Clone + Debug + Default + 'static,
     {
@@ -105,7 +105,7 @@ mod tests {
     #[test]
     fn linear_oneway_right_number_of_constraints() {
         for nc in 0..20 {
-            let ladder: Component<()> = LinearOneway::build_component(nc);
+            let ladder: Component<()> = LinearOneway::build(nc);
             assert_eq!(ladder.n_constraints(), nc);
         }
     }
@@ -113,7 +113,7 @@ mod tests {
     #[test]
     fn linear_twoway_right_number_of_constraints() {
         for nc in 0..20 {
-            let ladder: Component<()> = LinearOneway::build_component(nc);
+            let ladder: Component<()> = LinearOneway::build(nc);
             assert_eq!(ladder.n_constraints(), nc);
         }
     }

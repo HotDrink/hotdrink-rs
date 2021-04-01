@@ -2,6 +2,7 @@
 
 use super::{
     constraint::Constraint,
+    errors::NoSuchVariable,
     method::Method,
     traits::PlanError,
     variable_activation::State,
@@ -59,20 +60,13 @@ impl<T: Debug> Debug for Component<T> {
     }
 }
 
-/// Errors that can happen in a component.
-#[derive(Copy, Clone, Debug)]
-pub enum ComponentError {
-    /// No variable of the specified name exists.
-    NoSuchVariable,
-}
-
 impl<T: Clone> Component<T> {
     /// Add a callback to be called when a given variable is updated.
-    pub fn subscribe(
+    pub fn subscribe<'s>(
         &mut self,
-        variable: &str,
+        variable: &'s str,
         callback: impl Fn(Event<T, SolveError>) + Send + 'static,
-    ) -> Result<(), ComponentError>
+    ) -> Result<(), NoSuchVariable<'s>>
     where
         T: 'static,
     {
@@ -94,22 +88,26 @@ impl<T: Clone> Component<T> {
 
             Ok(())
         } else {
-            Err(ComponentError::NoSuchVariable)
+            Err(NoSuchVariable(variable))
         }
     }
 
     /// Unsubscribe from a variable to avoid receiving further events.
-    pub fn unsubscribe(&mut self, variable: &str) -> Result<(), ComponentError> {
+    pub fn unsubscribe<'s>(&mut self, variable: &'s str) -> Result<(), NoSuchVariable<'s>> {
         if let Some(&index) = self.name_to_index.get(variable) {
             self.variable_information.lock().unwrap()[index].unsubscribe();
             Ok(())
         } else {
-            Err(ComponentError::NoSuchVariable)
+            Err(NoSuchVariable(variable))
         }
     }
 
     /// Give a variable a new value.
-    pub fn set_variable(&mut self, variable: &str, value: T) -> Result<(), ComponentError> {
+    pub fn set_variable<'s>(
+        &mut self,
+        variable: &'s str,
+        value: T,
+    ) -> Result<(), NoSuchVariable<'s>> {
         if let Some(&idx) = self.name_to_index.get(variable) {
             self.updated_since_last_solve.insert(idx);
             self.ranker.touch(idx);
@@ -119,15 +117,25 @@ impl<T: Clone> Component<T> {
             self.variable_information.lock().unwrap()[idx].set_generation(self.generation);
             Ok(())
         } else {
-            Err(ComponentError::NoSuchVariable)
+            Err(NoSuchVariable(variable))
         }
     }
 
     /// Returns the current value of the variable with name `var`, if one exists.
-    pub fn get_variable(&self, var: &str) -> Option<impl Future<Output = (T, State<SolveError>)>> {
-        self.name_to_index
-            .get(var)
-            .map(|&idx| self.variable_activations[idx].clone())
+    pub fn variable<'s>(
+        &self,
+        variable: &'s str,
+    ) -> Result<impl Future<Output = (T, State<SolveError>)>, NoSuchVariable<'s>> {
+        let idx = self.variable_index(variable)?;
+        Ok(self.variable_activations[idx].clone())
+    }
+
+    /// Returns the index of the specified variable, if it exists.
+    fn variable_index<'s>(&self, variable: &'s str) -> Result<usize, NoSuchVariable<'s>> {
+        match self.name_to_index.get(variable) {
+            Some(&index) => Ok(index),
+            None => Err(NoSuchVariable(variable)),
+        }
     }
 
     /// Returns a reference to the name of this component.
@@ -217,33 +225,35 @@ impl<T: Clone> Component<T> {
     /// This adds a stay constraint to the specified variable,
     /// meaning that planning will attempt to avoid modifying it.
     /// The stay constraint can be remove with [`Component::unpin`].
-    pub fn pin(&mut self, var: &str)
+    pub fn pin<'s>(&mut self, variable: &'s str) -> Result<(), NoSuchVariable<'s>>
     where
         T: 'static,
     {
-        let idx = self.name_to_index[var];
+        let idx = self.variable_index(variable)?;
         self.constraints.push(Constraint::new(vec![Method::new(
             "pin".to_owned() + &idx.to_string(),
             vec![idx],
             vec![idx],
             Arc::new(Ok),
         )]));
+        Ok(())
     }
 
     /// Unpins a variable.
     ///
     /// This removes the stay constraint added by [`Component::pin`].
-    pub fn unpin(&mut self, var: &str)
+    pub fn unpin<'s>(&mut self, variable: &'s str) -> Result<(), NoSuchVariable<'s>>
     where
         T: 'static,
     {
-        let idx = self.name_to_index[var];
+        let idx = self.variable_index(variable)?;
         self.constraints.drain_filter(|c| {
             c.methods()
                 .get(0)
                 .map(|m| m.name() == "pin".to_owned() + &idx.to_string())
                 .unwrap_or(false)
         });
+        Ok(())
     }
 
     /// Returns true if any variables have been updated since
@@ -543,7 +553,7 @@ mod tests {
         let val1 = 3;
 
         // Pin c, which has the lowest priority
-        component.pin("c");
+        component.pin("c").unwrap();
         component.set_variable("a", val1).unwrap();
         component.update().unwrap();
 
@@ -560,7 +570,7 @@ mod tests {
         let val2 = 5;
 
         // Unpin c
-        component.unpin("c");
+        component.unpin("c").unwrap();
         component.set_variable("a", val2).unwrap();
         component.update().unwrap();
 

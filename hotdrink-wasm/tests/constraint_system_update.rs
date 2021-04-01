@@ -14,11 +14,11 @@ use wasm_bindgen_test::*;
 
 wasm_bindgen_test_configure!(run_in_browser);
 
-const LINEAR_ONEWAY: fn(usize) -> Component<()> = LinearOneway::build_component;
-const LINEAR_TWOWAY: fn(usize) -> Component<()> = LinearTwoway::build_component;
-const LADDER: fn(usize) -> Component<()> = Ladder::build_component;
-const UNPRUNABLE: fn(usize) -> Component<()> = Unprunable::build_component;
-const RANDOM: fn(usize) -> Component<()> = Random::build_component;
+const LINEAR_ONEWAY: fn(usize) -> Component<()> = LinearOneway::build;
+const LINEAR_TWOWAY: fn(usize) -> Component<()> = LinearTwoway::build;
+const LADDER: fn(usize) -> Component<()> = Ladder::build;
+const UNPRUNABLE: fn(usize) -> Component<()> = Unprunable::build;
+const RANDOM: fn(usize) -> Component<()> = Random::build;
 
 fn bench_update<T, F>(name: &str, make_cs: F, n_constraints: usize)
 where

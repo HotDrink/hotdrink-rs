@@ -24,7 +24,7 @@ macro_rules! bench_hierarchical_planner {
             #[bench]
             fn $name(b: &mut Bencher) {
                 let cs = $make_cs::<()>(N_COMPONENTS, N_VARIABLES);
-                let comp = cs.get_component("0");
+                let comp = cs.component("0").unwrap();
                 let ranking: Vec<usize> = (0..comp.n_variables()).collect();
                 b.iter(|| hierarchical_planner(comp, &ranking));
             }

@@ -10,6 +10,7 @@
 pub mod component;
 pub mod constraint;
 pub mod constraint_system;
+pub mod errors;
 pub mod method;
 pub mod solve_error;
 pub mod traits;

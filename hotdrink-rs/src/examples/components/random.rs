@@ -161,7 +161,7 @@ where
 pub struct Random;
 
 impl ComponentFactory for Random {
-    fn build_component<T>(n_constraints: usize) -> Component<T>
+    fn build<T>(n_constraints: usize) -> Component<T>
     where
         T: Clone + Debug + Default + 'static,
     {
@@ -200,7 +200,7 @@ mod tests {
         let x: Option<i32> = choose(&mut vec![]);
         assert_eq!(x, None);
 
-        for i in 1..10000 {
+        for i in 1..1000 {
             let mut v = (0..i).collect();
             let x = choose(&mut v);
             assert!(x.is_some() && !v.contains(&x.unwrap()));
@@ -209,7 +209,7 @@ mod tests {
 
     #[test]
     fn random_is_solvable() {
-        for _ in 0..10000 {
+        for _ in 0..1000 {
             let size = random_inclusive(0, 100).unwrap();
             let random: Component<i32> = make_random(size, 5);
             assert!(crate::algorithms::simple_planner::simple_planner(&random).is_some())
@@ -220,7 +220,7 @@ mod tests {
     #[ignore = "TODO: Should this work? Would be nice for benchmarks to guarantee it."]
     fn random_makes_enough_constraints() {
         use crate::ComponentSpec;
-        for _ in 0..10000 {
+        for _ in 0..1000 {
             let size = random_inclusive(0, 100).unwrap();
             let random: Component<i32> = make_random(size, 5);
             assert_eq!(random.constraints().len(), size);
@@ -240,7 +240,7 @@ mod tests {
 
     #[bench]
     fn construct_random_bench(b: &mut Bencher) {
-        const N_CONSTRAINTS: usize = 10_000;
-        b.iter(|| Random::build_component::<()>(N_CONSTRAINTS));
+        const N_CONSTRAINTS: usize = 1_000;
+        b.iter(|| Random::build::<()>(N_CONSTRAINTS));
     }
 }

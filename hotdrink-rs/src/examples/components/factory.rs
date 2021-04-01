@@ -1,6 +1,6 @@
 //! A trait for structs that can build components.
 
-use crate::{Component, ConstraintSystem};
+use crate::Component;
 use std::fmt::Debug;
 
 /// Convert a variable id to a name.
@@ -21,18 +21,7 @@ pub fn cname(cid: usize) -> String {
 /// This is used for creating components in benchmarks.
 pub trait ComponentFactory {
     /// Build the component with the specified name and number of constraints.
-    fn build_component<T>(n_constraints: usize) -> Component<T>
+    fn build<T>(n_constraints: usize) -> Component<T>
     where
         T: Clone + Debug + Default + 'static;
-
-    /// Use `build_component` to build a constraint system that wraps the component.
-    fn build_constraint_system<T>(n_constraints: usize) -> ConstraintSystem<T>
-    where
-        T: Clone + Debug + Default + 'static,
-    {
-        let component: Component<T> = Self::build_component(n_constraints);
-        let mut cs = ConstraintSystem::new();
-        cs.add_component(component);
-        cs
-    }
 }

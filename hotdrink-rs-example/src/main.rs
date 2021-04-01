@@ -86,7 +86,7 @@ impl Sandbox for GuiState {
 }
 
 fn bind<'a>(state: &'a mut State, name: &str, cs: &Component<i64>) -> TextInput<'a, Message> {
-    let (value, _) = futures::executor::block_on(cs.get_variable(&name).unwrap());
+    let (value, _) = futures::executor::block_on(cs.variable(&name).unwrap());
     let name_clone = name.to_string();
     TextInput::new(state, name, &value.to_string(), move |v| {
         Message::SetVariable(name_clone.clone(), v.parse().ok())

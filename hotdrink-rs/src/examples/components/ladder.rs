@@ -59,7 +59,7 @@ where
 pub struct Ladder;
 
 impl ComponentFactory for Ladder {
-    fn build_component<T>(n_constraints: usize) -> Component<T>
+    fn build<T>(n_constraints: usize) -> Component<T>
     where
         T: Clone + std::fmt::Debug + Default + 'static,
     {
@@ -85,7 +85,7 @@ mod tests {
     #[test]
     fn right_number_of_constraints() {
         for nc in (2..20).step_by(2) {
-            let comp: Component<()> = Ladder::build_component(nc);
+            let comp: Component<()> = Ladder::build(nc);
             assert_eq!(comp.constraints().len(), nc);
         }
     }

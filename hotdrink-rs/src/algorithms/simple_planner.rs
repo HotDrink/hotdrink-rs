@@ -330,23 +330,23 @@ mod tests {
     pub fn big_linear() {
         let linear_cs: ConstraintSystem<()> =
             crate::examples::constraint_systems::linear_oneway(1, 1000);
-        let linear_comp = linear_cs.get_component("0");
-        let _ = simple_planner(linear_comp);
+        let linear_comp = linear_cs.component("0").unwrap();
+        assert!(simple_planner(linear_comp).is_some())
     }
 
     #[test]
     pub fn big_tree() {
         let cs: ConstraintSystem<()> =
             crate::examples::constraint_systems::multioutput_singleway(1, 10);
-        let comp = cs.get_component("0");
-        let _ = simple_planner(comp);
+        let comp = cs.component("0").unwrap();
+        assert!(simple_planner(comp).is_some());
     }
 
     #[test]
     pub fn big_dense() {
         let cs: ConstraintSystem<()> = crate::examples::constraint_systems::make_dense_cs(1, 100);
-        let comp = cs.get_component("0");
-        let _ = simple_planner(comp);
+        let comp = cs.component("0").unwrap();
+        assert!(simple_planner(comp).is_some());
     }
 
     #[test]
@@ -393,7 +393,7 @@ mod tests {
     pub fn linear_bench(b: &mut Bencher) {
         let cs: ConstraintSystem<()> =
             crate::examples::constraint_systems::linear::linear_oneway(1, 400);
-        let comp = cs.get_component("0");
+        let comp = cs.component("0").unwrap();
         b.iter(|| simple_planner(comp));
     }
 
@@ -401,7 +401,7 @@ mod tests {
     pub fn tree_bench(b: &mut Bencher) {
         let cs: ConstraintSystem<()> =
             crate::examples::constraint_systems::tree::multioutput_singleway(1, 400);
-        let comp = cs.get_component("0");
+        let comp = cs.component("0").unwrap();
         b.iter(|| simple_planner(comp));
     }
 }

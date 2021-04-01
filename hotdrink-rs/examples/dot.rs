@@ -42,37 +42,37 @@ fn main() -> io::Result<()> {
     write_component("ladder", size, ladder::<()>)?;
     write_component("linear-oneway", size, |nv| {
         let cs = linear_oneway::<()>(1, nv);
-        let component = cs.get_component("0").clone();
+        let component = cs.component("0").unwrap().clone();
         component
     })?;
     write_component("linear-twoway", size, |nv| {
         let cs = linear_twoway::<()>(1, nv);
-        let component = cs.get_component("0").clone();
+        let component = cs.component("0").unwrap().clone();
         component
     })?;
     write_component("dense", size, |nv| {
         let component = make_dense_cs::<()>(1, nv);
-        let component = component.get_component("0").clone();
+        let component = component.component("0").unwrap().clone();
         component
     })?;
     write_component("singleoutput-singleway", size, |nv| {
         let component = singleoutput_singleway::<()>(1, nv);
-        let component = component.get_component("0").clone();
+        let component = component.component("0").unwrap().clone();
         component
     })?;
     write_component("singleoutput-multiway", size, |nv| {
         let component = singleoutput_multiway::<()>(1, nv);
-        let component = component.get_component("0").clone();
+        let component = component.component("0").unwrap().clone();
         component
     })?;
     write_component("multioutput-singleway", size, |nv| {
         let component = multioutput_singleway::<()>(1, nv);
-        let component = component.get_component("0").clone();
+        let component = component.component("0").unwrap().clone();
         component
     })?;
     write_component("unprunable", size, |nv| {
         let component = unprunable::<()>(1, nv);
-        let component = component.get_component("0").clone();
+        let component = component.component("0").unwrap().clone();
         component
     })?;
     let max_vars_per_constraint = 5;

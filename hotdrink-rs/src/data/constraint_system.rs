@@ -3,7 +3,11 @@
 //! for interacting with them.
 
 use super::{
-    component::Component, solve_error::SolveError, traits::PlanError, variable_activation::State,
+    component::Component,
+    errors::{ApiError, NoSuchComponent},
+    solve_error::SolveError,
+    traits::PlanError,
+    variable_activation::State,
 };
 use crate::{
     event::Event,
@@ -41,29 +45,47 @@ impl<T: Clone + Debug> ConstraintSystem<T> {
         self.components.push(component);
     }
 
-    /// Get a reference to the selected component
-    pub fn get_component(&self, name: &str) -> &Component<T> {
-        let index = self.component_map[name];
-        &self.components[index]
+    /// Get a reference to the selected component.
+    pub fn component<'s>(&self, name: &'s str) -> Result<&Component<T>, NoSuchComponent<'s>> {
+        match self.component_map.get(name) {
+            Some(&index) => Ok(&self.components[index]),
+            None => Err(NoSuchComponent(&name)),
+        }
+    }
+
+    /// Get a mutable reference to the selected component.
+    pub fn component_mut<'s>(
+        &mut self,
+        name: &'s str,
+    ) -> Result<&mut Component<T>, NoSuchComponent<'s>> {
+        match self.component_map.get(name) {
+            Some(&index) => Ok(&mut self.components[index]),
+            None => Err(NoSuchComponent(&name)),
+        }
     }
 
     /// Updates the specified variable to the provided value.
-    pub fn set_variable(&mut self, component: &str, variable: &str, value: T) {
+    pub fn set_variable<'s>(
+        &mut self,
+        component: &'s str,
+        variable: &'s str,
+        value: T,
+    ) -> Result<(), ApiError<'s>> {
         log::debug!("Variable {}.{} updated to {:?}", component, variable, value);
-        let index = self.component_map[component];
-        self.components[index]
-            .set_variable(variable, value)
-            .unwrap_or_else(|_| panic!("No such variable: {}.{}", component, variable));
+        let component = self.component_mut(component)?;
+        component.set_variable(variable, value)?;
+        Ok(())
     }
 
     /// Returns the current value of the variable with name `var`, if one exists.
-    pub fn get_variable(
+    pub fn get_variable<'s>(
         &self,
-        component: &str,
-        variable: &str,
-    ) -> Option<impl Future<Output = (T, State<SolveError>)>> {
-        let index = self.component_map[component];
-        self.components[index].get_variable(variable)
+        component: &'s str,
+        variable: &'s str,
+    ) -> Result<impl Future<Output = (T, State<SolveError>)>, ApiError<'s>> {
+        let component = self.component(component)?;
+        let variable = component.variable(variable)?;
+        Ok(variable)
     }
 
     /// Solves each component in the constraint system,
@@ -157,40 +179,35 @@ impl<T: Clone + Debug> ConstraintSystem<T> {
     /// This adds a stay constraint to the specified variable,
     /// meaning that planning will attempt to avoid modifying it.
     /// The stay constraint can be remove with [`ConstraintSystem::unpin`].
-    pub fn pin(&mut self, component: &str, variable: &str)
+    pub fn pin<'s>(&mut self, component: &'s str, variable: &'s str) -> Result<(), ApiError<'s>>
     where
         T: 'static,
     {
-        let index = self.component_map[component];
-        self.components[index].pin(variable);
+        let component = self.component_mut(component)?;
+        component.pin(variable)?;
+        Ok(())
     }
 
     /// Unpins a variable.
     ///
     /// This removes the stay constraint added by [`ConstraintSystem::pin`].
-    pub fn unpin(&mut self, component: &str, variable: &str)
+    pub fn unpin<'s>(&mut self, component: &'s str, variable: &'s str) -> Result<(), ApiError<'s>>
     where
         T: 'static,
     {
-        let index = self.component_map[component];
-        self.components[index].unpin(variable);
+        let component = self.component_mut(component)?;
+        component.unpin(variable)?;
+        Ok(())
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::ConstraintSystem;
-    use crate::{
-        component, ret,
-        thread::{
-            dummy_pool::DummyPool,
-            thread_pool::{TerminationStrategy, ThreadPool},
-        },
-    };
+    use crate::{component, ret, Event};
 
     #[test]
     pub fn constraint_system_test() {
-        let mut tp = DummyPool::new(0, TerminationStrategy::UnusedResultAndNotDone).unwrap();
         // Construct the constraint system
         let mut cs = ConstraintSystem::new();
         cs.add_component(component! {
@@ -198,26 +215,34 @@ mod tests {
                 let a: i32 = 0, b: i32 = 0, c: i32 = 0;
                 constraint sum {
                     abc(a: &i32, b: &i32) -> [c] = ret![a + b];
-                    bca(b: &i32, c: &i32) -> [a] = ret![b + c];
-                    cab(c: &i32, a: &i32) -> [b] = ret![c + a];
+                    bca(a: &i32, c: &i32) -> [b] = ret![c - a];
+                    cab(b: &i32, c: &i32) -> [a] = ret![c - b];
                 }
             }
         });
 
         // Update a few variable values
-        cs.set_variable("comp", "a", 7);
-        assert_eq!(cs.par_update(&mut tp), Ok(()));
+        cs.set_variable("comp", "a", 7).unwrap();
+        assert_eq!(cs.update(), Ok(()));
 
-        // TODO: Replace this test?
-        // cs.listen(Arc::new(Mutex::new(|e: Notification| {
-        //     if let EventData::Ready(v) = &e.data_ref() {
-        //         match e.identifier().variable() {
-        //             "a" => assert_eq!(v, &7),
-        //             "b" => assert_eq!(v, &0),
-        //             "c" => assert_eq!(v, &7),
-        //             _ => panic!("No such variable"),
-        //         }
-        //     }
-        // })));
+        let comp = cs.component_mut("comp").unwrap();
+        comp.subscribe("a", |event| {
+            if let Event::Ready(v) = event {
+                assert_eq!(v, 7)
+            }
+        })
+        .unwrap();
+        comp.subscribe("b", |event| {
+            if let Event::Ready(v) = event {
+                assert_eq!(v, 0)
+            }
+        })
+        .unwrap();
+        comp.subscribe("c", |event| {
+            if let Event::Ready(v) = event {
+                assert_eq!(v, 7)
+            }
+        })
+        .unwrap();
     }
 }

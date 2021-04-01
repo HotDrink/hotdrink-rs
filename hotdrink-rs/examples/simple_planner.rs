@@ -5,7 +5,7 @@ use hotdrink_rs::{
 fn main() {
     env_logger::init();
     let cs = make_dense_cs::<()>(1, 100000);
-    let comp = cs.get_component("0");
+    let comp = cs.component("0").unwrap();
     let plan = simple_planner(comp);
     dbg!(plan.is_some());
 }

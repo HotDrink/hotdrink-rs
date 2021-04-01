@@ -151,18 +151,33 @@ macro_rules! gen_js_constraint_system {
                 self.inner
                     .lock()
                     .unwrap()
-                    .set_variable(component, variable, value);
+                    .set_variable(component, variable, value)
+                    .unwrap_or_else(|e| {
+                        log::error!("Could not set variable: {}", e);
+                    });
             }
 
             /// Pins the specified variable, stopping it from changing.
             /// Note that this can cause the system to be overconstrained.
             pub fn pin(&self, component: &str, variable: &str) {
-                self.inner.lock().unwrap().pin(component, variable);
+                self.inner
+                    .lock()
+                    .unwrap()
+                    .pin(component, variable)
+                    .unwrap_or_else(|e| {
+                        log::error!("Could not pin variable: {}", e);
+                    });
             }
 
             /// Unpins the specified variable, allowing it to change again.
             pub fn unpin(&self, component: &str, variable: &str) {
-                self.inner.lock().unwrap().unpin(component, variable);
+                self.inner
+                    .lock()
+                    .unwrap()
+                    .unpin(component, variable)
+                    .unwrap_or_else(|e| {
+                        log::error!("Could not unpin variable: {}", e);
+                    });
             }
         }
     };
