@@ -6,6 +6,21 @@ function vname(i) {
     return "v" + i;
 }
 
+function make_linear_oneway(n_constraints) {
+    let n_variables = n_constraints + 1;
+    var model = new hd.ComponentBuilder();
+    for (let i = 0; i < n_variables; i++) {
+        model.variable(vname(i), 0);
+    }
+    for (let i = 0; i < n_variables - 1; i++) {
+        let a = vname(i);
+        let b = vname(i + 1);
+        model.constraint(`${a}, ${b}`)
+        model.method(`${a} -> ${b}`, id);
+    }
+    return model.component();
+}
+
 function make_linear_twoway(n_constraints) {
     let n_variables = n_constraints + 1;
     var model = new hd.ComponentBuilder();
@@ -22,17 +37,27 @@ function make_linear_twoway(n_constraints) {
     return model.component();
 }
 
-function make_linear_oneway(n_constraints) {
-    let n_variables = n_constraints + 1;
+function make_ladder(n_constraints) {
+    let n_variables = n_constraints + 2;
     var model = new hd.ComponentBuilder();
     for (let i = 0; i < n_variables; i++) {
         model.variable(vname(i), 0);
     }
-    for (let i = 0; i < n_variables - 1; i++) {
-        let a = vname(i);
-        let b = vname(i + 1);
-        model.constraint(`${a}, ${b}`)
-        model.method(`${a} -> ${b}`, id);
+    for (let i = 0; i < n_variables - 3; i += 2) {
+        let a0 = vname(i);
+        let b0 = vname(i + 1);
+        let a1 = vname(i + 2);
+        let b1 = vname(i + 3);
+
+        model.constraint(`${a0}, ${b0}, ${a1}`);
+        model.method(`${a0}, ${b0} -> ${a1}`, (a, b) => a + b);
+        model.method(`${a0}, ${a1} -> ${b0}`, (a, b) => a + b);
+        model.method(`${b0}, ${a1} -> ${a0}`, (a, b) => a + b);
+
+        model.constraint(`${b1}, ${b0}, ${a1}`);
+        model.method(`${b1}, ${b0} -> ${a1}`, (a, b) => a + b);
+        model.method(`${b1}, ${a1} -> ${b0}`, (a, b) => a + b);
+        model.method(`${b0}, ${a1} -> ${b1}`, (a, b) => a + b);
     }
     return model.component();
 }
@@ -51,31 +76,6 @@ function make_unprunable(n_constraints) {
         model.constraint(`${current}, ${left}, ${right}`)
         model.method(`${current}, ${left} -> ${right}`, (a, b) => a + b);
         model.method(`${current}, ${right} -> ${left}`, (a, b) => a + b);
-    }
-    return model.component();
-}
-
-function make_ladder(n_constraints) {
-    let n_variables = n_constraints + 2;
-    var model = new hd.ComponentBuilder();
-    for (let i = 0; i < n_variables; i++) {
-        model.variable(vname(i), 0);
-    }
-    for (let i = 0; i < n_variables - 3; i += 2) {
-        let a0 = vname(i);
-        let b0 = vname(i + 1);
-        let a1 = vname(i + 2);
-        let b1 = vname(i + 3);
-
-        model.constraint(`${a0}, ${b0}, ${a1}`);
-        model.method(`${a0}, ${b0} -> ${a1}`, (a, b) => 0);
-        model.method(`${a0}, ${a1} -> ${b0}`, (a, b) => 0);
-        model.method(`${b0}, ${a1} -> ${a0}`, (a, b) => 0);
-
-        model.constraint(`${b1}, ${b0}, ${a1}`);
-        model.method(`${b1}, ${b0} -> ${a1}`, (a, b) => 0);
-        model.method(`${b1}, ${a1} -> ${b0}`, (a, b) => 0);
-        model.method(`${b0}, ${a1} -> ${b1}`, (a, b) => 0);
     }
     return model.component();
 }
@@ -218,8 +218,15 @@ function bench_component(name, make_component, n_variables) {
 }
 
 function bench_components(entries) {
-    for (let n_variables of [250, 500, 1000]) {
-        for (let entry of entries) {
+    for (let n_variables of [50, 100, 200]) {
+        for (let entry of entries.slow) {
+            let name = entry.name;
+            let make_component = entry.make_component;
+            bench_component(name, make_component, n_variables);
+        }
+    }
+    for (let n_variables of [50, 100, 200, 400, 600]) {
+        for (let entry of entries.fast) {
             let name = entry.name;
             let make_component = entry.make_component;
             bench_component(name, make_component, n_variables);
@@ -227,10 +234,14 @@ function bench_components(entries) {
     }
 }
 
-bench_components([
-    { name: "linear-oneway", make_component: make_linear_oneway },
-    { name: "linear-twoway", make_component: make_linear_twoway },
-    { name: "ladder", make_component: make_ladder },
-    { name: "unprunable", make_component: make_unprunable },
-    { name: "random", make_component: make_random },
-]);
+bench_components({
+    slow: [
+        { name: "linear-oneway", make_component: make_linear_oneway },
+        { name: "linear-twoway", make_component: make_linear_twoway },
+        { name: "ladder       ", make_component: make_ladder },
+        { name: "random       ", make_component: make_random },
+    ],
+    fast: [
+        { name: "unprunable   ", make_component: make_unprunable },
+    ]
+});

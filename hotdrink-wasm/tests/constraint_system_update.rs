@@ -47,7 +47,7 @@ fn bench_update<Cb: ComponentFactory>(n_constraints: usize) {
 
 #[wasm_bindgen_test]
 fn thesis_update() {
-    for &i in &[1250, 2500, 5000] {
+    for &i in &[50, 100, 200, 400, 600] {
         bench_update::<LinearOneway>(i);
         bench_update::<LinearTwoway>(i);
         bench_update::<Ladder>(i);
