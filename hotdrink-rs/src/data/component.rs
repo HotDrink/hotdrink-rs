@@ -25,6 +25,7 @@ use crate::{
 use std::{
     collections::{HashMap, HashSet},
     fmt::{self, Debug, Write},
+    future::Future,
     ops::{Index, IndexMut},
     sync::{Arc, Mutex},
 };
@@ -78,7 +79,7 @@ impl<T: Clone> Component<T> {
         if let Some(&index) = self.name_to_index.get(variable) {
             // Call the callback with current variable state
             let activation = &self.variable_activations[index];
-            let shared_state = activation.shared_state();
+            let shared_state = activation.inner();
             let shared_state = shared_state.lock().unwrap();
             let value = shared_state.current_value();
             let state = shared_state.get_state();
@@ -108,8 +109,8 @@ impl<T: Clone> Component<T> {
     }
 
     /// Give a variable a new value.
-    pub fn set_variable(&mut self, var: &str, value: T) -> Result<(), ComponentError> {
-        if let Some(&idx) = self.name_to_index.get(var) {
+    pub fn set_variable(&mut self, variable: &str, value: T) -> Result<(), ComponentError> {
+        if let Some(&idx) = self.name_to_index.get(variable) {
             self.updated_since_last_solve.insert(idx);
             self.ranker.touch(idx);
 
@@ -123,10 +124,10 @@ impl<T: Clone> Component<T> {
     }
 
     /// Returns the current value of the variable with name `var`, if one exists.
-    pub fn get_variable(&self, var: &str) -> Option<T> {
+    pub fn get_variable(&self, var: &str) -> Option<impl Future<Output = (T, State<SolveError>)>> {
         self.name_to_index
             .get(var)
-            .map(|&idx| self.variable_activations[idx].latest_value())
+            .map(|&idx| self.variable_activations[idx].clone())
     }
 
     /// Returns a reference to the name of this component.
@@ -189,7 +190,7 @@ impl<T: Clone> Component<T> {
         self.updated_since_last_solve.clear();
         let component_name = self.name().to_owned();
 
-        // Clone, but cancel the inner activation to avoid two references
+        // Clone the variable information for use in the general callback
         let variable_information_clone = self.variable_information.clone();
 
         // Solve based on the plan

@@ -132,11 +132,12 @@ where
             for &input in &actual_variables {
                 inputs.push(input);
             }
+            let n_outputs = outputs.len();
             let method = Method::new(
                 format!("m{}", i),
                 inputs,
                 outputs.to_vec(),
-                Arc::new(|_| Ok(vec![T::default()])),
+                Arc::new(move |_| Ok(vec![T::default(); n_outputs])),
             );
             methods.push(method);
         }
@@ -157,9 +158,9 @@ where
 
 /// A component factory for creating random components.
 #[derive(Copy, Clone, Debug, Default, PartialEq, Eq)]
-pub struct RandomComponentFactory;
+pub struct Random;
 
-impl ComponentFactory for RandomComponentFactory {
+impl ComponentFactory for Random {
     fn build_component<T>(n_constraints: usize) -> Component<T>
     where
         T: Clone + Debug + Default + 'static,
@@ -170,7 +171,7 @@ impl ComponentFactory for RandomComponentFactory {
 
 #[cfg(test)]
 mod tests {
-    use super::{choose, make_random, random_inclusive};
+    use super::{super::ComponentFactory, choose, make_random, random_inclusive, Random};
     use crate::Component;
 
     #[test]
@@ -199,7 +200,7 @@ mod tests {
         let x: Option<i32> = choose(&mut vec![]);
         assert_eq!(x, None);
 
-        for i in 1..100 {
+        for i in 1..10000 {
             let mut v = (0..i).collect();
             let x = choose(&mut v);
             assert!(x.is_some() && !v.contains(&x.unwrap()));
@@ -208,7 +209,7 @@ mod tests {
 
     #[test]
     fn random_is_solvable() {
-        for _ in 0..1000 {
+        for _ in 0..10000 {
             let size = random_inclusive(0, 100).unwrap();
             let random: Component<i32> = make_random(size, 5);
             assert!(crate::algorithms::simple_planner::simple_planner(&random).is_some())
@@ -219,7 +220,7 @@ mod tests {
     #[ignore = "TODO: Should this work? Would be nice for benchmarks to guarantee it."]
     fn random_makes_enough_constraints() {
         use crate::ComponentSpec;
-        for _ in 0..1000 {
+        for _ in 0..10000 {
             let size = random_inclusive(0, 100).unwrap();
             let random: Component<i32> = make_random(size, 5);
             assert_eq!(random.constraints().len(), size);
@@ -232,5 +233,14 @@ mod tests {
         for r in random_usize {
             assert!((5..100).contains(&r));
         }
+    }
+
+    extern crate test;
+    use test::Bencher;
+
+    #[bench]
+    fn construct_random_bench(b: &mut Bencher) {
+        const N_CONSTRAINTS: usize = 10_000;
+        b.iter(|| Random::build_component::<()>(N_CONSTRAINTS));
     }
 }

@@ -2,12 +2,14 @@
 //! This works as a container for components, and provides an API
 //! for interacting with them.
 
-use super::{component::Component, solve_error::SolveError, traits::PlanError};
+use super::{
+    component::Component, solve_error::SolveError, traits::PlanError, variable_activation::State,
+};
 use crate::{
     event::Event,
     thread::{dummy_pool::DummyPool, thread_pool::ThreadPool},
 };
-use std::{collections::HashMap, fmt::Debug};
+use std::{collections::HashMap, fmt::Debug, future::Future};
 
 /// A container for `Component`s.
 #[derive(Clone, Debug, PartialEq)]
@@ -55,7 +57,11 @@ impl<T: Clone + Debug> ConstraintSystem<T> {
     }
 
     /// Returns the current value of the variable with name `var`, if one exists.
-    pub fn get_variable(&self, component: &str, variable: &str) -> Option<T> {
+    pub fn get_variable(
+        &self,
+        component: &str,
+        variable: &str,
+    ) -> Option<impl Future<Output = (T, State<SolveError>)>> {
         let index = self.component_map[component];
         self.components[index].get_variable(variable)
     }

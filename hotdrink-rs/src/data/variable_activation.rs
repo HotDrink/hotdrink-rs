@@ -36,17 +36,17 @@ pub type EventCallback<T, E> = Arc<Mutex<dyn Fn(Event<T, E>) + Send>>;
 
 /// Contains a slot for a value to be produced,
 /// and one for a waker to be called when this happens.
-pub struct SharedState<T, E> {
+pub struct VariableActivationInner<T, E> {
     value: T,
     state: State<E>,
     waker: Option<Waker>,
 }
 
-impl<T: Clone, E: Clone> SharedState<T, E> {
-    /// Constructs a [`SharedState`] from another one.
+impl<T: Clone, E: Clone> VariableActivationInner<T, E> {
+    /// Constructs a [`VariableActivationInner`] from another one.
     /// This is used as a way of having a fallback in case the new computation fails.
     /// That is, previous provides a default value.
-    pub fn from_previous(previous: &Arc<Mutex<SharedState<T, E>>>) -> Self {
+    pub fn from_previous(previous: &Arc<Mutex<VariableActivationInner<T, E>>>) -> Self {
         // TODO: If previous is not done yet, it will take previous' old value.
         // We should wait for the previous to get a value,
         // and if that fails it will again use a reference to the previous one.
@@ -94,7 +94,7 @@ impl<T: Clone, E: Clone> SharedState<T, E> {
     }
 }
 
-impl<T, E> From<T> for SharedState<T, E> {
+impl<T, E> From<T> for VariableActivationInner<T, E> {
     fn from(value: T) -> Self {
         Self {
             value,
@@ -104,7 +104,7 @@ impl<T, E> From<T> for SharedState<T, E> {
     }
 }
 
-impl<T: Debug, E: Debug> Debug for SharedState<T, E> {
+impl<T: Debug, E: Debug> Debug for VariableActivationInner<T, E> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("SharedState")
             .field("value", &self.value)
@@ -113,7 +113,7 @@ impl<T: Debug, E: Debug> Debug for SharedState<T, E> {
     }
 }
 
-impl<T: PartialEq, E: PartialEq> PartialEq for SharedState<T, E> {
+impl<T: PartialEq, E: PartialEq> PartialEq for VariableActivationInner<T, E> {
     fn eq(&self, other: &Self) -> bool {
         self.value == other.value && self.state == other.state
     }
@@ -126,7 +126,7 @@ impl<T: PartialEq, E: PartialEq> PartialEq for SharedState<T, E> {
 pub struct VariableActivation<T, E> {
     /// A slot for the data once it arrives, as well as
     /// the waker to call once a result has been produced.
-    pub shared_state: Arc<Mutex<SharedState<T, E>>>,
+    pub shared_state: Arc<Mutex<VariableActivationInner<T, E>>>,
     /// A reference to the thread that is producing the result.
     /// Dropping this tells the worker that this value no longer requires the outputs of the computation.
     pub producer: Option<TerminationHandle>,
@@ -134,7 +134,7 @@ pub struct VariableActivation<T, E> {
 
 impl<T: Clone, E: Clone> VariableActivation<T, E> {
     /// Returns a reference to the shared state of this variable activation.
-    pub fn shared_state(&self) -> &Arc<Mutex<SharedState<T, E>>> {
+    pub fn inner(&self) -> &Arc<Mutex<VariableActivationInner<T, E>>> {
         &self.shared_state
     }
 
@@ -163,7 +163,7 @@ impl<T: Debug, E: Debug> Debug for VariableActivation<T, E> {
 impl<T, E> From<T> for VariableActivation<T, E> {
     fn from(value: T) -> Self {
         Self {
-            shared_state: Arc::new(Mutex::new(SharedState::from(value))),
+            shared_state: Arc::new(Mutex::new(VariableActivationInner::from(value))),
             producer: None,
         }
     }

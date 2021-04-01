@@ -7,8 +7,8 @@ use crate::data::variable_activation::State;
 use crate::{
     algorithms::hierarchical_planner::Vertex,
     data::{
-        traits::{MethodFailure, MethodFunction, MethodSpec, MethodResult},
-        variable_activation::{SharedState, VariableActivation},
+        traits::{MethodFailure, MethodFunction, MethodResult, MethodSpec},
+        variable_activation::{VariableActivation, VariableActivationInner},
     },
     event::{Event, GeneralEvent},
     thread::thread_pool::ThreadPool,
@@ -89,18 +89,19 @@ impl<T> MethodSpec for Method<T> {
     }
 }
 
-/// A [`SharedState`] wrapped in an [`Arc`] and a [`Mutex`] so that it can be shared.
-pub type SharedSharedState<T> = Arc<Mutex<SharedState<T, SolveError>>>;
+/// A [`VariableActivationInner`] wrapped in an [`Arc`] and a [`Mutex`] so that it can be shared.
+pub type SharedVariableActivationInner<T> = Arc<Mutex<VariableActivationInner<T, SolveError>>>;
 
 fn handle_error<T>(
     output_indices: &[usize],
-    shared_states: &Arc<Vec<SharedSharedState<T>>>,
+    shared_states: &Arc<Vec<SharedVariableActivationInner<T>>>,
     general_callback: &(impl Fn(GeneralEvent<T, SolveError>) + Send + 'static),
     generation: usize,
     errors: Vec<SolveError>,
 ) where
     T: Clone,
 {
+    log::error!("{:?}", errors);
     for &o in output_indices {
         general_callback(GeneralEvent::new(
             o,
@@ -119,7 +120,7 @@ impl<T> Method<T> {
     pub fn activate(
         &self,
         inputs: Vec<impl Into<VariableActivation<T, SolveError>>>,
-        shared_states: Vec<SharedSharedState<T>>,
+        shared_states: Vec<SharedVariableActivationInner<T>>,
         location: (String, String),
         generation: usize,
         pool: &mut impl ThreadPool,
@@ -312,36 +313,4 @@ impl<T> Vertex for Method<T> {
     fn is_stay(&self) -> bool {
         self.is_stay
     }
-}
-
-#[cfg(test)]
-mod tests {
-    // use std::sync::Arc;
-    // use crate::{data::traits::MethodError, thread::pool::dummy_pool::DummyPool};
-    // use super::Method;
-
-    // #[test]
-    // pub fn activate_test() {
-    //     let m = Method::Normal(
-    //         "m".to_string(),
-    //         vec![0, 1],
-    //         vec![2],
-    //         Arc::new(|v: Vec<i32>| Ok(vec![v[0] + v[1]])),
-    //     );
-    //     // Verify good input gives good output
-    //     let futures = m.activate(vec![3, 6], &mut DummyPool);
-    //     match futures {
-    //         Ok(futures) => futures::executor::block_on(async {
-    //             let values = futures::future::join_all(futures).await;
-    //             assert_eq!(values, vec![9]);
-    //         }),
-    //         Err(e) => panic!("This method call should not fail, but got {:?}", e),
-    //     }
-
-    //     // Verify that bad input gives error
-    //     assert_eq!(
-    //         m.activate(vec![3], &mut DummyPool),
-    //         Err(MethodError::WrongInputCount)
-    //     );
-    // }
 }

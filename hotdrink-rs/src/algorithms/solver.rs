@@ -8,7 +8,7 @@ use crate::{
         method::Method,
         solve_error::SolveError,
         traits::{MethodFailure, MethodSpec, PlanError},
-        variable_activation::{SharedState, VariableActivation},
+        variable_activation::{VariableActivation, VariableActivationInner},
     },
     event::GeneralEvent,
     thread::thread_pool::ThreadPool,
@@ -91,7 +91,7 @@ where
             // Cancel old activation
             previous_activation.cancel();
             // Keep the old value from the previous state, but set to pending
-            let shared_state = SharedState::from_previous(previous_activation.shared_state());
+            let shared_state = VariableActivationInner::from_previous(previous_activation.inner());
             shared_states.push(Arc::new(Mutex::new(shared_state)));
         }
 

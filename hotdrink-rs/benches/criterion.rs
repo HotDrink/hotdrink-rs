@@ -8,20 +8,29 @@ use hotdrink_rs::{
         factory::ComponentFactory,
         ladder::Ladder,
         linear::{LinearOneway, LinearTwoway},
-        random::RandomComponentFactory,
+        random::Random,
         unprunable::Unprunable,
     },
     Component,
 };
-use rand::Rng;
+use rand::{distributions::Uniform, prelude::ThreadRng, Rng};
 
 const LINEAR_ONEWAY: fn(usize) -> Component<()> = LinearOneway::build_component;
 const LINEAR_TWOWAY: fn(usize) -> Component<()> = LinearTwoway::build_component;
 const LADDER: fn(usize) -> Component<()> = Ladder::build_component;
 const UNPRUNABLE: fn(usize) -> Component<()> = Unprunable::build_component;
-const RANDOM: fn(usize) -> Component<()> = RandomComponentFactory::build_component;
+const RANDOM: fn(usize) -> Component<()> = Random::build_component;
 
 // Helpers for benching operations on components
+
+fn update_random(component: &mut Component<()>, rng: &mut ThreadRng, uniform: Uniform<usize>) {
+    if component.n_variables() > 0 {
+        let random_number: usize = rng.sample(uniform);
+        component
+            .set_variable(&format!("var{}", random_number), ())
+            .unwrap();
+    }
+}
 
 fn bench_update(
     group: &mut BenchmarkGroup<WallTime>,
@@ -32,14 +41,9 @@ fn bench_update(
     group.bench_with_input(BenchmarkId::new(name, input), input, |b, input| {
         let mut component: Component<()> = make_component(*input);
         let mut rng = rand::thread_rng();
-        let uniform = rand::distributions::Uniform::new(0, component.n_variables());
+        let uniform = Uniform::new_inclusive(0, component.n_variables().saturating_sub(1));
         b.iter(|| {
-            if *input > 0 {
-                let random_number: usize = rng.sample(uniform);
-                component
-                    .set_variable(&format!("var{}", random_number), ())
-                    .unwrap();
-            }
+            update_random(&mut component, &mut rng, uniform);
             component.update().unwrap();
         })
     });
@@ -52,16 +56,12 @@ fn bench_hierarchical_planner(
     make_component: fn(usize) -> Component<()>,
 ) {
     group.bench_with_input(BenchmarkId::new(name, input), input, |b, input| {
-        let mut comp = make_component(*input);
+        let mut component = make_component(*input);
         let mut rng = rand::thread_rng();
-        let uniform = rand::distributions::Uniform::new(0, comp.n_variables());
+        let uniform = Uniform::new_inclusive(0, component.n_variables().saturating_sub(1));
         b.iter(|| {
-            if comp.n_variables() > 0 {
-                let random_number: usize = rng.sample(uniform);
-                comp.set_variable(&format!("var{}", random_number), ())
-                    .unwrap();
-            }
-            hierarchical_planner(&comp, &comp.ranking()).unwrap();
+            update_random(&mut component, &mut rng, uniform);
+            hierarchical_planner(&component, &component.ranking()).unwrap();
         })
     });
 }
@@ -90,6 +90,10 @@ fn update_benches(c: &mut Criterion) {
         bench_update(&mut group, "ladder", i, LADDER);
         bench_update(&mut group, "unprunable", i, UNPRUNABLE);
         bench_update(&mut group, "random", i, RANDOM);
+    }
+    for i in &[250, 500, 1000] {
+        bench_hierarchical_planner(&mut group, "unprunable", i, UNPRUNABLE);
+        bench_hierarchical_planner(&mut group, "random", i, RANDOM);
     }
     group.finish();
 }

@@ -10,12 +10,12 @@ struct GuiState {
     field_b: State,
     field_c: State,
     field_d: State,
-    component: Component<i32>,
+    component: Component<i64>,
 }
 
 #[derive(Debug, Clone)]
 enum Message {
-    SetVariable(String, Option<i32>),
+    SetVariable(String, Option<i64>),
 }
 
 impl Sandbox for GuiState {
@@ -25,16 +25,16 @@ impl Sandbox for GuiState {
         // Create constraint system
         let component = component! {
             component Sum {
-                let a: i32 = 0, b: i32 = 0, c: i32 = 0, d: i32 = 0;
+                let a: i64 = 0, b: i64 = 0, c: i64 = 0, d: i64 = 0;
                 constraint Sum {
-                    s1(a: &i32, b: &i32) -> [c] = ret![a + b];
-                    s2(a: &i32, c: &i32) -> [b] = ret![c - a];
-                    s3(b: &i32, c: &i32) -> [a] = ret![c - b];
+                    s1(a: &i64, b: &i64) -> [c] = ret![a.saturating_add(*b)];
+                    s2(a: &i64, c: &i64) -> [b] = ret![c - a];
+                    s3(b: &i64, c: &i64) -> [a] = ret![c - b];
                 }
                 constraint Product {
-                    p1(a: &i32, b: &i32) -> [d] = ret![a * b];
-                    p2(a: &i32, d: &i32) -> [b] = ret![d / a];
-                    p3(b: &i32, d: &i32) -> [a] = ret![d / b];
+                    p1(a: &i64, b: &i64) -> [d] = ret![a.saturating_mul(*b)];
+                    p2(a: &i64, d: &i64) -> [b] = ret![d / a];
+                    p3(b: &i64, d: &i64) -> [a] = ret![d / b];
                 }
             }
         };
@@ -75,7 +75,7 @@ impl Sandbox for GuiState {
     fn view(&mut self) -> Element<Message> {
         Column::new()
             .padding(20)
-            .width(Length::Units(200))
+            .width(Length::Units(300))
             .align_items(Align::Center)
             .push(bind(&mut self.field_a, "a", &self.component))
             .push(bind(&mut self.field_b, "b", &self.component))
@@ -85,10 +85,10 @@ impl Sandbox for GuiState {
     }
 }
 
-fn bind<'a>(state: &'a mut State, name: &str, cs: &Component<i32>) -> TextInput<'a, Message> {
-    let value = cs.get_variable(&name);
+fn bind<'a>(state: &'a mut State, name: &str, cs: &Component<i64>) -> TextInput<'a, Message> {
+    let (value, _) = futures::executor::block_on(cs.get_variable(&name).unwrap());
     let name_clone = name.to_string();
-    TextInput::new(state, name, &value.unwrap().to_string(), move |v| {
+    TextInput::new(state, name, &value.to_string(), move |v| {
         Message::SetVariable(name_clone.clone(), v.parse().ok())
     })
 }
