@@ -60,6 +60,9 @@ where
 pub struct Unprunable;
 
 impl ComponentFactory for Unprunable {
+    fn name() -> &'static str {
+        "unprunable"
+    }
     fn build<T>(n_constraints: usize) -> Component<T>
     where
         T: Clone + Debug + Default + 'static,

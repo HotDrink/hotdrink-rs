@@ -51,7 +51,12 @@ where
     for i in 0..n_variables {
         name_to_index.insert(format!("var{}", i), i);
     }
-    Component::new_with_map("ladder".to_string(), name_to_index, values, constraints)
+    Component::new_with_map(
+        Ladder::name().to_string(),
+        name_to_index,
+        values,
+        constraints,
+    )
 }
 
 /// A component factory for creating ladder-like components.
@@ -59,6 +64,9 @@ where
 pub struct Ladder;
 
 impl ComponentFactory for Ladder {
+    fn name() -> &'static str {
+        "ladder"
+    }
     fn build<T>(n_constraints: usize) -> Component<T>
     where
         T: Clone + std::fmt::Debug + Default + 'static,

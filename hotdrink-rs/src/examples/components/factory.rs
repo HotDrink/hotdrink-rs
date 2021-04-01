@@ -17,9 +17,11 @@ pub fn cname(cid: usize) -> String {
     format!("c{}", cid)
 }
 
-/// A trait for structs that can build components.
+/// A trait for structs that can build components of a specified size.
 /// This is used for creating components in benchmarks.
 pub trait ComponentFactory {
+    /// Returns the name of this factory.
+    fn name() -> &'static str;
     /// Build the component with the specified name and number of constraints.
     fn build<T>(n_constraints: usize) -> Component<T>
     where

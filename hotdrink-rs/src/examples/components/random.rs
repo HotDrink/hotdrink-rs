@@ -149,7 +149,7 @@ where
 
     let name_to_idx = (0..n_variables).map(|i| (format!("var{}", i), i)).collect();
     Component::new_with_map(
-        "random".to_string(),
+        Random::name().to_string(),
         name_to_idx,
         vec![T::default(); n_variables],
         constraints,
@@ -161,6 +161,9 @@ where
 pub struct Random;
 
 impl ComponentFactory for Random {
+    fn name() -> &'static str {
+        "random"
+    }
     fn build<T>(n_constraints: usize) -> Component<T>
     where
         T: Clone + Debug + Default + 'static,

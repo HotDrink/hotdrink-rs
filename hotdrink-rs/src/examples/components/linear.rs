@@ -12,6 +12,9 @@ use std::{fmt::Debug, sync::Arc};
 pub struct LinearOneway;
 
 impl ComponentFactory for LinearOneway {
+    fn name() -> &'static str {
+        "linear-oneway"
+    }
     fn build<T>(n_constraints: usize) -> Component<T>
     where
         T: Clone + Debug + Default + 'static,
@@ -43,7 +46,7 @@ impl ComponentFactory for LinearOneway {
 
         // Construct component
         let comp = RawComponent::new(
-            "linear-oneway".to_string(),
+            LinearOneway::name().to_string(),
             variable_names,
             vec![T::default(); n_variables],
             constraints,
@@ -58,6 +61,9 @@ impl ComponentFactory for LinearOneway {
 pub struct LinearTwoway;
 
 impl ComponentFactory for LinearTwoway {
+    fn name() -> &'static str {
+        "linear-twoway"
+    }
     fn build<T>(n_constraints: usize) -> Component<T>
     where
         T: Clone + Debug + Default + 'static,
@@ -87,7 +93,7 @@ impl ComponentFactory for LinearTwoway {
 
         // Construct component
         let comp = RawComponent::new(
-            "linear-twoway".to_string(),
+            LinearTwoway::name().to_string(),
             variable_names,
             vec![T::default(); n_variables],
             constraints,
