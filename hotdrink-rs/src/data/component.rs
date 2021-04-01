@@ -251,6 +251,12 @@ impl<T: Clone> Component<T> {
         !self.updated_since_last_solve.is_empty()
     }
 
+    /// Returns the current ranking of variables,
+    /// based on when they were last updated.
+    pub fn ranking(&self) -> Vec<usize> {
+        self.ranker.ranking()
+    }
+
     /// Constructs a string-representation of a graph formatted in the [dot language](https://graphviz.org/doc/info/lang.html).
     /// This can be used for visualization of the constraint graph that the component represents.
     /// This function includes every method in a constraint.

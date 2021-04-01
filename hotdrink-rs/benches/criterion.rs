@@ -3,310 +3,188 @@ use criterion::{
 };
 use hotdrink_rs::{
     algorithms::{hierarchical_planner::hierarchical_planner, simple_planner::simple_planner},
-    data::{constraint_system::ConstraintSystem, traits::ComponentSpec},
-    examples::{
-        components::random::make_random,
-        constraint_systems::{
-            dense::make_dense_cs,
-            empty::make_empty_cs,
-            ladder::ladder,
-            linear::linear_twoway,
-            linear_oneway,
-            sparse::make_sparse_cs,
-            tree::{multioutput_threeway, unprunable},
-        },
+    data::traits::ComponentSpec,
+    examples::components::{
+        factory::ComponentFactory,
+        ladder::Ladder,
+        linear::{LinearOneway, LinearTwoway},
+        random::RandomComponentFactory,
+        unprunable::Unprunable,
     },
-    thread::dummy_pool::DummyPool,
     Component,
 };
 use rand::Rng;
 
-// Update constraint systems
-fn bench_cs_update(
-    group: &mut BenchmarkGroup<WallTime>,
-    name: &str,
-    input: &usize,
-    make_cs: fn(usize, usize) -> ConstraintSystem<()>,
-) {
-    group.bench_with_input(BenchmarkId::new(name, input), input, |b, input| {
-        let mut cs: ConstraintSystem<()> = make_cs(1, *input);
-        let mut dummy_pool = DummyPool;
-        b.iter(|| {
-            cs.par_update_always(&mut dummy_pool).unwrap();
-        })
-    });
-}
+const LINEAR_ONEWAY: fn(usize) -> Component<()> = LinearOneway::build_component;
+const LINEAR_TWOWAY: fn(usize) -> Component<()> = LinearTwoway::build_component;
+const LADDER: fn(usize) -> Component<()> = Ladder::build_component;
+const UNPRUNABLE: fn(usize) -> Component<()> = Unprunable::build_component;
+const RANDOM: fn(usize) -> Component<()> = RandomComponentFactory::build_component;
 
-// Update constraint systems
-fn bench_cs_update_with_modified_variable(
-    group: &mut BenchmarkGroup<WallTime>,
-    name: &str,
-    input: &usize,
-    make_cs: fn(usize, usize) -> ConstraintSystem<()>,
-) {
-    group.bench_with_input(BenchmarkId::new(name, input), input, |b, input| {
-        let mut cs: ConstraintSystem<()> = make_cs(1, *input);
-        let mut dummy_pool = DummyPool;
-        let mut rng = rand::thread_rng();
-        let uniform = rand::distributions::Uniform::new(0, cs.get_component("0").n_variables());
-        b.iter(|| {
-            if *input > 0 {
-                let random_number: usize = rng.sample(uniform);
-                cs.set_variable("0", &format!("var{}", random_number), ());
-            }
-            cs.par_update(&mut dummy_pool).unwrap();
-        })
-    });
-}
+// Helpers for benching operations on components
 
-fn constraint_system_update(c: &mut Criterion) {
-    let mut group = c.benchmark_group("constraint_system_update");
-    for i in &[1250, 2500, 5000] {
-        bench_cs_update(&mut group, "dense", i, make_dense_cs);
-        bench_cs_update(&mut group, "empty", i, make_empty_cs);
-        bench_cs_update(&mut group, "linear/oneway", i, linear_oneway);
-        bench_cs_update(&mut group, "linear/twoway", i, linear_twoway);
-        // bench_cs_update(&mut group, "sparse", i, make_sparse_cs);
-        // bench_cs_update(
-        //     &mut group,
-        //     "tree/multioutput/threeway",
-        //     i,
-        //     multioutput_threeway,
-        // );
-        bench_cs_update(&mut group, "ladder", i, ladder);
-    }
-    for i in &[1250, 2500, 5000] {
-        bench_cs_update(&mut group, "unprunable", i, unprunable);
-    }
-    group.finish();
-}
-
-fn constraint_system_update_with_modified_variable(c: &mut Criterion) {
-    let mut group = c.benchmark_group("constraint_system_update_with_modified_variable");
-    for i in &[1250, 2500, 5000] {
-        bench_cs_update_with_modified_variable(&mut group, "dense", i, make_dense_cs);
-        bench_cs_update_with_modified_variable(&mut group, "empty", i, make_empty_cs);
-        bench_cs_update_with_modified_variable(&mut group, "linear/oneway", i, linear_oneway);
-        bench_cs_update_with_modified_variable(&mut group, "linear/twoway", i, linear_twoway);
-        //     bench_cs_update_with_modified_variable(&mut group, "sparse", i, make_sparse_cs);
-        //     bench_cs_update_with_modified_variable(
-        //         &mut group,
-        //         "tree/multioutput/threeway",
-        //         i,
-        //         multioutput_threeway,
-        //     );
-    }
-    for i in &[1250, 2500, 5000] {
-        bench_cs_update_with_modified_variable(&mut group, "unprunable", i, unprunable);
-        bench_cs_update_with_modified_variable(&mut group, "ladder", i, ladder);
-    }
-    group.finish();
-}
-
-// Plan components
-
-fn bench_hierarchical_planner(
-    group: &mut BenchmarkGroup<WallTime>,
-    name: &str,
-    input: &usize,
-    make_cs: fn(usize, usize) -> ConstraintSystem<()>,
-) {
-    group.bench_with_input(BenchmarkId::new(name, input), input, |b, input| {
-        let cs: ConstraintSystem<()> = make_cs(1, *input);
-        let comp = cs.get_component("0");
-        let ranking: Vec<usize> = (0..comp.n_variables()).collect();
-        b.iter(|| {
-            hierarchical_planner(comp, &ranking).unwrap();
-        })
-    });
-}
-
-fn bench_hierarchical_planner_component(
+fn bench_update(
     group: &mut BenchmarkGroup<WallTime>,
     name: &str,
     input: &usize,
     make_component: fn(usize) -> Component<()>,
 ) {
     group.bench_with_input(BenchmarkId::new(name, input), input, |b, input| {
-        let comp = make_component(*input);
-        let ranking: Vec<usize> = (0..comp.n_variables()).collect();
+        let mut component: Component<()> = make_component(*input);
+        let mut rng = rand::thread_rng();
+        let uniform = rand::distributions::Uniform::new(0, component.n_variables());
         b.iter(|| {
-            hierarchical_planner(&comp, &ranking).unwrap();
+            if *input > 0 {
+                let random_number: usize = rng.sample(uniform);
+                component
+                    .set_variable(&format!("var{}", random_number), ())
+                    .unwrap();
+            }
+            component.update().unwrap();
         })
     });
 }
 
-fn component_hierarchical_planner(c: &mut Criterion) {
-    let mut group = c.benchmark_group("component_hierarchical_planner");
-    for i in &[0, 1000, 5000, 10000, 20000] {
-        bench_hierarchical_planner(&mut group, "dense", i, make_dense_cs);
-        bench_hierarchical_planner(&mut group, "empty", i, make_empty_cs);
-        bench_hierarchical_planner(&mut group, "linear/twoway", i, linear_twoway);
-        bench_hierarchical_planner(&mut group, "sparse", i, make_sparse_cs);
-        bench_hierarchical_planner(
-            &mut group,
-            "tree/multioutput/threeway",
-            i,
-            multioutput_threeway,
-        );
-        bench_hierarchical_planner(&mut group, "ladder", i, ladder);
-    }
-    for i in &[0, 250, 500, 1000] {
-        bench_hierarchical_planner(&mut group, "unprunable", i, unprunable);
-        bench_hierarchical_planner_component(&mut group, "random", i, |nv| make_random(nv, 5));
-    }
-    group.finish();
+fn bench_hierarchical_planner(
+    group: &mut BenchmarkGroup<WallTime>,
+    name: &str,
+    input: &usize,
+    make_component: fn(usize) -> Component<()>,
+) {
+    group.bench_with_input(BenchmarkId::new(name, input), input, |b, input| {
+        let mut comp = make_component(*input);
+        let mut rng = rand::thread_rng();
+        let uniform = rand::distributions::Uniform::new(0, comp.n_variables());
+        b.iter(|| {
+            if comp.n_variables() > 0 {
+                let random_number: usize = rng.sample(uniform);
+                comp.set_variable(&format!("var{}", random_number), ())
+                    .unwrap();
+            }
+            hierarchical_planner(&comp, &comp.ranking()).unwrap();
+        })
+    });
 }
 
 fn bench_simple_planner(
     group: &mut BenchmarkGroup<WallTime>,
     name: &str,
     input: &usize,
-    make_cs: fn(usize, usize) -> ConstraintSystem<()>,
-) {
-    group.bench_with_input(BenchmarkId::new(name, input), input, |b, input| {
-        let cs = make_cs(1, *input);
-        let comp = cs.get_component("0");
-        b.iter(|| {
-            simple_planner(comp).unwrap();
-        })
-    });
-}
-
-fn bench_simple_planner_component(
-    group: &mut BenchmarkGroup<WallTime>,
-    name: &str,
-    input: &usize,
     make_component: fn(usize) -> Component<()>,
 ) {
     group.bench_with_input(BenchmarkId::new(name, input), input, |b, input| {
-        let comp = make_component(*input);
+        let component = make_component(*input);
         b.iter(|| {
-            simple_planner(&comp).unwrap();
+            simple_planner(&component).unwrap();
         })
     });
 }
 
-fn component_simple_planner(c: &mut Criterion) {
+// General benchmarks for components
+
+fn update_benches(c: &mut Criterion) {
+    let mut group = c.benchmark_group("update");
+    for i in &[1250, 2500, 5000] {
+        bench_update(&mut group, "linear-oneway", i, LINEAR_ONEWAY);
+        bench_update(&mut group, "linear-twoway", i, LINEAR_TWOWAY);
+        bench_update(&mut group, "ladder", i, LADDER);
+        bench_update(&mut group, "unprunable", i, UNPRUNABLE);
+        bench_update(&mut group, "random", i, RANDOM);
+    }
+    group.finish();
+}
+
+fn hierarchical_planner_benches(c: &mut Criterion) {
+    let mut group = c.benchmark_group("hierarchical_planner");
+    for i in &[0, 1000, 5000, 10000, 20000] {
+        bench_hierarchical_planner(&mut group, "linear-oneway", i, LINEAR_TWOWAY);
+        bench_hierarchical_planner(&mut group, "linear-twoway", i, LINEAR_TWOWAY);
+        bench_hierarchical_planner(&mut group, "ladder", i, LADDER);
+    }
+    for i in &[0, 250, 500, 1000] {
+        bench_hierarchical_planner(&mut group, "unprunable", i, UNPRUNABLE);
+        bench_hierarchical_planner(&mut group, "random", i, RANDOM);
+    }
+    group.finish();
+}
+
+fn simple_planner_benches(c: &mut Criterion) {
     let mut group = c.benchmark_group("component_simple_planner");
     for i in &[0, 1000, 5000, 10000, 20000] {
-        bench_simple_planner(&mut group, "dense", i, make_dense_cs);
-        bench_simple_planner(&mut group, "empty", i, make_empty_cs);
-        bench_simple_planner(&mut group, "linear/twoway", i, linear_twoway);
-        bench_simple_planner(&mut group, "ladder", i, ladder);
-        bench_simple_planner(&mut group, "unprunable", i, unprunable);
-        bench_simple_planner_component(&mut group, "random", i, |nv| {
-            make_random((nv as f64 * 0.75) as usize, 3)
-        });
+        bench_simple_planner(&mut group, "linear-oneway", i, LINEAR_TWOWAY);
+        bench_simple_planner(&mut group, "linear-twoway", i, LINEAR_TWOWAY);
+        bench_simple_planner(&mut group, "ladder", i, LADDER);
+        bench_simple_planner(&mut group, "unprunable", i, UNPRUNABLE);
+        bench_simple_planner(&mut group, "random", i, RANDOM);
     }
     group.finish();
 }
 
-fn max_simple_planner(c: &mut Criterion) {
-    let mut group = c.benchmark_group("max_simple_planner");
-    for i in &[150000] {
-        bench_simple_planner(&mut group, "empty", i, make_empty_cs);
-        bench_simple_planner(&mut group, "dense", i, make_dense_cs);
-        bench_simple_planner(&mut group, "linear/oneway", i, linear_oneway);
-        bench_simple_planner(&mut group, "linear/twoway", i, linear_twoway);
-        bench_simple_planner(&mut group, "ladder", i, ladder);
-        bench_simple_planner(&mut group, "unprunable", i, unprunable);
-    }
-    group.finish();
-}
+// Benchmarks for testing the limits of the library
 
-fn max_hierarchical_planner(c: &mut Criterion) {
-    let mut group = c.benchmark_group("max_hierarchical_planner");
-    for i in &[30000] {
-        bench_hierarchical_planner(&mut group, "empty", i, make_empty_cs);
-        bench_hierarchical_planner(&mut group, "dense", i, make_dense_cs);
-        bench_hierarchical_planner(&mut group, "linear/oneway", i, linear_oneway);
-        bench_hierarchical_planner(&mut group, "linear/twoway", i, linear_twoway);
-        bench_hierarchical_planner(&mut group, "ladder", i, ladder);
-    }
-    for i in &[500] {
-        bench_hierarchical_planner(&mut group, "unprunable", i, unprunable);
-    }
-    group.finish();
-}
-
-fn max_update(c: &mut Criterion) {
-    let mut group = c.benchmark_group("max_update");
-    for i in &[20000] {
-        bench_cs_update(&mut group, "empty", i, make_empty_cs);
-        bench_cs_update(&mut group, "dense", i, make_dense_cs);
-        bench_cs_update(&mut group, "linear/oneway", i, linear_oneway);
-        bench_cs_update(&mut group, "linear/twoway", i, linear_twoway);
-        bench_cs_update(&mut group, "ladder", i, ladder);
-    }
-    for i in &[500] {
-        bench_cs_update(&mut group, "unprunable", i, unprunable);
-    }
-    group.finish();
-}
-
-fn max_update_with_modified_variable(c: &mut Criterion) {
+fn update_benches_max(c: &mut Criterion) {
     let mut group = c.benchmark_group("max_update_with_modified_variable");
     for i in &[20000] {
-        bench_cs_update_with_modified_variable(&mut group, "empty", i, make_empty_cs);
-        bench_cs_update_with_modified_variable(&mut group, "dense", i, make_dense_cs);
-        bench_cs_update_with_modified_variable(&mut group, "linear/oneway", i, linear_oneway);
-        bench_cs_update_with_modified_variable(&mut group, "linear/twoway", i, linear_twoway);
+        bench_update(&mut group, "linear/oneway", i, LINEAR_ONEWAY);
+        bench_update(&mut group, "linear/twoway", i, LINEAR_TWOWAY);
     }
     for i in &[750] {
-        bench_cs_update_with_modified_variable(&mut group, "ladder", i, ladder);
-        bench_cs_update_with_modified_variable(&mut group, "unprunable", i, unprunable);
+        bench_update(&mut group, "ladder", i, LADDER);
+        bench_update(&mut group, "unprunable", i, UNPRUNABLE);
+        bench_update(&mut group, "random", i, RANDOM);
     }
     group.finish();
 }
 
-fn thesis_update_without_modification(c: &mut Criterion) {
-    let mut group = c.benchmark_group("thesis_update_without_modification");
-    for i in &[1250, 2500, 5000] {
-        bench_cs_update(&mut group, "linear/oneway", i, linear_oneway);
-        bench_cs_update(&mut group, "linear/twoway", i, linear_twoway);
-        bench_cs_update(&mut group, "ladder", i, ladder);
-        bench_cs_update(&mut group, "unprunable", i, unprunable);
-        bench_cs_update(&mut group, "random", i, |_, nv| {
-            let comp = make_random(nv, 5);
-            let mut cs = ConstraintSystem::new();
-            cs.add_component(comp);
-            cs
-        });
+fn hierarchical_planner_benches_max(c: &mut Criterion) {
+    let mut group = c.benchmark_group("max_hierarchical_planner");
+    for i in &[30000] {
+        bench_hierarchical_planner(&mut group, "linear/oneway", i, LINEAR_ONEWAY);
+        bench_hierarchical_planner(&mut group, "linear/twoway", i, LINEAR_TWOWAY);
+        bench_hierarchical_planner(&mut group, "ladder", i, LADDER);
+    }
+    for i in &[500] {
+        bench_hierarchical_planner(&mut group, "unprunable", i, UNPRUNABLE);
+        bench_hierarchical_planner(&mut group, "random", i, RANDOM);
     }
     group.finish();
 }
 
-fn thesis_update_with_modification(c: &mut Criterion) {
-    let mut group = c.benchmark_group("thesis_update_with_modification");
-    for i in &[1250, 2500, 5000] {
-        bench_cs_update_with_modified_variable(&mut group, "linear/oneway", i, linear_oneway);
-        bench_cs_update_with_modified_variable(&mut group, "linear/twoway", i, linear_twoway);
-        bench_cs_update_with_modified_variable(&mut group, "ladder", i, ladder);
-        bench_cs_update_with_modified_variable(&mut group, "unprunable", i, unprunable);
-        bench_cs_update_with_modified_variable(&mut group, "random", i, |_, nv| {
-            let mut comp = make_random(nv, 5);
-            comp.set_name("0");
-            let mut cs = ConstraintSystem::new();
-            cs.add_component(comp);
-            cs
-        });
+fn simple_planner_benches_max(c: &mut Criterion) {
+    let mut group = c.benchmark_group("max_simple_planner");
+    for i in &[150000] {
+        bench_simple_planner(&mut group, "linear/oneway", i, LINEAR_ONEWAY);
+        bench_simple_planner(&mut group, "linear/twoway", i, LINEAR_TWOWAY);
+        bench_simple_planner(&mut group, "ladder", i, LADDER);
+        bench_simple_planner(&mut group, "unprunable", i, UNPRUNABLE);
+        bench_simple_planner(&mut group, "random", i, RANDOM);
+    }
+    group.finish();
+}
+
+// Benchmarks for generating thesis output
+
+fn thesis_update(c: &mut Criterion) {
+    let mut group = c.benchmark_group("thesis_update");
+    for i in &[250, 500, 1000] {
+        bench_update(&mut group, "linear/oneway", i, LINEAR_ONEWAY);
+        bench_update(&mut group, "linear/twoway", i, LINEAR_TWOWAY);
+        bench_update(&mut group, "ladder", i, LADDER);
+        bench_update(&mut group, "unprunable", i, UNPRUNABLE);
+        bench_update(&mut group, "random", i, RANDOM);
     }
     group.finish();
 }
 
 criterion_group!(
     benches,
-    constraint_system_update,
-    constraint_system_update_with_modified_variable,
-    component_hierarchical_planner,
-    component_simple_planner,
-    max_simple_planner,
-    max_hierarchical_planner,
-    max_update,
-    max_update_with_modified_variable,
-    thesis_update_without_modification,
-    thesis_update_with_modification
+    update_benches,
+    hierarchical_planner_benches,
+    simple_planner_benches,
+    update_benches_max,
+    hierarchical_planner_benches_max,
+    simple_planner_benches_max,
+    thesis_update,
 );
 
 criterion_main!(benches);
