@@ -178,7 +178,7 @@ impl<T: Clone + Debug> ConstraintSystem<T> {
     ///
     /// This adds a stay constraint to the specified variable,
     /// meaning that planning will attempt to avoid modifying it.
-    /// The stay constraint can be remove with [`ConstraintSystem::unpin`].
+    /// The stay constraint can be remove with [`unpin`](#method.unpin).
     pub fn pin<'s>(&mut self, component: &'s str, variable: &'s str) -> Result<(), ApiError<'s>>
     where
         T: 'static,
@@ -190,7 +190,7 @@ impl<T: Clone + Debug> ConstraintSystem<T> {
 
     /// Unpins a variable.
     ///
-    /// This removes the stay constraint added by [`ConstraintSystem::pin`].
+    /// This removes the stay constraint added by [`pin`](#method.pin).
     pub fn unpin<'s>(&mut self, component: &'s str, variable: &'s str) -> Result<(), ApiError<'s>>
     where
         T: 'static,
