@@ -170,12 +170,14 @@ fn simple_planner_benches_max(c: &mut Criterion) {
 
 fn thesis_update(c: &mut Criterion) {
     let mut group = c.benchmark_group("thesis_update");
-    for i in &[50, 100, 200, 400, 600] {
+    for i in &[50, 100, 200, 400, 600, 1200] {
         bench_update(&mut group, "linear-oneway", i, LINEAR_ONEWAY);
         bench_update(&mut group, "linear-twoway", i, LINEAR_TWOWAY);
         bench_update(&mut group, "ladder", i, LADDER);
-        bench_update(&mut group, "unprunable", i, UNPRUNABLE);
         bench_update(&mut group, "random", i, RANDOM);
+    }
+    for i in &[50, 100, 200, 400, 600] {
+        bench_update(&mut group, "unprunable", i, UNPRUNABLE);
     }
     group.finish();
 }
