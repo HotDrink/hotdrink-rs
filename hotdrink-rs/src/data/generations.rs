@@ -75,22 +75,43 @@ impl<T> Generations<T> {
     }
 
     /// Clears the future.
-    /// Will for instance be called if the past has changed.
+    /// This function can be used to clear an future invalidated by modifying the past.
     fn clear_future(&mut self) {
         self.diff.truncate(self.current_generation);
-        for &vi in &self.current_idx {
-            self.values[vi].truncate(self.current_idx[vi] + 1);
+        for (vi, current_index) in self.current_idx.iter().enumerate() {
+            self.values[vi].truncate(current_index + 1);
         }
     }
 
-    /// Begins a new generation: This includes incrementing
-    /// the generation counter, and adding a diff from the previous generation.
+    /// Begins a new generation: This includes incrementing the generation counter,
+    /// and adding a diff from the previous generation.
     fn begin_generation(&mut self) {
         self.current_generation += 1;
         self.diff.push_back(Vec::new());
     }
 
-    /// Gives a variable a new value, and removes redo-history.
+    /// Deletes undo history that goes past the limit, if a limit exists.
+    fn clear_past(&mut self) {
+        // Delete old history that goes past the undo limit
+        if let Some(undo_limit) = self.undo_limit {
+            // While we have too many generations
+            while self.generations() - 1 > undo_limit {
+                // Pop the earliest diff
+                let earliest_diff = self
+                    .diff
+                    .pop_front()
+                    .expect("Diff did not have enough generations");
+                // Pop earliest value for each variable
+                for vi in earliest_diff {
+                    self.values[vi].pop_front();
+                    self.current_idx[vi] -= 1;
+                }
+                self.current_generation -= 1;
+            }
+        }
+    }
+
+    /// Gives a variable a new value.
     pub fn set(&mut self, index: usize, value: T) {
         self.clear_future();
 
@@ -101,6 +122,11 @@ impl<T> Generations<T> {
         self.diff[self.current_generation - 1].push(index);
         self.current_idx[index] += 1;
         self.values[index].push_back(value);
+
+        if !self.is_modified {
+            self.clear_past();
+        }
+
         self.is_modified = true;
     }
 
@@ -125,24 +151,6 @@ impl<T> Generations<T> {
     /// Stores a checkpoint that can be returned to with [`undo`](#method.undo) or [`redo`](#method.redo).
     pub fn commit(&mut self) {
         self.is_modified = false;
-
-        // Delete too old history
-        if let Some(undo_limit) = self.undo_limit {
-            // While we have too many generations
-            while self.generations() - 1 > undo_limit {
-                // Pop the earliest diff
-                let earliest_diff = self
-                    .diff
-                    .pop_front()
-                    .expect("Diff did not have enough generations");
-                // Pop earliest value for each variable
-                for vi in earliest_diff {
-                    self.values[vi].pop_front();
-                    self.current_idx[vi] -= 1;
-                }
-                self.current_generation -= 1;
-            }
-        }
     }
 
     /// Moves back to the last [`commit`](#method.commit).
@@ -311,5 +319,22 @@ mod tests {
         gs.commit();
         assert_eq!(gs.undo(), Ok(()));
         assert_eq!(gs.undo(), Err(NoMoreUndo));
+    }
+
+    #[test]
+    fn undo_limit_n_gives_n_undos() {
+        env_logger::builder().is_test(true).init();
+        for undo_limit in 0..10 {
+            let mut gs = Generations::new_with_limit(vec![0], undo_limit);
+            for _ in 0..undo_limit {
+                gs.set(0, 1);
+                gs.commit();
+            }
+            for _ in 0..undo_limit {
+                assert_eq!(gs.undo(), Ok(()));
+            }
+            assert_eq!(gs.values(), vec![&0]);
+            assert_eq!(gs.undo(), Err(NoMoreUndo));
+        }
     }
 }
