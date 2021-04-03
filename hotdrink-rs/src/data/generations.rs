@@ -74,24 +74,34 @@ impl<T> Generations<T> {
         Some(res)
     }
 
-    /// Gives a variable a new value, and removes redo-history.
-    pub fn set(&mut self, index: usize, value: T) {
-        // Delete invalidated history
+    /// Clears the future.
+    /// Will for instance be called if the past has changed.
+    fn clear_future(&mut self) {
         self.diff.truncate(self.current_generation);
         for &vi in &self.current_idx {
             self.values[vi].truncate(self.current_idx[vi] + 1);
         }
+    }
+
+    /// Begins a new generation: This includes incrementing
+    /// the generation counter, and adding a diff from the previous generation.
+    fn begin_generation(&mut self) {
+        self.current_generation += 1;
+        self.diff.push_back(Vec::new());
+    }
+
+    /// Gives a variable a new value, and removes redo-history.
+    pub fn set(&mut self, index: usize, value: T) {
+        self.clear_future();
 
         if !self.is_modified {
-            // A new generation has started
-            self.current_generation += 1;
-            self.diff.push_back(Vec::new());
-            self.is_modified = true;
+            self.begin_generation();
         }
 
         self.diff[self.current_generation - 1].push(index);
         self.current_idx[index] += 1;
         self.values[index].push_back(value);
+        self.is_modified = true;
     }
 
     /// Returns references to the current values.
