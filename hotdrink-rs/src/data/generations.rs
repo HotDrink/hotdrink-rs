@@ -16,7 +16,7 @@ pub struct Generations<T> {
     /// `diff[n]` gives the difference between generation `n` and `n+1`.
     diff: VecDeque<Vec<usize>>,
     /// The maximum number of generations to keep.
-    max_generations: Option<usize>,
+    undo_limit: Option<usize>,
 }
 
 /// Nothing more to undo.
@@ -39,15 +39,15 @@ impl<T> Generations<T> {
                 .collect(),
             is_modified: false,
             diff: Default::default(),
-            max_generations: None,
+            undo_limit: None,
         }
     }
 
     /// Constructs a new [`Generations`] with the specified default values and history limit.
-    pub fn new_with_limit(start_values: Vec<T>, max_generations: usize) -> Self {
-        let mut without_limit = Self::new(start_values);
-        without_limit.max_generations = Some(max_generations);
-        without_limit
+    pub fn new_with_limit(start_values: Vec<T>, undo_limit: usize) -> Self {
+        let mut without_cap = Self::new(start_values);
+        without_cap.undo_limit = Some(undo_limit);
+        without_cap
     }
 
     /// Returns the number of variables per generation.
@@ -117,9 +117,9 @@ impl<T> Generations<T> {
         self.is_modified = false;
 
         // Delete too old history
-        if let Some(max_generations) = self.max_generations {
+        if let Some(undo_limit) = self.undo_limit {
             // While we have too many generations
-            while self.generations() > max_generations {
+            while self.generations() - 1 > undo_limit {
                 // Pop the earliest diff
                 let earliest_diff = self
                     .diff
@@ -275,7 +275,7 @@ mod tests {
 
     #[test]
     fn generation_limit_one_gives_no_undo() {
-        let mut gs = Generations::new_with_limit(vec![0], 1);
+        let mut gs = Generations::new_with_limit(vec![0], 0);
         gs.set(0, 3);
         gs.commit();
         assert_eq!(gs.undo(), Err(NoMoreUndo));
@@ -283,7 +283,7 @@ mod tests {
 
     #[test]
     fn generation_limit_two_gives_one_undo() {
-        let mut gs = Generations::new_with_limit(vec![0], 2);
+        let mut gs = Generations::new_with_limit(vec![0], 1);
         gs.set(0, 3);
         gs.commit();
         assert_eq!(gs.undo(), Ok(()));
