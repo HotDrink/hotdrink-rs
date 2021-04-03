@@ -284,7 +284,13 @@ mod tests {
     }
 
     #[test]
-    fn generation_limit_one_gives_no_undo() {
+    fn undo_limit_zero_gives_no_undo() {
+        // Without commit
+        let mut gs = Generations::new_with_limit(vec![0], 0);
+        gs.set(0, 3);
+        assert_eq!(gs.undo(), Err(NoMoreUndo));
+
+        // With commit
         let mut gs = Generations::new_with_limit(vec![0], 0);
         gs.set(0, 3);
         gs.commit();
@@ -292,7 +298,14 @@ mod tests {
     }
 
     #[test]
-    fn generation_limit_two_gives_one_undo() {
+    fn undo_limit_one_gives_one_undo() {
+        // Without commit
+        let mut gs = Generations::new_with_limit(vec![0], 1);
+        gs.set(0, 3);
+        assert_eq!(gs.undo(), Ok(()));
+        assert_eq!(gs.undo(), Err(NoMoreUndo));
+
+        // With commit
         let mut gs = Generations::new_with_limit(vec![0], 1);
         gs.set(0, 3);
         gs.commit();
