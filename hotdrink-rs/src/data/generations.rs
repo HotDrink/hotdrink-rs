@@ -57,7 +57,7 @@ impl<T> Generations<T> {
 
     /// Returns the number of generations stored.
     pub fn generations(&self) -> usize {
-        self.diff.len()
+        self.diff.len() + 1
     }
 
     /// Returns a reference to a specified variable.
@@ -119,7 +119,7 @@ impl<T> Generations<T> {
         // Delete too old history
         if let Some(max_generations) = self.max_generations {
             // While we have too many generations
-            while self.generations() >= max_generations {
+            while self.generations() > max_generations {
                 // Pop the earliest diff
                 let earliest_diff = self
                     .diff
@@ -154,7 +154,7 @@ impl<T> Generations<T> {
 
     /// Moves forward to the next [`commit`](#method.commit).
     pub fn redo(&mut self) -> Result<(), NoMoreRedo> {
-        if self.current_generation == self.generations() {
+        if self.current_generation == self.generations() - 1 {
             return Err(NoMoreRedo);
         }
 
