@@ -1,6 +1,6 @@
 //! A data structure to allow undo and redo of operations.
 
-use std::ops::Index;
+use std::{collections::VecDeque, ops::Index};
 
 /// Represents values over time to allow for undo and redo.
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
@@ -12,9 +12,11 @@ pub struct Generations<T> {
     /// If values have been modified since last commit.
     is_modified: bool,
     /// A list of values for each variable.
-    values: Vec<Vec<T>>,
+    values: Vec<VecDeque<T>>,
     /// `diff[n]` gives the difference between generation `n` and `n+1`.
-    diff: Vec<Vec<usize>>,
+    diff: VecDeque<Vec<usize>>,
+    /// The maximum number of generations to keep.
+    max_generations: Option<usize>,
 }
 
 /// Nothing more to undo.
@@ -27,17 +29,25 @@ pub struct NoMoreRedo;
 
 impl<T> Generations<T> {
     /// Constructs a new [`Generations`] with the specified default values.
-    pub fn new(default_values: Vec<T>) -> Self {
+    pub fn new(start_values: Vec<T>) -> Self {
         Self {
             current_generation: 0,
-            current_idx: vec![0; default_values.len()],
-            values: default_values
+            current_idx: vec![0; start_values.len()],
+            values: start_values
                 .into_iter()
-                .map(|value| vec![value])
+                .map(|value| VecDeque::from(vec![value]))
                 .collect(),
             is_modified: false,
-            diff: vec![],
+            diff: Default::default(),
+            max_generations: None,
         }
+    }
+
+    /// Constructs a new [`Generations`] with the specified default values and history limit.
+    pub fn new_with_limit(start_values: Vec<T>, max_generations: usize) -> Self {
+        let mut without_limit = Self::new(start_values);
+        without_limit.max_generations = Some(max_generations);
+        without_limit
     }
 
     /// Returns the number of variables per generation.
@@ -66,7 +76,7 @@ impl<T> Generations<T> {
 
     /// Gives a variable a new value, and removes redo-history.
     pub fn set(&mut self, index: usize, value: T) {
-        // Delete invalid history
+        // Delete invalidated history
         self.diff.truncate(self.current_generation);
         for &vi in &self.current_idx {
             self.values[vi].truncate(self.current_idx[vi] + 1);
@@ -75,13 +85,13 @@ impl<T> Generations<T> {
         if !self.is_modified {
             // A new generation has started
             self.current_generation += 1;
-            self.diff.push(Vec::new());
+            self.diff.push_back(Vec::new());
             self.is_modified = true;
         }
 
         self.diff[self.current_generation - 1].push(index);
         self.current_idx[index] += 1;
-        self.values[index].push(value);
+        self.values[index].push_back(value);
     }
 
     /// Returns references to the current values.
@@ -105,6 +115,24 @@ impl<T> Generations<T> {
     /// Stores a checkpoint that can be returned to with [`undo`](#method.undo) or [`redo`](#method.redo).
     pub fn commit(&mut self) {
         self.is_modified = false;
+
+        // Delete too old history
+        if let Some(max_generations) = self.max_generations {
+            // While we have too many generations
+            while self.generations() >= max_generations {
+                // Pop the earliest diff
+                let earliest_diff = self
+                    .diff
+                    .pop_front()
+                    .expect("Diff did not have enough generations");
+                // Pop earliest value for each variable
+                for vi in earliest_diff {
+                    self.values[vi].pop_front();
+                    self.current_idx[vi] -= 1;
+                }
+                self.current_generation -= 1;
+            }
+        }
     }
 
     /// Moves back to the last [`commit`](#method.commit).
@@ -243,5 +271,22 @@ mod tests {
         // Make sure redo history was deleted
         assert_eq!(gs.redo(), Err(NoMoreRedo));
         assert_eq!(gs.values(), vec![&5, &6]);
+    }
+
+    #[test]
+    fn generation_limit_one_gives_no_undo() {
+        let mut gs = Generations::new_with_limit(vec![0], 1);
+        gs.set(0, 3);
+        gs.commit();
+        assert_eq!(gs.undo(), Err(NoMoreUndo));
+    }
+
+    #[test]
+    fn generation_limit_two_gives_one_undo() {
+        let mut gs = Generations::new_with_limit(vec![0], 2);
+        gs.set(0, 3);
+        gs.commit();
+        assert_eq!(gs.undo(), Ok(()));
+        assert_eq!(gs.undo(), Err(NoMoreUndo));
     }
 }
