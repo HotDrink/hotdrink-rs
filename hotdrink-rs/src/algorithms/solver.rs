@@ -5,6 +5,7 @@
 use super::hierarchical_planner::{OwnedEnforcedConstraint, Vertex};
 use crate::{
     data::{
+        generations::Generations,
         method::Method,
         solve_error::SolveError,
         traits::{MethodFailure, MethodSpec, PlanError},
@@ -61,7 +62,7 @@ where
 /// 6. A callback to pass new produced values to. These events include the component name and the generation.
 pub fn par_solve<T>(
     plan: &[OwnedEnforcedConstraint<Method<T>>],
-    current_values: &mut Vec<VariableActivation<T, SolveError>>,
+    current_values: &mut Generations<VariableActivation<T, SolveError>>,
     component_name: String,
     generation: usize,
     pool: &mut impl ThreadPool,
@@ -71,7 +72,7 @@ where
     T: Clone + Send + 'static + Debug,
 {
     if !plan.is_empty() {
-        log::debug!("Solving {} with plan {:?}", component_name, plan);
+        log::trace!("Solving {} with plan {:?}", component_name, plan);
     }
 
     for osc in plan {
@@ -87,7 +88,7 @@ where
 
         let mut shared_states = Vec::with_capacity(m.outputs().len());
         for &o in m.outputs() {
-            let previous_activation = &mut current_values[o];
+            let previous_activation = current_values.get_mut(o).unwrap();
             // Cancel old activation
             previous_activation.cancel();
             // Keep the old value from the previous state, but set to pending
@@ -109,7 +110,7 @@ where
         outputs
             .into_iter()
             .zip(m.outputs())
-            .for_each(|(v, &o)| current_values[o] = v);
+            .for_each(|(v, &o)| current_values.set(o, v));
     }
 
     Ok(())

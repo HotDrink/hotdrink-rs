@@ -153,7 +153,7 @@ where
     C: ConstraintSpec<Method = M> + Debug + Clone,
     Comp: ComponentSpec<Constraint = C> + Clone,
 {
-    log::info!("Calling hierarchical planner");
+    log::trace!("Calling hierarchical planner");
     // The initial solution with no stay constraints. If this fails, just return.
     let mut best_solution: Option<OwnedPlan<M>> = None;
 
@@ -189,7 +189,7 @@ where
             }
         }
 
-        log::info!("Calling simple");
+        log::trace!("Calling simple");
         // Check if this new solution works
         match simple_planner(&component) {
             Some(new_solution) => {
@@ -286,7 +286,7 @@ pub fn hierarchical_planner_only_updated<T: Clone + 'static>(
     // TOOD: Remove unnecessary cloning
     let comp: Component<T> = Component::new(
         component.name().to_string(),
-        component.variables().to_vec(),
+        component.variables().into_iter().cloned().collect(),
         constraints
             .iter()
             .cloned()

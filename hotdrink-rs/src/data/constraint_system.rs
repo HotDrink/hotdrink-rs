@@ -5,6 +5,7 @@
 use super::{
     component::Component,
     errors::{ApiError, NoSuchComponent},
+    generations::{NoMoreRedo, NoMoreUndo},
     solve_error::SolveError,
     traits::PlanError,
     variable_activation::State,
@@ -20,6 +21,8 @@ use std::{collections::HashMap, fmt::Debug, future::Future};
 pub struct ConstraintSystem<T> {
     component_map: HashMap<String, usize>,
     components: Vec<Component<T>>,
+    undo_stack: Vec<String>,
+    redo_stack: Vec<String>,
 }
 
 impl<T> Default for ConstraintSystem<T> {
@@ -27,6 +30,8 @@ impl<T> Default for ConstraintSystem<T> {
         Self {
             component_map: HashMap::new(),
             components: Vec::new(),
+            undo_stack: Vec::new(),
+            redo_stack: Vec::new(),
         }
     }
 }
@@ -71,7 +76,9 @@ impl<T: Clone + Debug> ConstraintSystem<T> {
         variable: &'s str,
         value: T,
     ) -> Result<(), ApiError<'s>> {
-        log::debug!("Variable {}.{} updated to {:?}", component, variable, value);
+        self.undo_stack.push(component.to_string());
+        self.redo_stack.clear();
+        log::trace!("Variable {}.{} updated to {:?}", component, variable, value);
         let component = self.component_mut(component)?;
         component.set_variable(variable, value)?;
         Ok(())
@@ -197,6 +204,30 @@ impl<T: Clone + Debug> ConstraintSystem<T> {
     {
         let component = self.component_mut(component)?;
         component.unpin(variable)?;
+        Ok(())
+    }
+
+    /// Undo the last change of the last modified component.
+    pub fn undo(&mut self) -> Result<(), NoMoreUndo> {
+        let last_undone = self.undo_stack.pop().ok_or(NoMoreUndo)?;
+        let component = self
+            .component_mut(&last_undone)
+            .expect("Component was removed");
+        log::info!("Undoing last change in {}", component.name());
+        let _ = component.undo()?;
+        self.redo_stack.push(last_undone);
+        Ok(())
+    }
+
+    /// Redo the last change of the last modified component.
+    pub fn redo(&mut self) -> Result<(), NoMoreRedo> {
+        let last_redone = self.redo_stack.pop().ok_or(NoMoreRedo)?;
+        let component = self
+            .component_mut(&last_redone)
+            .expect("Component was removed");
+        log::info!("Redoing last change in {}", component.name());
+        let _ = component.redo()?;
+        self.undo_stack.push(last_redone);
         Ok(())
     }
 }

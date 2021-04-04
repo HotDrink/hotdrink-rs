@@ -141,7 +141,7 @@ impl<T> Method<T> {
         let m_name = self.name().to_string();
         let (component, constraint) = location;
 
-        log::debug!("Activating {}", &m_name);
+        log::trace!("Activating {}", &m_name);
 
         let shared_states = Arc::new(shared_states);
         let shared_states_clone = shared_states.clone();
@@ -213,7 +213,7 @@ impl<T> Method<T> {
 
                 // Compute the result
                 let result = f(inputs);
-                log::debug!("{}({}) = {:?}", m_name, formatted_inputs, result);
+                log::trace!("{}({}) = {:?}", m_name, formatted_inputs, result);
 
                 // Inspect it
                 match result {

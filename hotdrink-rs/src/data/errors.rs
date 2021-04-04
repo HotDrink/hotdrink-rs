@@ -2,6 +2,8 @@
 
 use std::fmt::Display;
 
+use super::generations::{NoMoreRedo, NoMoreUndo};
+
 /// An error occured while using the API.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum ApiError<'a> {
@@ -9,6 +11,10 @@ pub enum ApiError<'a> {
     NoSuchComponent(NoSuchComponent<'a>),
     /// See [`NoSuchVariable`].
     NoSuchVariable(NoSuchVariable<'a>),
+    /// Nothing more to undo.
+    NoMoreUndo,
+    /// Nothing more to redo.
+    NoMoreRedo,
 }
 
 impl<'a> Display for ApiError<'a> {
@@ -16,6 +22,8 @@ impl<'a> Display for ApiError<'a> {
         match self {
             ApiError::NoSuchComponent(nsc) => nsc.fmt(f),
             ApiError::NoSuchVariable(nsv) => nsv.fmt(f),
+            ApiError::NoMoreUndo => write!(f, "Nothing more to undo"),
+            ApiError::NoMoreRedo => write!(f, "Nothing more to redo"),
         }
     }
 }
@@ -29,6 +37,18 @@ impl<'a> From<NoSuchComponent<'a>> for ApiError<'a> {
 impl<'a> From<NoSuchVariable<'a>> for ApiError<'a> {
     fn from(nsv: NoSuchVariable<'a>) -> Self {
         Self::NoSuchVariable(nsv)
+    }
+}
+
+impl<'a> From<NoMoreUndo> for ApiError<'a> {
+    fn from(_: NoMoreUndo) -> Self {
+        Self::NoMoreUndo
+    }
+}
+
+impl<'a> From<NoMoreRedo> for ApiError<'a> {
+    fn from(_: NoMoreRedo) -> Self {
+        Self::NoMoreRedo
     }
 }
 

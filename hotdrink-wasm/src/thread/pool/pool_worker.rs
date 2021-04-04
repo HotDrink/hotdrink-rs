@@ -222,7 +222,7 @@ impl PoolWorker {
             };
             // Check if the task is dropped, and that the worker is still working on the task
             if should_be_terminated {
-                log::info!("Worker was terminated");
+                log::trace!("Worker was terminated");
                 // Terminate the worker
                 shared_data.is_terminated.store(true, Ordering::SeqCst);
                 self.worker.terminate();

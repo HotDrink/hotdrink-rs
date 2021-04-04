@@ -94,7 +94,7 @@ pub trait ComponentSpec: Index<&'static str> + IndexMut<&'static str> {
     /// Returns the number of variables in the component.
     fn n_variables(&self) -> usize;
     /// Returns the variables of the component.
-    fn variables(&self) -> &[Self::Variable];
+    fn variables(&self) -> Vec<&Self::Variable>;
     /// Returns a specific variable from a component.
     fn get(&self, i: usize) -> &Self::Variable;
     /// Sets the value of a variable.

@@ -3,6 +3,7 @@
 use super::{
     constraint::Constraint,
     errors::NoSuchVariable,
+    generations::{Generations, NoMoreRedo, NoMoreUndo},
     method::Method,
     traits::PlanError,
     variable_activation::State,
@@ -19,7 +20,7 @@ use crate::{
         traits::{ComponentSpec, ConstraintSpec},
         variable_activation::VariableActivation,
     },
-    event::Event,
+    event::{Event, GeneralEvent},
     thread::{dummy_pool::DummyPool, thread_pool::ThreadPool},
     variable_ranking::{SortRanker, VariableRanker},
 };
@@ -42,7 +43,7 @@ pub struct Component<T> {
     name: String,
     name_to_index: HashMap<String, usize>,
     variable_information: Arc<Mutex<Vec<VariableInfo<T, SolveError>>>>,
-    variable_activations: Vec<VariableActivation<T, SolveError>>,
+    variable_activations: Generations<VariableActivation<T, SolveError>>,
     constraints: Vec<Constraint<T>>,
     ranker: SortRanker,
     updated_since_last_solve: HashSet<usize>,
@@ -113,7 +114,8 @@ impl<T: Clone> Component<T> {
             self.ranker.touch(idx);
 
             // Create a new activation
-            self.variable_activations[idx] = VariableActivation::from(value);
+            self.variable_activations
+                .set(idx, VariableActivation::from(value));
             self.variable_information.lock().unwrap()[idx].set_generation(self.generation);
             Ok(())
         } else {
@@ -214,6 +216,9 @@ impl<T: Clone> Component<T> {
                 variable_info.call_callback(ge);
             },
         )?;
+
+        // Commit changes
+        self.variable_activations.commit();
 
         self.generation += 1;
 
@@ -371,6 +376,48 @@ impl<T: Clone> Component<T> {
 
         Ok(buffer)
     }
+
+    fn notify(&mut self) {
+        let mut variable_information = self.variable_information.lock().unwrap();
+        for (vi, v) in variable_information.iter_mut().enumerate() {
+            let va = &self.variable_activations[vi];
+            let inner = va.inner().lock().unwrap();
+            let opt_event = match inner.get_state() {
+                State::Ready => Some(GeneralEvent::new(
+                    vi,
+                    self.generation,
+                    Event::Ready(inner.current_value().clone()),
+                )),
+                State::Error(errors) => Some(GeneralEvent::new(
+                    vi,
+                    self.generation,
+                    Event::Error(errors.clone()),
+                )),
+                State::Pending => None, // Event will arrive later
+            };
+            if let Some(ge) = opt_event {
+                v.call_callback(ge);
+            }
+        }
+    }
+
+    /// Jumps back to the previous set/update call.
+    pub fn undo(&mut self) -> Result<(), NoMoreUndo> {
+        self.variable_activations.undo()?;
+        self.generation += 1;
+        self.notify();
+
+        Ok(())
+    }
+
+    /// Jumps forward to the next set/update call.
+    pub fn redo(&mut self) -> Result<(), NoMoreRedo> {
+        self.variable_activations.redo()?;
+        self.generation += 1;
+        self.notify();
+
+        Ok(())
+    }
 }
 
 impl<T: Clone> ComponentSpec for Component<T> {
@@ -384,7 +431,7 @@ impl<T: Clone> ComponentSpec for Component<T> {
         constraints: Vec<Self::Constraint>,
     ) -> Self {
         let n_variables = values.len();
-        let values = values.into_iter().map(|v| v.into()).collect();
+        let values = Generations::new(values.into_iter().map(|v| v.into()).collect());
         Self {
             name,
             name_to_index: HashMap::new(),
@@ -409,11 +456,11 @@ impl<T: Clone> ComponentSpec for Component<T> {
     }
 
     fn n_variables(&self) -> usize {
-        self.variable_activations.len()
+        self.variable_activations.n_variables()
     }
 
-    fn variables(&self) -> &[Self::Variable] {
-        &self.variable_activations
+    fn variables(&self) -> Vec<&Self::Variable> {
+        self.variable_activations.values()
     }
 
     fn get(&self, i: usize) -> &Self::Variable {
@@ -421,7 +468,8 @@ impl<T: Clone> ComponentSpec for Component<T> {
     }
 
     fn set(&mut self, i: usize, value: impl Into<Self::Value>) {
-        self.variable_activations[i] = VariableActivation::from(value.into());
+        self.variable_activations
+            .set(i, VariableActivation::from(value.into()));
     }
 
     fn constraints(&self) -> &[Self::Constraint] {
@@ -511,11 +559,11 @@ mod tests {
         let mut component: Component<i32> = sum();
 
         assert_eq!(
-            component.variables(),
+            &component.variables(),
             &[
-                VariableActivation::from(0),
-                VariableActivation::from(0),
-                VariableActivation::from(0)
+                &VariableActivation::from(0),
+                &VariableActivation::from(0),
+                &VariableActivation::from(0)
             ]
         );
 
@@ -524,11 +572,11 @@ mod tests {
         component.par_update(&mut DummyPool).unwrap();
 
         assert_eq!(
-            component.variables(),
+            &component.variables(),
             &[
-                VariableActivation::from(3),
-                VariableActivation::from(0),
-                VariableActivation::from(3)
+                &VariableActivation::from(3),
+                &VariableActivation::from(0),
+                &VariableActivation::from(3)
             ]
         );
 
@@ -537,11 +585,11 @@ mod tests {
         component.update().unwrap();
 
         assert_eq!(
-            component.variables(),
+            &component.variables(),
             &[
-                VariableActivation::from(3),
-                VariableActivation::from(-1),
-                VariableActivation::from(2)
+                &VariableActivation::from(3),
+                &VariableActivation::from(-1),
+                &VariableActivation::from(2)
             ]
         );
     }
@@ -559,11 +607,11 @@ mod tests {
 
         // It should pick b, since it is not pinned and has a lower priority than a
         assert_eq!(
-            component.variables(),
+            &component.variables(),
             &[
-                VariableActivation::from(val1),
-                VariableActivation::from(-val1),
-                VariableActivation::from(0)
+                &VariableActivation::from(val1),
+                &VariableActivation::from(-val1),
+                &VariableActivation::from(0)
             ]
         );
 
@@ -576,11 +624,56 @@ mod tests {
 
         // It should pick c, since c is no longer pinned
         assert_eq!(
-            component.variables(),
+            &component.variables(),
             &[
-                VariableActivation::from(val2),
-                VariableActivation::from(-val1),
-                VariableActivation::from(val2 - val1)
+                &VariableActivation::from(val2),
+                &VariableActivation::from(-val1),
+                &VariableActivation::from(val2 - val1)
+            ]
+        );
+    }
+
+    #[test]
+    fn undo_redo_works() {
+        let mut component: Component<i32> = sum();
+
+        // Perform change and update
+        component.set_variable("a", 3).unwrap();
+        component.update().unwrap();
+
+        // Verify that change happened
+        assert_eq!(
+            &component.variables(),
+            &[
+                &VariableActivation::from(3),
+                &VariableActivation::from(0),
+                &VariableActivation::from(3)
+            ]
+        );
+
+        // Undo change
+        assert_eq!(component.undo(), Ok(()));
+
+        // Verify that change was undone
+        assert_eq!(
+            &component.variables(),
+            &[
+                &VariableActivation::from(0),
+                &VariableActivation::from(0),
+                &VariableActivation::from(0)
+            ]
+        );
+
+        // Redo change
+        assert_eq!(component.redo(), Ok(()));
+
+        // Verify that change was redone
+        assert_eq!(
+            &component.variables(),
+            &[
+                &VariableActivation::from(3),
+                &VariableActivation::from(0),
+                &VariableActivation::from(3)
             ]
         );
     }

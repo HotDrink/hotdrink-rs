@@ -10,6 +10,25 @@ function main() {
   let cs = wasm.demo_cs();
   cs.listen(e => cs.notify(e.data));
 
+  // Undo/redo triggers the input events since fields get autofocused.
+  // This flag lets us ignore these events.
+  let undo_or_redo = false;
+  // Capture undo events
+  document.addEventListener('keydown', function (event) {
+    if (event.ctrlKey && event.key === 'z') {
+      cs.undo();
+      undo_or_redo = true;
+    }
+  });
+
+  // Capture redo events
+  document.addEventListener('keydown', function (event) {
+    if (event.ctrlKey && event.key === 'Z') {
+      cs.redo();
+      undo_or_redo = true;
+    }
+  });
+
   // Bind a single HTML element to the constraint system.
   // Get the field named `name`, and upon edits send it to the constraint system and solve.
   // Add a callback to the constraint system to set the field value when a new value arrives.
@@ -18,12 +37,13 @@ function main() {
     let state = document.getElementById(name + "_state");
     // Pass input events to the constraint system
     box.addEventListener("input", () => {
+      if (undo_or_redo) {
+        undo_or_redo = false;
+        return;
+      }
       let parsed = parse(box.value);
       cs.set_variable(comp, name, parsed);
-      let before = performance.now();
       cs.update();
-      let after = performance.now();
-      console.log("Solve took", after - before, "ms");
     });
     // Subscribe to a variable in the given component
     cs.subscribe(comp, name, v => {

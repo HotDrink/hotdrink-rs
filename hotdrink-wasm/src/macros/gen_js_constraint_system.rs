@@ -179,6 +179,20 @@ macro_rules! gen_js_constraint_system {
                         log::error!("Could not unpin variable: {}", e);
                     });
             }
+
+            /// Undo the last change.
+            pub fn undo(&self) {
+                self.inner.lock().unwrap().undo().unwrap_or_else(|e| {
+                    log::error!("Undo failed: {}", e);
+                })
+            }
+
+            /// Undo the last change.
+            pub fn redo(&self) {
+                self.inner.lock().unwrap().redo().unwrap_or_else(|e| {
+                    log::error!("Redo failed: {}", e);
+                })
+            }
         }
     };
 }

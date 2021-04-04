@@ -75,7 +75,7 @@ fn spawn_worker(wasm_bindgen_shim_url: &str) -> Result<WorkerInfo, JsValue> {
                 ready_clone.store(true, Ordering::SeqCst);
             }
             Err(e) => {
-                log::debug!("Could not receive work: {}", e);
+                log::error!("Could not receive work: {}", e);
                 break;
             }
         }
@@ -138,7 +138,7 @@ impl ThreadPool for DynamicPool {
             };
             if should_be_terminated {
                 w.worker.terminate();
-                log::debug!("Terminated a thread");
+                log::trace!("Terminated a thread");
             }
             should_be_terminated
         });

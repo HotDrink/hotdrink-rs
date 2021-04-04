@@ -1,6 +1,6 @@
 //! A data structure to allow undo and redo of operations.
 
-use std::{collections::VecDeque, ops::Index};
+use std::{collections::VecDeque, fmt::Display, ops::Index};
 
 /// Represents values over time to allow for undo and redo.
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
@@ -23,9 +23,21 @@ pub struct Generations<T> {
 #[derive(Copy, Clone, Debug, Default, PartialEq, Eq)]
 pub struct NoMoreUndo;
 
+impl Display for NoMoreUndo {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "Nothing more to undo")
+    }
+}
+
 /// Nothing more to redo.
 #[derive(Copy, Clone, Debug, Default, PartialEq, Eq)]
 pub struct NoMoreRedo;
+
+impl Display for NoMoreRedo {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "Nothing more to redo")
+    }
+}
 
 impl<T> Generations<T> {
     /// Constructs a new [`Generations`] with the specified default values.
@@ -196,6 +208,12 @@ impl<T> Index<usize> for Generations<T> {
     }
 }
 
+impl<T> From<Vec<T>> for Generations<T> {
+    fn from(vec: Vec<T>) -> Self {
+        Self::new(vec)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::{Generations, NoMoreRedo, NoMoreUndo};
@@ -323,7 +341,6 @@ mod tests {
 
     #[test]
     fn undo_limit_n_gives_n_undos() {
-        env_logger::builder().is_test(true).init();
         for undo_limit in 0..10 {
             let mut gs = Generations::new_with_limit(vec![0], undo_limit);
             for _ in 0..undo_limit {
