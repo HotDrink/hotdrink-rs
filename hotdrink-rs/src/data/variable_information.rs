@@ -1,6 +1,6 @@
 //! Extra information about a variable, such as its status, generation, and callbacks.
 
-use super::variable_activation::EventCallback;
+use super::{component::GenerationCounter, variable_activation::EventCallback};
 use crate::event::{Event, GeneralEvent};
 use std::fmt::Debug;
 use std::sync::{Arc, Mutex};
@@ -21,27 +21,19 @@ pub enum Status {
 /// More specifically, this struct contains its generation, current status, and a callback if one exists.
 #[derive(Clone)]
 pub struct VariableInfo<T, E> {
-    generation: usize,
+    target_generation: GenerationCounter,
     status: Status,
     callback: Option<EventCallback<T, E>>,
 }
 
 impl<T: Clone, E: Clone> VariableInfo<T, E> {
     /// Constructs a new [`VariableInfo`] with the specified status.
-    pub fn new(status: Status) -> Self {
+    pub fn new(status: Status, target_generation: GenerationCounter) -> Self {
         Self {
-            generation: 0,
+            target_generation,
             status,
             callback: None,
         }
-    }
-    /// Returns the current generation of the variable.
-    pub fn generation(&self) -> usize {
-        self.generation
-    }
-    /// Sets the generation to the specified value.
-    pub fn set_generation(&mut self, generation: usize) {
-        self.generation = generation;
     }
     /// Returns a reference to the callback of the variable.
     pub fn callback(&self) -> &Option<EventCallback<T, E>> {
@@ -59,16 +51,13 @@ impl<T: Clone, E: Clone> VariableInfo<T, E> {
     ///
     /// Old events will be ignored, and new ones will update the current status of the variable.
     pub fn call_callback(&mut self, ge: GeneralEvent<T, E>) {
-        let new_generation = ge.generation();
-        let old_generation = self.generation();
+        let event_generation = ge.generation();
 
-        // Ignore old events
-        if new_generation < old_generation {
+        // Ignore events from another generation
+        if event_generation != self.target_generation.get() {
             return;
         }
 
-        // Update generation
-        self.generation = new_generation;
         // Update status
         let event = ge.event();
         self.status = match &event {
@@ -86,7 +75,7 @@ impl<T: Clone, E: Clone> VariableInfo<T, E> {
 impl<T: Debug, E: Debug> Debug for VariableInfo<T, E> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("VariableInfo")
-            .field("generation", &self.generation)
+            .field("generation", &self.target_generation.get())
             .field("status", &self.status)
             .finish()
     }
@@ -94,7 +83,7 @@ impl<T: Debug, E: Debug> Debug for VariableInfo<T, E> {
 
 impl<T, E> PartialEq for VariableInfo<T, E> {
     fn eq(&self, other: &Self) -> bool {
-        self.generation == other.generation && self.status == other.status
+        self.target_generation == other.target_generation && self.status == other.status
     }
 }
 

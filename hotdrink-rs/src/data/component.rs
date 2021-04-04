@@ -29,11 +29,48 @@ use std::{
     fmt::{self, Debug, Write},
     future::Future,
     ops::{Index, IndexMut},
-    sync::{Arc, Mutex},
+    sync::{
+        atomic::{AtomicUsize, Ordering},
+        Arc, Mutex,
+    },
 };
 
 /// A callback that responds some input `T`.
 pub type GeneralCallback<T> = Arc<Mutex<dyn Fn(T) + Send>>;
+
+/// A counter for the current generation.
+#[derive(Clone, Debug, Default)]
+pub struct GenerationCounter {
+    generation: Arc<AtomicUsize>,
+}
+
+impl GenerationCounter {
+    /// Constructs a new [`GenerationCounter`] at generation 0.
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    /// Returns the generation.
+    pub fn get(&self) -> usize {
+        self.generation.load(Ordering::SeqCst)
+    }
+
+    /// Increments the generation.
+    pub fn inc(&self) {
+        self.generation.fetch_add(1, Ordering::SeqCst);
+    }
+
+    /// Decrements the generation.
+    pub fn dec(&self) {
+        self.generation.fetch_sub(1, Ordering::SeqCst);
+    }
+}
+
+impl PartialEq for GenerationCounter {
+    fn eq(&self, other: &Self) -> bool {
+        self.get() == other.get()
+    }
+}
 
 /// A collection of variables along with constraints that should be maintained between them.
 /// Variables can get new values, values can be retrieved from the component, and the constraints can be enforced.
@@ -48,7 +85,7 @@ pub struct Component<T> {
     ranker: SortRanker,
     updated_since_last_solve: HashSet<usize>,
     n_ready: usize,
-    generation: usize,
+    generation: GenerationCounter,
 }
 
 impl<T: Debug> Debug for Component<T> {
@@ -116,7 +153,6 @@ impl<T: Clone> Component<T> {
             // Create a new activation
             self.variable_activations
                 .set(idx, VariableActivation::from(value));
-            self.variable_information.lock().unwrap()[idx].set_generation(self.generation);
             Ok(())
         } else {
             Err(NoSuchVariable(variable))
@@ -204,11 +240,13 @@ impl<T: Clone> Component<T> {
         let variable_information_clone = self.variable_information.clone();
 
         // Solve based on the plan
+        self.generation.inc();
+        let generation = self.generation.get();
         solver::par_solve(
             &plan,
             &mut self.variable_activations,
             component_name,
-            self.generation,
+            generation,
             pool,
             move |ge| {
                 let mut lock = variable_information_clone.lock().unwrap();
@@ -219,8 +257,6 @@ impl<T: Clone> Component<T> {
 
         // Commit changes
         self.variable_activations.commit();
-
-        self.generation += 1;
 
         Ok(())
     }
@@ -387,14 +423,14 @@ impl<T: Clone> Component<T> {
                 State::Error(errors) => Event::Error(errors.clone()),
                 State::Pending => Event::Pending, // Event will arrive later
             };
-            v.call_callback(GeneralEvent::new(vi, self.generation, event));
+            v.call_callback(GeneralEvent::new(vi, self.generation.get(), event));
         }
     }
 
     /// Jumps back to the previous set/update call.
     pub fn undo(&mut self) -> Result<(), NoMoreUndo> {
         self.variable_activations.undo()?;
-        self.generation += 1;
+        self.generation.dec();
         self.notify();
 
         Ok(())
@@ -403,7 +439,7 @@ impl<T: Clone> Component<T> {
     /// Jumps forward to the next set/update call.
     pub fn redo(&mut self) -> Result<(), NoMoreRedo> {
         self.variable_activations.redo()?;
-        self.generation += 1;
+        self.generation.inc();
         self.notify();
 
         Ok(())
@@ -422,19 +458,23 @@ impl<T: Clone> ComponentSpec for Component<T> {
     ) -> Self {
         let n_variables = values.len();
         let values = Generations::new(values.into_iter().map(|v| v.into()).collect());
+        let generation = GenerationCounter::new();
         Self {
             name,
             name_to_index: HashMap::new(),
             variable_activations: values,
             variable_information: Arc::new(Mutex::new(vec![
-                VariableInfo::new(Status::Ready);
+                VariableInfo::new(
+                    Status::Ready,
+                    generation.clone(),
+                );
                 n_variables
             ])),
             constraints,
             ranker: VariableRanker::of_size(n_variables),
             updated_since_last_solve: (0..n_variables).collect(),
             n_ready: n_variables,
-            generation: 0,
+            generation,
         }
     }
 
