@@ -35,13 +35,9 @@ use super::{
 };
 use crate::{
     algorithms::toposorter::toposort,
-    data::{
-        component::Component,
-        method::Method,
-        traits::{ComponentSpec, ConstraintSpec, MethodSpec, PlanError},
-    },
+    data::traits::{ComponentSpec, ConstraintSpec, MethodSpec, PlanError},
 };
-use std::{collections::HashSet, fmt::Debug};
+use std::fmt::Debug;
 
 /// Represents a type with input- and output-indices.
 /// This can be used to represent Vertices in graphs.
@@ -226,76 +222,6 @@ where
         .map(|v| v.into_iter().cloned().collect());
 
     sorted.ok_or(PlanError::Overconstrained)
-}
-
-/// Run the hierarchical planner, but only re-enforce constraints that may have been
-/// broken by the modification of variables in `updated_since_last_solve`.
-/// Use DFS to search through the constraint graph from each variable,
-/// and tag the constraints we must solve again.
-#[deprecated = "All variables in a component are likely connected anyway, so this is a waste of time"]
-pub fn hierarchical_planner_only_updated<T: Clone + 'static>(
-    component: &Component<T>,
-    ranking: &[usize],
-    updated_since_last_solve: &HashSet<usize>,
-) -> Result<OwnedPlan<Method<T>>, PlanError> {
-    let n = component.n_variables();
-    let constraints = component.constraints();
-
-    // Tag visited constraints
-    let mut keep = vec![false; constraints.len()];
-    let mut stack: Vec<usize> = Vec::new();
-
-    // Create a map from variables to constraints
-    let mut var_to_constraints: Vec<Vec<usize>> = vec![Vec::new(); n];
-    for (ci, c) in constraints.iter().enumerate() {
-        for &vi in c.variables() {
-            var_to_constraints[vi].push(ci);
-        }
-    }
-
-    // Push the constraints directly involved with modified variables
-    for v in updated_since_last_solve {
-        stack.extend(var_to_constraints[*v].iter());
-    }
-
-    // Create a map from constraint to neighboring constraints
-    let mut constraint_to_constraints: Vec<Vec<usize>> = vec![Vec::new(); constraints.len()];
-    // For each constraint
-    for (ci, c) in constraints.iter().enumerate() {
-        // For each variable used by the constraint
-        for &vi in c.variables() {
-            // If it is used, check out the neighbors of this variable
-            let neighbors = &var_to_constraints[vi];
-            constraint_to_constraints[ci].extend(neighbors.iter());
-        }
-    }
-
-    // Dfs
-    while let Some(top) = stack.pop() {
-        if keep[top] {
-            continue;
-        }
-        keep[top] = true;
-
-        for &c in &constraint_to_constraints[top] {
-            stack.push(c);
-        }
-    }
-
-    // Create filtered component
-    // TOOD: Remove unnecessary cloning
-    let comp: Component<T> = Component::new(
-        component.name().to_string(),
-        component.variables().into_iter().cloned().collect(),
-        constraints
-            .iter()
-            .cloned()
-            .enumerate()
-            .filter_map(|(i, c)| if keep[i] { Some(c) } else { None })
-            .collect(),
-    );
-
-    hierarchical_planner(&comp, ranking)
 }
 
 #[cfg(test)]
