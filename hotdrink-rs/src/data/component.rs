@@ -382,22 +382,12 @@ impl<T: Clone> Component<T> {
         for (vi, v) in variable_information.iter_mut().enumerate() {
             let va = &self.variable_activations[vi];
             let inner = va.inner().lock().unwrap();
-            let opt_event = match inner.get_state() {
-                State::Ready => Some(GeneralEvent::new(
-                    vi,
-                    self.generation,
-                    Event::Ready(inner.current_value().clone()),
-                )),
-                State::Error(errors) => Some(GeneralEvent::new(
-                    vi,
-                    self.generation,
-                    Event::Error(errors.clone()),
-                )),
-                State::Pending => None, // Event will arrive later
+            let event = match inner.get_state() {
+                State::Ready => Event::Ready(inner.current_value().clone()),
+                State::Error(errors) => Event::Error(errors.clone()),
+                State::Pending => Event::Pending, // Event will arrive later
             };
-            if let Some(ge) = opt_event {
-                v.call_callback(ge);
-            }
+            v.call_callback(GeneralEvent::new(vi, self.generation, event));
         }
     }
 

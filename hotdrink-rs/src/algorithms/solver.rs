@@ -89,8 +89,6 @@ where
         let mut shared_states = Vec::with_capacity(m.outputs().len());
         for &o in m.outputs() {
             let previous_activation = current_values.get_mut(o).unwrap();
-            // Cancel old activation
-            previous_activation.cancel();
             // Keep the old value from the previous state, but set to pending
             let shared_state = VariableActivationInner::from_previous(previous_activation.inner());
             shared_states.push(Arc::new(Mutex::new(shared_state)));
