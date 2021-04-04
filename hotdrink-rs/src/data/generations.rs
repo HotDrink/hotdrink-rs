@@ -2,21 +2,13 @@
 
 use std::{collections::VecDeque, fmt::Display, ops::Index};
 
-/// Represents values over time to allow for undo and redo.
-#[derive(Clone, Debug, Default, PartialEq, Eq)]
-pub struct Generations<T> {
-    /// The generation we are currently on.
-    current_generation: usize,
-    /// The index of the current value of each variable.
-    current_idx: Vec<usize>,
-    /// If values have been modified since last commit.
-    is_modified: bool,
-    /// A list of values for each variable.
-    values: Vec<VecDeque<T>>,
-    /// `diff[n]` gives the difference between generation `n` and `n+1`.
-    diff: VecDeque<Vec<usize>>,
-    /// The maximum number of generations to keep.
-    undo_limit: Option<usize>,
+/// The limit on how much undo history to keep.
+#[derive(Copy, Clone, Debug, PartialEq, Eq)]
+pub enum UndoLimit {
+    /// No limit on the undo history.
+    Unlimited,
+    /// A limit on the undo history.
+    Limited(usize),
 }
 
 /// Nothing more to undo.
@@ -39,6 +31,23 @@ impl Display for NoMoreRedo {
     }
 }
 
+/// Represents values over time to allow for undo and redo.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct Generations<T> {
+    /// The generation we are currently on.
+    current_generation: usize,
+    /// The index of the current value of each variable.
+    current_idx: Vec<usize>,
+    /// If values have been modified since last commit.
+    is_modified: bool,
+    /// A list of values for each variable.
+    values: Vec<VecDeque<T>>,
+    /// `diff[n]` gives the difference between generation `n` and `n+1`.
+    diff: VecDeque<Vec<usize>>,
+    /// The maximum number of generations to keep.
+    undo_limit: UndoLimit,
+}
+
 impl<T> Generations<T> {
     /// Constructs a new [`Generations`] with the specified default values.
     pub fn new(start_values: Vec<T>) -> Self {
@@ -51,15 +60,21 @@ impl<T> Generations<T> {
                 .collect(),
             is_modified: false,
             diff: Default::default(),
-            undo_limit: None,
+            undo_limit: UndoLimit::Unlimited,
         }
     }
 
     /// Constructs a new [`Generations`] with the specified default values and history limit.
     pub fn new_with_limit(start_values: Vec<T>, undo_limit: usize) -> Self {
         let mut without_cap = Self::new(start_values);
-        without_cap.undo_limit = Some(undo_limit);
+        without_cap.undo_limit = UndoLimit::Limited(undo_limit);
         without_cap
+    }
+
+    /// Sets a new limit on the number of undos to keep and enforce it.
+    pub fn set_limit(&mut self, undo_limit: UndoLimit) {
+        self.undo_limit = undo_limit;
+        self.clear_past();
     }
 
     /// Returns the number of variables per generation.
@@ -105,7 +120,7 @@ impl<T> Generations<T> {
     /// Deletes undo history that goes past the limit, if a limit exists.
     fn clear_past(&mut self) {
         // Delete old history that goes past the undo limit
-        if let Some(undo_limit) = self.undo_limit {
+        if let UndoLimit::Limited(undo_limit) = self.undo_limit {
             // While we have too many generations
             while self.generations() - 1 > undo_limit {
                 // Pop the earliest diff
