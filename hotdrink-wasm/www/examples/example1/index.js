@@ -10,22 +10,19 @@ function main() {
   let cs = wasm.demo_cs();
   cs.listen(e => cs.notify(e.data));
 
-  // Undo/redo triggers the input events since fields get autofocused.
-  // This flag lets us ignore these events.
-  let undo_or_redo = false;
   // Capture undo events
-  document.addEventListener('keydown', function (event) {
+  document.addEventListener('keydown', (event) => {
     if (event.ctrlKey && event.key === 'z') {
+      event.preventDefault();
       cs.undo();
-      undo_or_redo = true;
     }
   });
 
   // Capture redo events
-  document.addEventListener('keydown', function (event) {
+  document.addEventListener('keydown', (event) => {
     if (event.ctrlKey && event.key === 'Z') {
+      event.preventDefault();
       cs.redo();
-      undo_or_redo = true;
     }
   });
 
@@ -37,10 +34,6 @@ function main() {
     let state = document.getElementById(name + "_state");
     // Pass input events to the constraint system
     box.addEventListener("input", () => {
-      if (undo_or_redo) {
-        undo_or_redo = false;
-        return;
-      }
       let parsed = parse(box.value);
       cs.set_variable(comp, name, parsed);
       cs.update();

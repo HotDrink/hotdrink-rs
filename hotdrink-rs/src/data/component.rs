@@ -4,6 +4,7 @@ use super::{
     constraint::Constraint,
     errors::NoSuchVariable,
     filtered_callback::FilteredCallback,
+    generation_id::GenerationId,
     generations::{Generations, NoMoreRedo, NoMoreUndo},
     method::Method,
     traits::PlanError,
@@ -29,48 +30,11 @@ use std::{
     fmt::{self, Debug, Write},
     future::Future,
     ops::{Index, IndexMut},
-    sync::{
-        atomic::{AtomicUsize, Ordering},
-        Arc, Mutex,
-    },
+    sync::{Arc, Mutex},
 };
 
 /// A callback that responds some input `T`.
 pub type GeneralCallback<T> = Arc<Mutex<dyn Fn(T) + Send>>;
-
-/// A counter for the current generation.
-#[derive(Clone, Debug, Default)]
-pub struct GenerationCounter {
-    generation: Arc<AtomicUsize>,
-}
-
-impl GenerationCounter {
-    /// Constructs a new [`GenerationCounter`] at generation 0.
-    pub fn new() -> Self {
-        Self::default()
-    }
-
-    /// Returns the generation.
-    pub fn get(&self) -> usize {
-        self.generation.load(Ordering::SeqCst)
-    }
-
-    /// Increments the generation.
-    pub fn inc(&self) {
-        self.generation.fetch_add(1, Ordering::SeqCst);
-    }
-
-    /// Decrements the generation.
-    pub fn dec(&self) {
-        self.generation.fetch_sub(1, Ordering::SeqCst);
-    }
-}
-
-impl PartialEq for GenerationCounter {
-    fn eq(&self, other: &Self) -> bool {
-        self.get() == other.get()
-    }
-}
 
 /// A collection of variables along with constraints that should be maintained between them.
 /// Variables can get new values, values can be retrieved from the component, and the constraints can be enforced.
@@ -80,12 +44,14 @@ pub struct Component<T> {
     name: String,
     name_to_index: HashMap<String, usize>,
     callbacks: Arc<Mutex<Vec<FilteredCallback<T, SolveError>>>>,
-    variable_activations: Generations<VariableActivation<T, SolveError>>,
+    activations: Generations<VariableActivation<T, SolveError>>,
     constraints: Vec<Constraint<T>>,
     ranker: SortRanker,
     updated_since_last_solve: HashSet<usize>,
     n_ready: usize,
-    generation: GenerationCounter,
+    // generation: GenerationCounter,
+    current_generation: usize,
+    total_generation: usize,
 }
 
 impl<T: Debug> Debug for Component<T> {
@@ -110,7 +76,7 @@ impl<T: Clone> Component<T> {
     {
         if let Some(&index) = self.name_to_index.get(variable) {
             // Call the callback with current variable state
-            let activation = &self.variable_activations[index];
+            let activation = &self.activations[index];
             let shared_state = activation.inner();
             let shared_state = shared_state.lock().unwrap();
             let value = shared_state.current_value();
@@ -151,8 +117,7 @@ impl<T: Clone> Component<T> {
             self.ranker.touch(idx);
 
             // Create a new activation
-            self.variable_activations
-                .set(idx, VariableActivation::from(value));
+            self.activations.set(idx, VariableActivation::from(value));
             Ok(())
         } else {
             Err(NoSuchVariable(variable))
@@ -165,7 +130,7 @@ impl<T: Clone> Component<T> {
         variable: &'s str,
     ) -> Result<impl Future<Output = (T, State<SolveError>)>, NoSuchVariable<'s>> {
         let idx = self.variable_index(variable)?;
-        Ok(self.variable_activations[idx].clone())
+        Ok(self.activations[idx].clone())
     }
 
     /// Returns the index of the specified variable, if it exists.
@@ -239,24 +204,30 @@ impl<T: Clone> Component<T> {
         // Clone the variable information for use in the general callback
         let variable_information_clone = self.callbacks.clone();
 
+        // Set the new callbacks to respond to.
+        self.current_generation += 1;
+        self.total_generation += 1;
+        let generation = GenerationId::new(self.current_generation, self.total_generation);
+        for fcb in &mut *self.callbacks.lock().unwrap() {
+            fcb.set_target(generation);
+        }
+
         // Solve based on the plan
-        self.generation.inc();
-        let generation = self.generation.get();
         solver::par_solve(
             &plan,
-            &mut self.variable_activations,
+            &mut self.activations,
             component_name,
             generation,
             pool,
             move |ge| {
                 let mut lock = variable_information_clone.lock().unwrap();
-                let variable_info = &mut lock[ge.variable()];
-                variable_info.call_callback(ge);
+                let fcb = &mut lock[ge.variable()];
+                fcb.call_callback(ge);
             },
         )?;
 
         // Commit changes
-        self.variable_activations.commit();
+        self.activations.commit();
 
         Ok(())
     }
@@ -413,34 +384,57 @@ impl<T: Clone> Component<T> {
         Ok(buffer)
     }
 
-    fn notify(&mut self) {
-        let mut variable_information = self.callbacks.lock().unwrap();
-        for (vi, v) in variable_information.iter_mut().enumerate() {
-            let va = &self.variable_activations[vi];
+    fn notify(&self, callbacks: &[FilteredCallback<T, SolveError>]) {
+        for (vi, v) in callbacks.iter().enumerate() {
+            let va = &self.activations[vi];
             let inner = va.inner().lock().unwrap();
             let event = match inner.get_state() {
                 State::Ready => Event::Ready(inner.current_value().clone()),
                 State::Error(errors) => Event::Error(errors.clone()),
-                State::Pending => Event::Pending, // Event will arrive later
+                State::Pending => Event::Pending,
             };
-            v.call_callback(GeneralEvent::new(vi, self.generation.get(), event));
+            v.call_callback(GeneralEvent::new(
+                vi,
+                GenerationId::new(self.current_generation, self.total_generation),
+                event,
+            ));
         }
     }
 
     /// Jumps back to the previous set/update call.
     pub fn undo(&mut self) -> Result<(), NoMoreUndo> {
-        self.variable_activations.undo()?;
-        self.generation.dec();
-        self.notify();
+        // Lock callbacks and which events to respond to
+        let mut callbacks = self.callbacks.lock().unwrap();
+        self.activations.undo()?;
+        self.current_generation -= 1;
+        self.total_generation += 1;
+        // Update target to accept events from this `notify`-call.
+        for fcb in callbacks.iter_mut() {
+            fcb.set_target(GenerationId::new(
+                self.current_generation,
+                self.total_generation,
+            ));
+        }
+        self.notify(&callbacks);
 
         Ok(())
     }
 
     /// Jumps forward to the next set/update call.
     pub fn redo(&mut self) -> Result<(), NoMoreRedo> {
-        self.variable_activations.redo()?;
-        self.generation.inc();
-        self.notify();
+        // Lock callbacks and which events to respond to
+        let mut callbacks = self.callbacks.lock().unwrap();
+        self.activations.redo()?;
+        self.current_generation += 1;
+        self.total_generation += 1;
+        // Update target to accept events from this `notify`-call.
+        for fcb in callbacks.iter_mut() {
+            fcb.set_target(GenerationId::new(
+                self.current_generation,
+                self.total_generation,
+            ));
+        }
+        self.notify(&callbacks);
 
         Ok(())
     }
@@ -458,20 +452,17 @@ impl<T: Clone> ComponentSpec for Component<T> {
     ) -> Self {
         let n_variables = values.len();
         let values = Generations::new(values.into_iter().map(|v| v.into()).collect());
-        let generation = GenerationCounter::new();
         Self {
             name,
             name_to_index: HashMap::new(),
-            variable_activations: values,
-            callbacks: Arc::new(Mutex::new(vec![
-                FilteredCallback::new(generation.clone(),);
-                n_variables
-            ])),
+            activations: values,
+            callbacks: Arc::new(Mutex::new(vec![FilteredCallback::new(); n_variables])),
             constraints,
             ranker: VariableRanker::of_size(n_variables),
             updated_since_last_solve: (0..n_variables).collect(),
             n_ready: n_variables,
-            generation,
+            current_generation: 0,
+            total_generation: 0,
         }
     }
 
@@ -483,19 +474,19 @@ impl<T: Clone> ComponentSpec for Component<T> {
     }
 
     fn n_variables(&self) -> usize {
-        self.variable_activations.n_variables()
+        self.activations.n_variables()
     }
 
     fn variables(&self) -> Vec<&Self::Variable> {
-        self.variable_activations.values()
+        self.activations.values()
     }
 
     fn get(&self, i: usize) -> &Self::Variable {
-        &self.variable_activations[i]
+        &self.activations[i]
     }
 
     fn set(&mut self, i: usize, value: impl Into<Self::Value>) {
-        self.variable_activations
+        self.activations
             .set(i, VariableActivation::from(value.into()));
     }
 
@@ -564,7 +555,7 @@ impl<T: PartialEq> PartialEq for Component<T> {
     fn eq(&self, other: &Self) -> bool {
         self.name == other.name
             && self.name_to_index == other.name_to_index
-            && self.variable_activations == other.variable_activations
+            && self.activations == other.activations
             && self.constraints == other.constraints
             && self.ranker == other.ranker
             && self.updated_since_last_solve == other.updated_since_last_solve

@@ -2,7 +2,10 @@
 //! A [`Method`] in a [`Constraint`](crate::Constraint) should enforce the relation
 //! that the constraint represents.
 
-use super::solve_error::{Reason, SolveError};
+use super::{
+    generation_id::GenerationId,
+    solve_error::{Reason, SolveError},
+};
 use crate::data::variable_activation::State;
 use crate::{
     algorithms::hierarchical_planner::Vertex,
@@ -96,7 +99,7 @@ fn handle_error<T>(
     output_indices: &[usize],
     shared_states: &Arc<Vec<SharedVariableActivationInner<T>>>,
     general_callback: &(impl Fn(GeneralEvent<T, SolveError>) + Send + 'static),
-    generation: usize,
+    generation: GenerationId,
     errors: Vec<SolveError>,
 ) where
     T: Clone,
@@ -122,7 +125,7 @@ impl<T> Method<T> {
         inputs: Vec<impl Into<VariableActivation<T, SolveError>>>,
         shared_states: Vec<SharedVariableActivationInner<T>>,
         location: (String, String),
-        generation: usize,
+        generation: GenerationId,
         pool: &mut impl ThreadPool,
         general_callback: impl Fn(GeneralEvent<T, SolveError>) + Send + 'static,
     ) -> Vec<VariableActivation<T, SolveError>>

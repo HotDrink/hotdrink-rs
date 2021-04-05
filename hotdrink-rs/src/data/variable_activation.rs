@@ -139,7 +139,12 @@ impl<T: Clone, E: Clone> VariableActivation<T, E> {
     }
 
     /// Drops the termination handle reference
-    pub fn cancel(&mut self) {
+    pub fn cancel(&mut self, e: E) {
+        let mut inner = self.shared_state.lock().unwrap();
+        // Only set to cancelled if no value was computed in time
+        if let State::Pending = inner.state {
+            inner.state = State::Error(vec![e]);
+        }
         self.producer = None;
     }
 

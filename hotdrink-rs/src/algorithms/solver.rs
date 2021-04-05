@@ -5,9 +5,10 @@
 use super::hierarchical_planner::{OwnedEnforcedConstraint, Vertex};
 use crate::{
     data::{
+        generation_id::GenerationId,
         generations::Generations,
         method::Method,
-        solve_error::SolveError,
+        solve_error::{Reason, SolveError},
         traits::{MethodFailure, MethodSpec, PlanError},
         variable_activation::{VariableActivation, VariableActivationInner},
     },
@@ -64,7 +65,7 @@ pub fn par_solve<T>(
     plan: &[OwnedEnforcedConstraint<Method<T>>],
     current_values: &mut Generations<VariableActivation<T, SolveError>>,
     component_name: String,
-    generation: usize,
+    generation: GenerationId,
     pool: &mut impl ThreadPool,
     general_callback: impl Fn(GeneralEvent<T, SolveError>) + Send + 'static + Clone,
 ) -> Result<(), PlanError>
@@ -89,6 +90,12 @@ where
         let mut shared_states = Vec::with_capacity(m.outputs().len());
         for &o in m.outputs() {
             let previous_activation = current_values.get_mut(o).unwrap();
+            previous_activation.cancel(SolveError::new(
+                component_name.clone(),
+                constraint_name.to_string(),
+                m.name().to_string(),
+                Reason::Cancelled,
+            ));
             // Keep the old value from the previous state, but set to pending
             let shared_state = VariableActivationInner::from_previous(previous_activation.inner());
             shared_states.push(Arc::new(Mutex::new(shared_state)));

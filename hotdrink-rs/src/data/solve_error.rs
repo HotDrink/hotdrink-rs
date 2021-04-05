@@ -52,6 +52,7 @@ impl Display for SolveError {
                     }
                 },
             },
+            Reason::Cancelled => "Computation was cancelled due to new input".to_string(),
         };
         write!(
             f,
@@ -70,6 +71,8 @@ pub enum Reason {
     PostConditionFailure(String),
     /// A method failed to execute. See [`MethodFailure`].
     MethodFailure(MethodFailure),
+    /// The computation was cancelled.
+    Cancelled,
 }
 
 impl Display for Reason {
@@ -78,6 +81,7 @@ impl Display for Reason {
             Reason::PreConditionFailure(msg) => write!(f, "a precondition not holding: {}", msg),
             Reason::PostConditionFailure(msg) => write!(f, "a postcondition not holding: {}", msg),
             Reason::MethodFailure(me) => write!(f, "a method failure: {:?}", me),
+            Reason::Cancelled => write!(f, "computation was cancelled"),
         }
     }
 }

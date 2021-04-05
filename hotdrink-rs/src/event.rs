@@ -1,5 +1,6 @@
 //! Types for representing events from the constraint system.
 
+use crate::data::generation_id::GenerationId;
 use std::fmt::Debug;
 
 /// Uniquely identifies a variable in a component
@@ -46,7 +47,7 @@ pub enum Event<T, E> {
 #[derive(Debug)]
 pub struct GeneralEvent<T, E> {
     variable: usize,
-    generation: usize,
+    generation: GenerationId,
     event: Event<T, E>,
 }
 
@@ -54,7 +55,7 @@ impl<T, E> GeneralEvent<T, E> {
     /// Constructs a new [`GeneralEvent`] for the specified variable.
     ///
     /// This includes the generation the computation is from, and what the event is.
-    pub fn new(variable: usize, generation: usize, event: Event<T, E>) -> Self {
+    pub fn new(variable: usize, generation: GenerationId, event: Event<T, E>) -> Self {
         Self {
             variable,
             generation,
@@ -68,7 +69,7 @@ impl<T, E> GeneralEvent<T, E> {
     }
 
     /// Returns the generation the event is from.
-    pub fn generation(&self) -> usize {
+    pub fn generation(&self) -> GenerationId {
         self.generation
     }
 
