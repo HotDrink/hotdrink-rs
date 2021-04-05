@@ -16,4 +16,4 @@ pub mod method;
 pub mod solve_error;
 pub mod traits;
 pub mod variable_activation;
-pub mod variable_information;
+pub mod filtered_callback;

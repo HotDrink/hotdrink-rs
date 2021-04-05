@@ -3,11 +3,11 @@
 use super::{
     constraint::Constraint,
     errors::NoSuchVariable,
+    filtered_callback::FilteredCallback,
     generations::{Generations, NoMoreRedo, NoMoreUndo},
     method::Method,
     traits::PlanError,
     variable_activation::State,
-    variable_information::{Status, VariableInfo},
 };
 use super::{solve_error::SolveError, traits::MethodSpec};
 use crate::{
@@ -79,7 +79,7 @@ impl PartialEq for GenerationCounter {
 pub struct Component<T> {
     name: String,
     name_to_index: HashMap<String, usize>,
-    variable_information: Arc<Mutex<Vec<VariableInfo<T, SolveError>>>>,
+    callbacks: Arc<Mutex<Vec<FilteredCallback<T, SolveError>>>>,
     variable_activations: Generations<VariableActivation<T, SolveError>>,
     constraints: Vec<Constraint<T>>,
     ranker: SortRanker,
@@ -122,7 +122,7 @@ impl<T: Clone> Component<T> {
             }
 
             // Update the stored callback
-            self.variable_information.lock().unwrap()[index].subscribe(callback);
+            self.callbacks.lock().unwrap()[index].subscribe(callback);
 
             Ok(())
         } else {
@@ -133,7 +133,7 @@ impl<T: Clone> Component<T> {
     /// Unsubscribe from a variable to avoid receiving further events.
     pub fn unsubscribe<'s>(&mut self, variable: &'s str) -> Result<(), NoSuchVariable<'s>> {
         if let Some(&index) = self.name_to_index.get(variable) {
-            self.variable_information.lock().unwrap()[index].unsubscribe();
+            self.callbacks.lock().unwrap()[index].unsubscribe();
             Ok(())
         } else {
             Err(NoSuchVariable(variable))
@@ -237,7 +237,7 @@ impl<T: Clone> Component<T> {
         let component_name = self.name().to_owned();
 
         // Clone the variable information for use in the general callback
-        let variable_information_clone = self.variable_information.clone();
+        let variable_information_clone = self.callbacks.clone();
 
         // Solve based on the plan
         self.generation.inc();
@@ -414,7 +414,7 @@ impl<T: Clone> Component<T> {
     }
 
     fn notify(&mut self) {
-        let mut variable_information = self.variable_information.lock().unwrap();
+        let mut variable_information = self.callbacks.lock().unwrap();
         for (vi, v) in variable_information.iter_mut().enumerate() {
             let va = &self.variable_activations[vi];
             let inner = va.inner().lock().unwrap();
@@ -463,11 +463,8 @@ impl<T: Clone> ComponentSpec for Component<T> {
             name,
             name_to_index: HashMap::new(),
             variable_activations: values,
-            variable_information: Arc::new(Mutex::new(vec![
-                VariableInfo::new(
-                    Status::Ready,
-                    generation.clone(),
-                );
+            callbacks: Arc::new(Mutex::new(vec![
+                FilteredCallback::new(generation.clone(),);
                 n_variables
             ])),
             constraints,

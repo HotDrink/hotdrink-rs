@@ -5,33 +5,20 @@ use crate::event::{Event, GeneralEvent};
 use std::fmt::Debug;
 use std::sync::{Arc, Mutex};
 
-/// The current status of a variable.
-#[derive(Copy, Clone, Debug, PartialEq, Eq)]
-pub enum Status {
-    /// A new value is being computed.
-    Pending,
-    /// The variable's value is fully updated.
-    Ready,
-    /// The variable is in an error-state.
-    Error,
-}
-
 /// Information about a variable.
 ///
 /// More specifically, this struct contains its generation, current status, and a callback if one exists.
 #[derive(Clone)]
-pub struct VariableInfo<T, E> {
-    target_generation: GenerationCounter,
-    status: Status,
+pub struct FilteredCallback<T, E> {
+    filtered_callback: GenerationCounter,
     callback: Option<EventCallback<T, E>>,
 }
 
-impl<T: Clone, E: Clone> VariableInfo<T, E> {
+impl<T: Clone, E: Clone> FilteredCallback<T, E> {
     /// Constructs a new [`VariableInfo`] with the specified status.
-    pub fn new(status: Status, target_generation: GenerationCounter) -> Self {
+    pub fn new(target_generation: GenerationCounter) -> Self {
         Self {
-            target_generation,
-            status,
+            filtered_callback: target_generation,
             callback: None,
         }
     }
@@ -54,37 +41,29 @@ impl<T: Clone, E: Clone> VariableInfo<T, E> {
         let event_generation = ge.generation();
 
         // Ignore events from another generation
-        if event_generation != self.target_generation.get() {
+        if event_generation != self.filtered_callback.get() {
             return;
         }
 
-        // Update status
-        let event = ge.event();
-        self.status = match &event {
-            Event::Pending => Status::Pending,
-            Event::Ready(_) => Status::Ready,
-            Event::Error(_) => Status::Error,
-        };
         // Call callback
         if let Some(callback) = &self.callback {
-            callback.lock().unwrap()(event);
+            callback.lock().unwrap()(ge.event());
         }
     }
 }
 
-impl<T: Debug, E: Debug> Debug for VariableInfo<T, E> {
+impl<T: Debug, E: Debug> Debug for FilteredCallback<T, E> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("VariableInfo")
-            .field("generation", &self.target_generation.get())
-            .field("status", &self.status)
+            .field("generation", &self.filtered_callback.get())
             .finish()
     }
 }
 
-impl<T, E> PartialEq for VariableInfo<T, E> {
+impl<T, E> PartialEq for FilteredCallback<T, E> {
     fn eq(&self, other: &Self) -> bool {
-        self.target_generation == other.target_generation && self.status == other.status
+        self.filtered_callback == other.filtered_callback
     }
 }
 
-impl<T, E> Eq for VariableInfo<T, E> {}
+impl<T, E> Eq for FilteredCallback<T, E> {}
