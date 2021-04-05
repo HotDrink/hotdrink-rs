@@ -16,10 +16,6 @@ function main() {
       event.preventDefault();
       cs.undo();
     }
-  });
-
-  // Capture redo events
-  document.addEventListener('keydown', (event) => {
     if (event.ctrlKey && event.key === 'Z') {
       event.preventDefault();
       cs.redo();
