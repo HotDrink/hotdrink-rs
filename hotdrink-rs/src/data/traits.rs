@@ -30,7 +30,8 @@ pub enum MethodFailure {
 pub type MethodResult<T> = Result<Vec<T>, MethodFailure>;
 
 /// The function contained within a method.
-pub type MethodFunction<T> = Arc<dyn Fn(Vec<T>) -> Result<Vec<T>, MethodFailure> + Send + Sync>;
+pub type MethodFunction<T> =
+    Arc<dyn Fn(Vec<Arc<T>>) -> Result<Vec<Arc<T>>, MethodFailure> + Send + Sync>;
 
 /// An extension of the [`Vertex`] trait for methods.
 pub trait MethodSpec: Vertex {
@@ -44,7 +45,7 @@ pub trait MethodSpec: Vertex {
         apply: MethodFunction<Self::Arg>,
     ) -> Self;
     /// Applies the provided arguments to the inner function of the method.
-    fn apply(&self, args: Vec<Self::Arg>) -> MethodResult<Self::Arg>;
+    fn apply(&self, args: Vec<Arc<Self::Arg>>) -> MethodResult<Arc<Self::Arg>>;
     /// Returns a reference to the name of the method.
     fn name(&self) -> &str;
 }
@@ -116,7 +117,7 @@ pub trait ComponentSpec: Index<&'static str> + IndexMut<&'static str> {
     /// Tries to enforce all constraints in the component.
     fn update(&mut self) -> Result<(), PlanError>
     where
-        Self::Value: Send + 'static + Debug;
+        Self::Value: Send + Sync + 'static + Debug;
     /// Converts a variable name to its index in the component.
     fn name_to_idx(&self, name: &str) -> Option<usize>;
 }

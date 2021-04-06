@@ -84,7 +84,7 @@ macro_rules! component {
                                             return Err($crate::data::traits::MethodFailure::NoSuchVariable(stringify!($inp).to_owned()));
                                         }
                                         // Convert it to the appropriate type
-                                        let $inp = std::convert::TryInto::<$inp_ty>::try_into($inp.unwrap());
+                                        let $inp = std::convert::TryInto::<$inp_ty>::try_into(&**$inp.unwrap());
                                         // Verify that it worked
                                         if $inp.is_err() {
                                             return Err($crate::data::traits::MethodFailure::TypeConversionFailure(stringify!($inp), stringify!($inp_ty)));
@@ -167,7 +167,7 @@ macro_rules! component {
 /// ```
 #[macro_export]
 macro_rules! ret {
-    ($($e:expr),*) => {{ Ok(vec![$($e.into()),*]) }}
+    ($($e:expr),*) => {{ Ok(vec![$(std::sync::Arc::new($e.into())),*]) }}
 }
 
 /// Turns a list of inputs into a failed [`MethodResult`]().
@@ -199,7 +199,7 @@ mod tests {
     use std::convert::TryFrom;
 
     macro_rules! all_into {
-        ($($e:expr),*) => {{ vec![$($e.into()),*] }}
+        ($($e:expr),*) => {{ vec![$(std::sync::Arc::new($e.into())),*] }}
     }
 
     // Generate an enum for standard types

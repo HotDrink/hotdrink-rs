@@ -47,7 +47,7 @@ impl<T, E> Default for EventHandler<T, E> {
     }
 }
 
-impl<T: Into<JsValue> + Debug, E: Display + Debug> EventHandler<T, E> {
+impl<T: Into<JsValue> + Clone + Debug, E: Display + Debug> EventHandler<T, E> {
     /// Construct a new event handler that reacts to no events.
     pub fn new() -> Self {
         Self::default()
@@ -117,7 +117,8 @@ impl<T: Into<JsValue> + Debug, E: Display + Debug> EventHandler<T, E> {
                 }
                 Event::Ready(value) => {
                     if let Some(on_ready) = &cb.on_ready {
-                        let js_value: JsValue = value.into();
+                        // TODO: Possible to remove this clone?
+                        let js_value: JsValue = (*value).clone().into();
                         on_ready.call1(&JsValue::null(), &js_value)?;
                     }
                 }

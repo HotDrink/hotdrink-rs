@@ -16,16 +16,16 @@ use std::{
 /// transition to `State::Ready` when its computation succeeds,
 /// or `State::Error` if the computation fails.
 #[derive(Clone, Debug, PartialEq)]
-pub enum State<E> {
+pub enum State<T, E> {
     /// The value is still being computed.
     Pending,
     /// The value was computed successfully.
-    Ready,
+    Ready(Arc<T>),
     /// The computation of the value failed.
     Error(Vec<E>),
 }
 
-impl<E> Default for State<E> {
+impl<T, E> Default for State<T, E> {
     fn default() -> Self {
         Self::Pending
     }
@@ -37,35 +37,28 @@ pub type EventCallback<T, E> = Arc<Mutex<dyn Fn(Event<T, E>) + Send>>;
 /// Contains a slot for a value to be produced,
 /// and one for a waker to be called when this happens.
 pub struct VariableActivationInner<T, E> {
-    value: T,
-    state: State<E>,
+    state: State<T, E>,
     waker: Option<Waker>,
 }
 
-impl<T: Clone, E: Clone> VariableActivationInner<T, E> {
-    /// Constructs a [`VariableActivationInner`] from another one.
-    /// This is used as a way of having a fallback in case the new computation fails.
-    /// That is, previous provides a default value.
-    pub fn from_previous(previous: &Arc<Mutex<VariableActivationInner<T, E>>>) -> Self {
-        // TODO: If previous is not done yet, it will take previous' old value.
-        // We should wait for the previous to get a value,
-        // and if that fails it will again use a reference to the previous one.
-        let previous = previous.lock().unwrap();
+impl<T, E> Default for VariableActivationInner<T, E> {
+    fn default() -> Self {
         Self {
-            value: previous.value.clone(),
             state: State::Pending,
             waker: None,
         }
     }
+}
 
-    /// Returns a reference to the current state.
-    pub fn get_state(&self) -> &State<E> {
-        &self.state
+impl<T: Clone, E: Clone> VariableActivationInner<T, E> {
+    /// Constructs a new [`VariableActivationInner`] with no value.
+    pub fn new() -> Self {
+        Self::default()
     }
 
-    /// Returns a reference to the current value.
-    pub fn current_value(&self) -> &T {
-        &self.value
+    /// Returns a reference to the current state.
+    pub fn state(&self) -> &State<T, E> {
+        &self.state
     }
 
     /// Set the state to [`State::Pending`].
@@ -75,8 +68,12 @@ impl<T: Clone, E: Clone> VariableActivationInner<T, E> {
 
     /// Sets the state to a successful value.
     pub fn set_value(&mut self, value: T) {
-        self.value = value;
-        self.state = State::Ready;
+        self.state = State::Ready(Arc::new(value));
+    }
+
+    /// Sets the state to a successful value.
+    pub fn set_value_arc(&mut self, value: Arc<T>) {
+        self.state = State::Ready(value);
     }
 
     /// Set the state to a failed value.
@@ -97,8 +94,7 @@ impl<T: Clone, E: Clone> VariableActivationInner<T, E> {
 impl<T, E> From<T> for VariableActivationInner<T, E> {
     fn from(value: T) -> Self {
         Self {
-            value,
-            state: State::Ready,
+            state: State::Ready(Arc::new(value)),
             waker: None,
         }
     }
@@ -107,7 +103,6 @@ impl<T, E> From<T> for VariableActivationInner<T, E> {
 impl<T: Debug, E: Debug> Debug for VariableActivationInner<T, E> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("SharedState")
-            .field("value", &self.value)
             .field("state", &self.state)
             .finish()
     }
@@ -115,7 +110,7 @@ impl<T: Debug, E: Debug> Debug for VariableActivationInner<T, E> {
 
 impl<T: PartialEq, E: PartialEq> PartialEq for VariableActivationInner<T, E> {
     fn eq(&self, other: &Self) -> bool {
-        self.value == other.value && self.state == other.state
+        self.state == other.state
     }
 }
 
@@ -126,7 +121,7 @@ impl<T: PartialEq, E: PartialEq> PartialEq for VariableActivationInner<T, E> {
 pub struct VariableActivation<T, E> {
     /// A slot for the data once it arrives, as well as
     /// the waker to call once a result has been produced.
-    pub shared_state: Arc<Mutex<VariableActivationInner<T, E>>>,
+    pub inner: Arc<Mutex<VariableActivationInner<T, E>>>,
     /// A reference to the thread that is producing the result.
     /// Dropping this tells the worker that this value no longer requires the outputs of the computation.
     pub producer: Option<TerminationHandle>,
@@ -135,32 +130,23 @@ pub struct VariableActivation<T, E> {
 impl<T: Clone, E: Clone> VariableActivation<T, E> {
     /// Returns a reference to the shared state of this variable activation.
     pub fn inner(&self) -> &Arc<Mutex<VariableActivationInner<T, E>>> {
-        &self.shared_state
+        &self.inner
     }
 
     /// Drops the termination handle reference
     pub fn cancel(&mut self, e: E) {
-        let mut inner = self.shared_state.lock().unwrap();
+        let mut inner = self.inner.lock().unwrap();
         // Only set to cancelled if no value was computed in time
         if let State::Pending = inner.state {
             inner.state = State::Error(vec![e]);
         }
         self.producer = None;
     }
-
-    /// Returns the value of this activation if it is done,
-    /// or the latest one that was produced otherwise.
-    pub fn latest_value(&self) -> T {
-        self.shared_state.lock().unwrap().current_value().clone()
-    }
 }
 
 impl<T: Debug, E: Debug> Debug for VariableActivation<T, E> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let shared_state = self
-            .shared_state
-            .lock()
-            .expect("Could not lock shared_state");
+        let shared_state = self.inner.lock().expect("Could not lock shared_state");
         write!(f, "{:?}", shared_state)
     }
 }
@@ -168,25 +154,35 @@ impl<T: Debug, E: Debug> Debug for VariableActivation<T, E> {
 impl<T, E> From<T> for VariableActivation<T, E> {
     fn from(value: T) -> Self {
         Self {
-            shared_state: Arc::new(Mutex::new(VariableActivationInner::from(value))),
+            inner: Arc::new(Mutex::new(VariableActivationInner::from(value))),
             producer: None,
         }
     }
 }
 
+/// Similar to [`State`], but this one can no longer be pending.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum DoneState<T, E> {
+    /// The computation succeeded.
+    Ready(Arc<T>),
+    /// The computation failed.
+    Error(Vec<E>),
+}
+
 impl<T: Clone, E: Clone> Future for VariableActivation<T, E> {
-    type Output = (T, State<E>);
+    type Output = DoneState<T, E>;
 
     fn poll(self: Pin<&mut Self>, cx: &mut std::task::Context<'_>) -> Poll<Self::Output> {
-        let mut shared_state = self.shared_state.lock().unwrap();
-        match &shared_state.state {
+        let mut inner = self.inner.lock().unwrap();
+        match &inner.state {
             // Still waiting for a value
             State::Pending => {
-                shared_state.waker = Some(cx.waker().clone());
+                inner.waker = Some(cx.waker().clone());
                 Poll::Pending
             }
             // It is complete, either Ready or Error.
-            state => Poll::Ready((shared_state.value.clone(), state.clone())),
+            State::Ready(value) => Poll::Ready(DoneState::Ready(Arc::clone(value))),
+            State::Error(errors) => Poll::Ready(DoneState::Error(errors.clone())),
         }
     }
 }
@@ -194,8 +190,8 @@ impl<T: Clone, E: Clone> Future for VariableActivation<T, E> {
 impl<T: PartialEq, E: PartialEq> PartialEq for VariableActivation<T, E> {
     /// TODO: Avoid deadlocks here?
     fn eq(&self, other: &Self) -> bool {
-        let v1 = self.shared_state.lock().expect("Coult not lock st1");
-        let v2 = other.shared_state.lock().expect("Coult not lock st2");
+        let v1 = self.inner.lock().expect("Coult not lock st1");
+        let v2 = other.inner.lock().expect("Coult not lock st2");
         *v1 == *v2
     }
 }

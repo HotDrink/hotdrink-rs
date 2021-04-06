@@ -8,7 +8,7 @@ use super::{
     generations::{NoMoreRedo, NoMoreUndo},
     solve_error::SolveError,
     traits::PlanError,
-    variable_activation::State,
+    variable_activation::DoneState,
 };
 use crate::{
     event::Event,
@@ -89,7 +89,7 @@ impl<T: Clone + Debug> ConstraintSystem<T> {
         &self,
         component: &'s str,
         variable: &'s str,
-    ) -> Result<impl Future<Output = (T, State<SolveError>)>, ApiError<'s>> {
+    ) -> Result<impl Future<Output = DoneState<T, SolveError>>, ApiError<'s>> {
         let component = self.component(component)?;
         let variable = component.variable(variable)?;
         Ok(variable)
@@ -99,7 +99,7 @@ impl<T: Clone + Debug> ConstraintSystem<T> {
     /// and increments the generation counter.
     pub fn update(&mut self) -> Result<(), PlanError>
     where
-        T: Send + 'static + Debug,
+        T: Send + Sync + 'static + Debug,
     {
         self.par_update(&mut DummyPool)
     }
@@ -108,7 +108,7 @@ impl<T: Clone + Debug> ConstraintSystem<T> {
     /// The callbacks will be called as usual upon completion.
     pub fn par_update(&mut self, spawn: &mut impl ThreadPool) -> Result<(), PlanError>
     where
-        T: Send + 'static + Debug,
+        T: Send + Sync + 'static + Debug,
     {
         for component in &mut self.components {
             if component.is_modified() {
@@ -123,7 +123,7 @@ impl<T: Clone + Debug> ConstraintSystem<T> {
     /// If no plan could be found, it will return a [`PlanError`].
     pub fn par_update_always(&mut self, spawn: &mut impl ThreadPool) -> Result<(), PlanError>
     where
-        T: Send + 'static + Debug,
+        T: Send + Sync + 'static + Debug,
     {
         for component in &mut self.components {
             component.par_update(spawn)?;
@@ -259,19 +259,19 @@ mod tests {
         let comp = cs.component_mut("comp").unwrap();
         comp.subscribe("a", |event| {
             if let Event::Ready(v) = event {
-                assert_eq!(v, 7)
+                assert_eq!(*v, 7)
             }
         })
         .unwrap();
         comp.subscribe("b", |event| {
             if let Event::Ready(v) = event {
-                assert_eq!(v, 0)
+                assert_eq!(*v, 0)
             }
         })
         .unwrap();
         comp.subscribe("c", |event| {
             if let Event::Ready(v) = event {
-                assert_eq!(v, 7)
+                assert_eq!(*v, 7)
             }
         })
         .unwrap();

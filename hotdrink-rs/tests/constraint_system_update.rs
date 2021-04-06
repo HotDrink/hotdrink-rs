@@ -14,7 +14,7 @@ pub fn basic_constraint_system() {
 
     cs.subscribe("Comp", "a", |e| match e {
         Event::Pending => {}
-        Event::Ready(v) => assert_eq!(v, 0),
+        Event::Ready(v) => assert_eq!(*v, 0),
         Event::Error(errors) => panic!("Got errors: {:?}", errors),
     });
 

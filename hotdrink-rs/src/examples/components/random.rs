@@ -114,7 +114,7 @@ where
                 .copied()
                 .collect(),
             vec![unused],
-            Arc::new(|_| Ok(vec![T::default()])),
+            Arc::new(|_| Ok(vec![Arc::new(T::default())])),
         );
         methods.push(write_to_unused);
 
@@ -137,7 +137,7 @@ where
                 format!("m{}", i),
                 inputs,
                 outputs.to_vec(),
-                Arc::new(move |_| Ok(vec![T::default(); n_outputs])),
+                Arc::new(move |_| Ok(vec![Arc::new(T::default()); n_outputs])),
             );
             methods.push(method);
         }

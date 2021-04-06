@@ -359,7 +359,7 @@ mod tests {
             fn m(a: &A, b: &mut B) -> [c, d] {
                 let a: &A = a;
                 let b: &B = b;
-                crate::ret![*a, *b]
+                crate::ret2![*a, *b]
             }
         };
     }

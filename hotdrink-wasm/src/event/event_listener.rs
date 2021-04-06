@@ -29,8 +29,8 @@ impl<T, E> Debug for EventListener<T, E> {
 
 impl<T, E> EventListener<T, E>
 where
-    T: Send + 'static,
-    E: Send + 'static,
+    T: Send + Sync + 'static,
+    E: Send + Sync + 'static,
 {
     /// Constructs a new `EventListener`, and makes a Web Worker that listens for events from the internal channel.
     pub fn from_url(wasm_bindgen_shim_url: &str) -> Result<Self, JsValue> {

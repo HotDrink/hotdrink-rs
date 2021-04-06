@@ -1,7 +1,7 @@
 //! Types for representing events from the constraint system.
 
 use crate::data::generation_id::GenerationId;
-use std::fmt::Debug;
+use std::{fmt::Debug, sync::Arc};
 
 /// Uniquely identifies a variable in a component
 #[derive(Debug, PartialEq, Eq, Hash, Clone, PartialOrd, Ord)]
@@ -37,7 +37,18 @@ pub enum Event<T, E> {
     /// The value is being computed.
     Pending,
     /// The computation succeeded.
-    Ready(T),
+    Ready(Arc<T>),
+    /// The computation failed.
+    Error(Vec<E>),
+}
+
+/// An attempt to avoid [`Arc`] in callbacks.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum CallbackEvent<'a, T, E> {
+    /// The value is being computed.
+    Pending,
+    /// The computation succeeded.
+    Ready(&'a T),
     /// The computation failed.
     Error(Vec<E>),
 }

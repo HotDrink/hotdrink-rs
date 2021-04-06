@@ -20,6 +20,12 @@ macro_rules! method {
     }};
 }
 
+/// A macro for simplifying returning values from a method.
+#[macro_export]
+macro_rules! ret2 {
+    ($($e:expr),*) => {{ Ok(vec![$($e.into()),*]) }}
+}
+
 /// Turn a parameter list into a list of [`MethodInput`](crate::builders::method_builder::MethodInput).
 #[macro_export]
 macro_rules! make_params {

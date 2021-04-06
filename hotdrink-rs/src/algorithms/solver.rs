@@ -9,7 +9,7 @@ use crate::{
         generations::Generations,
         method::Method,
         solve_error::{Reason, SolveError},
-        traits::{MethodFailure, MethodSpec, PlanError},
+        traits::{MethodSpec, PlanError},
         variable_activation::{VariableActivation, VariableActivationInner},
     },
     event::GeneralEvent,
@@ -19,38 +19,6 @@ use std::{
     fmt::Debug,
     sync::{Arc, Mutex},
 };
-
-/// Given a plan and a set of current values, execute the
-/// methods one by one while updating the current values
-/// until all of them are done.
-pub fn solve<T: Clone, M>(plan: &[&M], old_values: &mut Vec<T>) -> Result<(), MethodFailure>
-where
-    M: MethodSpec<Arg = T>,
-{
-    // Store in separate variable temporarily to fail atomically
-    let mut current_values = old_values.clone();
-
-    for m in plan {
-        // Pick inputs from current values
-        let inputs = m
-            .inputs()
-            .iter()
-            .map(|&i| current_values[i].clone())
-            .collect();
-        // Compute outputs
-        let outputs = m.apply(inputs)?;
-        // Re-insert outputs
-        outputs
-            .into_iter()
-            .zip(m.outputs())
-            .for_each(|(v, &o)| current_values[o] = v);
-    }
-
-    // All method calls were ok, we can now update the mutable reference
-    *old_values = current_values;
-
-    Ok(())
-}
 
 /// Solves a component by executing a plan concurrently.
 ///
@@ -70,7 +38,7 @@ pub fn par_solve<T>(
     general_callback: impl Fn(GeneralEvent<T, SolveError>) + Send + 'static + Clone,
 ) -> Result<(), PlanError>
 where
-    T: Clone + Send + 'static + Debug,
+    T: Clone + Send + Sync + 'static + Debug,
 {
     if !plan.is_empty() {
         log::trace!("Solving {} with plan {:?}", component_name, plan);
@@ -97,7 +65,7 @@ where
                 Reason::Cancelled,
             ));
             // Keep the old value from the previous state, but set to pending
-            let shared_state = VariableActivationInner::from_previous(previous_activation.inner());
+            let shared_state = VariableActivationInner::new();
             shared_states.push(Arc::new(Mutex::new(shared_state)));
         }
 

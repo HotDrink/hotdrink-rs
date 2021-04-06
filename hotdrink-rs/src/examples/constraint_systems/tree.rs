@@ -119,9 +119,9 @@ where
     let make_constraints: fn(&[String], &[String]) -> Vec<RawConstraint<T>> =
         |constraint_names, variable_names| {
             let n_variables = variable_names.len();
-            let apply = Arc::new(|v: Vec<T>| {
-                let value = v[0].clone();
-                Ok(vec![value.clone(), value])
+            let apply = Arc::new(|v: Vec<Arc<T>>| {
+                let value = (*v[0]).clone();
+                Ok(vec![Arc::new(value.clone()), Arc::new(value)])
             });
             let mut constraints = Vec::new();
             for current in 0..n_variables {
@@ -157,9 +157,9 @@ where
     let make_constraints: fn(&[String], &[String]) -> Vec<RawConstraint<T>> =
         |constraint_names, variable_names| {
             let n_variables = variable_names.len();
-            let apply = Arc::new(|v: Vec<T>| {
-                let value = v[0].clone();
-                Ok(vec![value.clone(), value])
+            let apply = Arc::new(|v: Vec<Arc<T>>| {
+                let value = (*v[0]).clone();
+                Ok(vec![Arc::new(value.clone()), Arc::new(value)])
             });
             let mut constraints = Vec::new();
             for current in 0..n_variables {
@@ -203,9 +203,9 @@ where
     let make_constraints: fn(&[String], &[String]) -> Vec<RawConstraint<T>> =
         |constraint_names, variable_names| {
             let n_variables = variable_names.len();
-            let apply = Arc::new(|v: Vec<T>| {
-                let value = v[0].clone();
-                Ok(vec![value.clone(), value])
+            let apply = Arc::new(|v: Vec<Arc<T>>| {
+                let value = (*v[0]).clone();
+                Ok(vec![Arc::new(value.clone()), Arc::new(value)])
             });
             let mut constraints = Vec::new();
             for current in 0..n_variables {
@@ -255,9 +255,9 @@ where
     let make_constraints: fn(&[String], &[String]) -> Vec<RawConstraint<T>> =
         |constraint_names, variable_names| {
             let n_variables = variable_names.len();
-            let apply = Arc::new(|v: Vec<T>| {
-                let value = v[0].clone();
-                Ok(vec![value.clone(), value])
+            let apply = Arc::new(|v: Vec<Arc<T>>| {
+                let value = (*v[0]).clone();
+                Ok(vec![Arc::new(value.clone()), Arc::new(value)])
             });
             let mut constraints = Vec::new();
             for current in 0..n_variables {

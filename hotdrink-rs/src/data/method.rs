@@ -6,7 +6,7 @@ use super::{
     generation_id::GenerationId,
     solve_error::{Reason, SolveError},
 };
-use crate::data::variable_activation::State;
+use crate::data::variable_activation::DoneState;
 use crate::{
     algorithms::hierarchical_planner::Vertex,
     data::{
@@ -69,7 +69,7 @@ impl<T> MethodSpec for Method<T> {
     }
 
     /// Apply the inner function of this method
-    fn apply(&self, input: Vec<T>) -> MethodResult<T> {
+    fn apply(&self, input: Vec<Arc<T>>) -> MethodResult<Arc<T>> {
         // Verify that all inputs are defined
         if input.len() != self.n_inputs() {
             return Err(MethodFailure::WrongInputCount(self.n_inputs(), input.len()));
@@ -130,7 +130,7 @@ impl<T> Method<T> {
         general_callback: impl Fn(GeneralEvent<T, SolveError>) + Send + 'static,
     ) -> Vec<VariableActivation<T, SolveError>>
     where
-        T: Clone + Send + 'static + Debug,
+        T: Clone + Send + Sync + 'static + Debug,
         Method<T>: Vertex,
     {
         // Convert the input to `Value`s that we can await.
@@ -171,13 +171,10 @@ impl<T> Method<T> {
                 // Split ok and erroneous inputs
                 let mut inputs = Vec::new();
                 let mut errors = Vec::new();
-                for (value, state) in input_results {
+                for state in input_results {
                     match state {
-                        State::Pending => {
-                            panic!("How did this happen? Await should have waited longer")
-                        }
-                        State::Ready => inputs.push(value),
-                        State::Error(es) => errors.extend(es),
+                        DoneState::Ready(value) => inputs.push(value),
+                        DoneState::Error(es) => errors.extend(es),
                     }
                 }
 
@@ -253,7 +250,7 @@ impl<T> Method<T> {
                             ));
                             let mut shared_state = st.lock().unwrap();
                             // Set the new value
-                            shared_state.set_value(res);
+                            shared_state.set_value_arc(res);
                             // Notify the async runtime that the value is ready
                             if let Some(waker) = shared_state.waker_mut().take() {
                                 waker.wake();
@@ -284,7 +281,7 @@ impl<T> Method<T> {
         let values = shared_states
             .iter()
             .map(|st| VariableActivation {
-                shared_state: st.clone(),
+                inner: st.clone(),
                 producer: Some(handle.clone()),
             })
             .collect();
@@ -309,7 +306,7 @@ impl<T> Vertex for Method<T> {
             name: format!("_stay_{}", index),
             inputs: vec![index],
             outputs: vec![index],
-            apply: Arc::new(|mut v| Ok(vec![v.remove(0)])),
+            apply: Arc::new(|_| panic!("stay constraints should not be run")),
         }
     }
 

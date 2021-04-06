@@ -8,7 +8,7 @@ use super::{
     generations::{Generations, NoMoreRedo, NoMoreUndo},
     method::Method,
     traits::PlanError,
-    variable_activation::State,
+    variable_activation::{DoneState, State},
 };
 use super::{solve_error::SolveError, traits::MethodSpec};
 use crate::{
@@ -79,11 +79,10 @@ impl<T: Clone> Component<T> {
             let activation = &self.activations[index];
             let shared_state = activation.inner();
             let shared_state = shared_state.lock().unwrap();
-            let value = shared_state.current_value();
-            let state = shared_state.get_state();
+            let state = shared_state.state();
             match state {
                 State::Pending => callback(Event::Pending),
-                State::Ready => callback(Event::Ready(value.clone())),
+                State::Ready(value) => callback(Event::Ready(value.clone())),
                 State::Error(errors) => callback(Event::Error(errors.clone())),
             }
 
@@ -128,7 +127,7 @@ impl<T: Clone> Component<T> {
     pub fn variable<'s>(
         &self,
         variable: &'s str,
-    ) -> Result<impl Future<Output = (T, State<SolveError>)>, NoSuchVariable<'s>> {
+    ) -> Result<impl Future<Output = DoneState<T, SolveError>>, NoSuchVariable<'s>> {
         let idx = self.variable_index(variable)?;
         Ok(self.activations[idx].clone())
     }
@@ -178,7 +177,7 @@ impl<T: Clone> Component<T> {
     /// and updates the futures of values in the constraint system instead.
     pub fn par_update(&mut self, pool: &mut impl ThreadPool) -> Result<(), PlanError>
     where
-        T: Send + 'static + Debug,
+        T: Send + Sync + 'static + Debug,
     {
         // Rank variables and run planner
         let ranking = self.ranker.ranking();
@@ -194,7 +193,7 @@ impl<T: Clone> Component<T> {
         plan: Vec<OwnedEnforcedConstraint<Method<T>>>,
     ) -> Result<(), PlanError>
     where
-        T: Send + 'static + Debug,
+        T: Send + Sync + 'static + Debug,
     {
         self.ranker = adjust_priorities(&plan, &self.ranker);
 
@@ -388,8 +387,8 @@ impl<T: Clone> Component<T> {
         for (vi, v) in callbacks.iter().enumerate() {
             let va = &self.activations[vi];
             let inner = va.inner().lock().unwrap();
-            let event = match inner.get_state() {
-                State::Ready => Event::Ready(inner.current_value().clone()),
+            let event = match inner.state() {
+                State::Ready(value) => Event::Ready(Arc::clone(value)),
                 State::Error(errors) => Event::Error(errors.clone()),
                 State::Pending => Event::Pending,
             };
@@ -468,7 +467,7 @@ impl<T: Clone> ComponentSpec for Component<T> {
 
     fn update(&mut self) -> Result<(), PlanError>
     where
-        T: Send + 'static + Debug,
+        T: Send + Sync + 'static + Debug,
     {
         self.par_update(&mut DummyPool)
     }
