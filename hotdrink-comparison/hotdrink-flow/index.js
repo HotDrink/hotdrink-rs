@@ -190,7 +190,7 @@ function make_random(n_constraints) {
   return model;
 }
 
-function bench_component(make_component, n_variables) {
+function bench_component(name, make_component, n_variables) {
   let cmp = make_component(n_variables);
   let cs = new hd.ConstraintSystem();
   cmp.connectSystem(cs);
@@ -214,37 +214,21 @@ function bench_component(make_component, n_variables) {
     total += performance.now() - start;
   }
 
-  console.log(cmp._name, "&", n_variables, "&", total / n_samples);
+  console.log(name, "&", n_variables, "&", total / n_samples);
 }
 
-// function make_builder(cmp) {
-//   let builder = {
-//     add_variable: v => cmp.emplaceConstraint(v.toString, 0),
-//     add_constraint: (c, ms) => {
-//       let spec = new hd.ConstraintSpec(c);
-//       for (let m of ms) {
-//         let input = m[0];
-//         let output = m[1];
-//         let name = m[2];
-//         let method = hd.Method()
-//       }
-//     },
-//   };
-//   return builder;
-// }
-
-function bench_components(component_makers) {
-  for (let n_variables of [50, 100, 200, 400, 600]) {
-    for (let make_component of component_makers) {
-      bench_component(make_component, n_variables);
+function bench_components(entry) {
+  for (let n_variables of [100, 500, 1000]) {
+    for (let entry of entries) {
+      bench_component(entry.name, entry.make_component, n_variables);
     }
   }
 }
 
 bench_components([
-  make_linear_oneway,
-  make_linear_twoway,
-  make_ladder,
-  make_unprunable,
-  make_random
+  { name: "linear-oneway", make_component: make_linear_oneway },
+  { name: "linear-twoway", make_component: make_linear_twoway },
+  { name: "ladder       ", make_component: make_ladder },
+  { name: "unprunable   ", make_component: make_unprunable },
+  { name: "random       ", make_component: make_random }
 ])

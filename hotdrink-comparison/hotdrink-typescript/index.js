@@ -218,15 +218,8 @@ function bench_component(name, make_component, n_variables) {
 }
 
 function bench_components(entries) {
-    for (let n_variables of [50, 100, 200]) {
-        for (let entry of entries.slow) {
-            let name = entry.name;
-            let make_component = entry.make_component;
-            bench_component(name, make_component, n_variables);
-        }
-    }
-    for (let n_variables of [50, 100, 200, 400, 600]) {
-        for (let entry of entries.fast) {
+    for (let n_variables of [100, 500, 1000]) {
+        for (let entry of entries) {
             let name = entry.name;
             let make_component = entry.make_component;
             bench_component(name, make_component, n_variables);
@@ -234,14 +227,10 @@ function bench_components(entries) {
     }
 }
 
-bench_components({
-    slow: [
-        { name: "linear-oneway", make_component: make_linear_oneway },
-        { name: "linear-twoway", make_component: make_linear_twoway },
-        { name: "ladder       ", make_component: make_ladder },
-        { name: "random       ", make_component: make_random },
-    ],
-    fast: [
-        { name: "unprunable   ", make_component: make_unprunable },
-    ]
-});
+bench_components([
+    { name: "linear-oneway", make_component: make_linear_oneway },
+    { name: "linear-twoway", make_component: make_linear_twoway },
+    { name: "ladder       ", make_component: make_ladder },
+    { name: "random       ", make_component: make_random },
+    { name: "unprunable   ", make_component: make_unprunable },
+]);
