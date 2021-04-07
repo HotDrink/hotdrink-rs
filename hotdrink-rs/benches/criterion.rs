@@ -84,37 +84,39 @@ fn bench_simple_planner(
 
 fn update_benches(c: &mut Criterion) {
     let mut group = c.benchmark_group("update");
-    for i in &[1250, 2500, 5000] {
+    for i in &[0, 500, 5000] {
         bench_update(&mut group, "linear-oneway", i, LINEAR_ONEWAY);
         bench_update(&mut group, "linear-twoway", i, LINEAR_TWOWAY);
+    }
+    for i in &[0, 500, 1000] {
         bench_update(&mut group, "ladder", i, LADDER);
-        bench_update(&mut group, "unprunable", i, UNPRUNABLE);
         bench_update(&mut group, "random", i, RANDOM);
     }
-    for i in &[250, 500, 1000] {
-        bench_hierarchical_planner(&mut group, "unprunable", i, UNPRUNABLE);
-        bench_hierarchical_planner(&mut group, "random", i, RANDOM);
+    for i in &[0, 250, 500] {
+        bench_update(&mut group, "unprunable", i, UNPRUNABLE);
     }
     group.finish();
 }
 
 fn hierarchical_planner_benches(c: &mut Criterion) {
     let mut group = c.benchmark_group("hierarchical_planner");
-    for i in &[0, 1000, 5000, 10000, 20000] {
+    for i in &[0, 500, 5000, 20000] {
         bench_hierarchical_planner(&mut group, "linear-oneway", i, LINEAR_TWOWAY);
         bench_hierarchical_planner(&mut group, "linear-twoway", i, LINEAR_TWOWAY);
-        bench_hierarchical_planner(&mut group, "ladder", i, LADDER);
     }
-    for i in &[0, 250, 500, 1000] {
-        bench_hierarchical_planner(&mut group, "unprunable", i, UNPRUNABLE);
+    for i in &[0, 500, 1000] {
+        bench_hierarchical_planner(&mut group, "ladder", i, LADDER);
         bench_hierarchical_planner(&mut group, "random", i, RANDOM);
+    }
+    for i in &[0, 250, 500] {
+        bench_hierarchical_planner(&mut group, "unprunable", i, UNPRUNABLE);
     }
     group.finish();
 }
 
 fn simple_planner_benches(c: &mut Criterion) {
     let mut group = c.benchmark_group("simple_planner");
-    for i in &[0, 1000, 5000, 10000, 20000] {
+    for i in &[0, 25000, 75000] {
         bench_simple_planner(&mut group, "linear-oneway", i, LINEAR_TWOWAY);
         bench_simple_planner(&mut group, "linear-twoway", i, LINEAR_TWOWAY);
         bench_simple_planner(&mut group, "ladder", i, LADDER);
@@ -175,8 +177,6 @@ fn thesis_update(c: &mut Criterion) {
         bench_update(&mut group, "linear-twoway", i, LINEAR_TWOWAY);
         bench_update(&mut group, "ladder", i, LADDER);
         bench_update(&mut group, "random", i, RANDOM);
-    }
-    for i in &[100, 500, 1000] {
         bench_update(&mut group, "unprunable", i, UNPRUNABLE);
     }
     group.finish();
