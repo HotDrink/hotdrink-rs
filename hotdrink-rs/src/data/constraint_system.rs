@@ -36,7 +36,7 @@ impl<T> Default for ConstraintSystem<T> {
     }
 }
 
-impl<T: Clone + Debug> ConstraintSystem<T> {
+impl<T: Debug> ConstraintSystem<T> {
     /// Creates a new constraint system with no components.
     pub fn new() -> Self {
         Self::default()
@@ -155,7 +155,7 @@ impl<T: Clone + Debug> ConstraintSystem<T> {
     /// cs.add_component(component);
     /// cs.subscribe("Comp", "x", |e| match e {
     ///     Event::Pending => {}
-    ///     Event::Ready(v) => assert_eq!(v, 0),
+    ///     Event::Ready(v) => assert_eq!(*v, 0),
     ///     Event::Error(errors) => panic!(errors),
     /// });
     /// ```
@@ -163,7 +163,7 @@ impl<T: Clone + Debug> ConstraintSystem<T> {
         &mut self,
         component: &str,
         variable: &str,
-        callback: impl Fn(Event<T, SolveError>) + Send + 'static,
+        callback: impl for<'a> Fn(Event<'a, T, SolveError>) + Send + 'static,
     ) where
         T: 'static,
     {
@@ -235,7 +235,7 @@ impl<T: Clone + Debug> ConstraintSystem<T> {
 #[cfg(test)]
 mod tests {
     use super::ConstraintSystem;
-    use crate::{component, ret, Event};
+    use crate::{component, event::Event, ret};
 
     #[test]
     pub fn constraint_system_test() {

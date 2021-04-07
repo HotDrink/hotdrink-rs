@@ -1,9 +1,12 @@
 //! A module to simplify method construction.
 
-use crate::{MethodFailure, MethodResult};
+use crate::MethodFailure;
 use itertools::Itertools;
 use std::sync::Arc;
 use std::{convert::TryInto, fmt::Debug};
+
+/// A slightly different version of [`crate::MethodResult`].
+pub type MethodResult<T> = Result<Vec<T>, MethodFailure>;
 
 /// A parameter for a method.
 /// This can either be an immutable reference, or a mutable one.

@@ -1,4 +1,6 @@
-use hotdrink_rs::{component, data::constraint_system::ConstraintSystem, event::Event, ret};
+use hotdrink_rs::{
+    component, data::constraint_system::ConstraintSystem, event::Event, ret,
+};
 
 #[test]
 pub fn basic_constraint_system() {

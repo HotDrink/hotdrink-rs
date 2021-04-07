@@ -105,7 +105,7 @@ macro_rules! gen_js_constraint_system {
                         let js_event = crate::event::js_event::JsEvent::new(
                             component.clone(),
                             variable.clone(),
-                            e,
+                            e.into(),
                         );
                         sender.send(js_event).unwrap()
                     });

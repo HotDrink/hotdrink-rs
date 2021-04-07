@@ -27,7 +27,7 @@ pub enum MethodFailure {
 }
 
 /// The result of calling a method's function.
-pub type MethodResult<T> = Result<Vec<T>, MethodFailure>;
+pub type MethodResult<T> = Result<Vec<Arc<T>>, MethodFailure>;
 
 /// The function contained within a method.
 pub type MethodFunction<T> =
@@ -45,7 +45,7 @@ pub trait MethodSpec: Vertex {
         apply: MethodFunction<Self::Arg>,
     ) -> Self;
     /// Applies the provided arguments to the inner function of the method.
-    fn apply(&self, args: Vec<Arc<Self::Arg>>) -> MethodResult<Arc<Self::Arg>>;
+    fn apply(&self, args: Vec<Arc<Self::Arg>>) -> MethodResult<Self::Arg>;
     /// Returns a reference to the name of the method.
     fn name(&self) -> &str;
 }

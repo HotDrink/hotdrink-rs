@@ -1,17 +1,25 @@
 //! Extra information about a variable, such as its status, generation, and callbacks.
 
 use super::{generation_id::GenerationId, variable_activation::EventCallback};
-use crate::event::{Event, GeneralEvent};
+use crate::event::{Event, SolveEvent, SolveEventWithLoc};
 use std::fmt::Debug;
 use std::sync::{Arc, Mutex};
 
 /// Information about a variable.
 ///
 /// More specifically, this struct contains its generation, current status, and a callback if one exists.
-#[derive(Clone)]
-pub struct FilteredCallback<T, E> {
+pub(crate) struct FilteredCallback<T, E> {
     target: GenerationId,
     callback: Option<EventCallback<T, E>>,
+}
+
+impl<T, E> Clone for FilteredCallback<T, E> {
+    fn clone(&self) -> Self {
+        Self {
+            target: self.target,
+            callback: self.callback.clone(),
+        }
+    }
 }
 
 impl<T, E> Default for FilteredCallback<T, E> {
@@ -23,17 +31,13 @@ impl<T, E> Default for FilteredCallback<T, E> {
     }
 }
 
-impl<T: Clone, E: Clone> FilteredCallback<T, E> {
+impl<T, E: Clone> FilteredCallback<T, E> {
     /// Constructs a new [`VariableInfo`] with the specified status.
     pub fn new() -> Self {
         Self::default()
     }
-    /// Returns a reference to the callback of the variable.
-    pub fn callback(&self) -> &Option<EventCallback<T, E>> {
-        &self.callback
-    }
     /// Sets the callback of the variable.
-    pub fn subscribe(&mut self, callback: impl Fn(Event<T, E>) + Send + 'static) {
+    pub fn subscribe(&mut self, callback: impl Fn(Event<'_, T, E>) + Send + 'static) {
         self.callback = Some(Arc::new(Mutex::new(callback)));
     }
     /// Removes the callback of the variable.
@@ -49,7 +53,7 @@ impl<T: Clone, E: Clone> FilteredCallback<T, E> {
     /// Calls the callback of the variable if one exists.
     ///
     /// Old events will be ignored, and new ones will update the current status of the variable.
-    pub fn call_callback(&self, ge: GeneralEvent<T, E>) {
+    pub fn call(&self, ge: SolveEventWithLoc<T, E>) {
         let generation = ge.generation();
 
         // Ignore events from another generation
@@ -59,7 +63,11 @@ impl<T: Clone, E: Clone> FilteredCallback<T, E> {
 
         // Call callback
         if let Some(callback) = &self.callback {
-            callback.lock().unwrap()(ge.event());
+            match ge.event() {
+                SolveEvent::Pending => callback.lock().unwrap()(Event::Pending),
+                SolveEvent::Ready(value) => callback.lock().unwrap()(Event::Ready(value.as_ref())),
+                SolveEvent::Error(errors) => callback.lock().unwrap()(Event::Error(errors)),
+            };
         }
     }
 }

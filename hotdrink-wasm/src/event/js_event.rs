@@ -1,18 +1,18 @@
 //! A wrapper around events that contains information about which variable was updated.
 
-use hotdrink_rs::event::Event;
+use hotdrink_rs::event::SolveEvent;
 
 /// A wrapper around events that contains information about which variable was updated.
 #[derive(Debug)]
 pub struct JsEvent<T, E> {
     component: String,
     variable: String,
-    event: Event<T, E>,
+    event: SolveEvent<T, E>,
 }
 
 impl<T, E> JsEvent<T, E> {
     /// Constructs a new `JsEvent` with variable information and an event.
-    pub fn new(component: String, variable: String, event: Event<T, E>) -> Self {
+    pub fn new(component: String, variable: String, event: SolveEvent<T, E>) -> Self {
         Self {
             component,
             variable,
@@ -31,7 +31,7 @@ impl<T, E> JsEvent<T, E> {
     }
 
     /// Returns the event that happened.
-    pub fn get_event(self) -> Event<T, E> {
+    pub fn get_event(self) -> SolveEvent<T, E> {
         self.event
     }
 }

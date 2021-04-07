@@ -32,7 +32,7 @@ impl<T, E> Default for State<T, E> {
 }
 
 /// A callback to an [`Event`] sent from a call to [`ConstraintSystem::update`](crate::ConstraintSystem::update).
-pub type EventCallback<T, E> = Arc<Mutex<dyn Fn(Event<T, E>) + Send>>;
+pub type EventCallback<T, E> = Arc<Mutex<dyn Fn(Event<'_, T, E>) + Send>>;
 
 /// Contains a slot for a value to be produced,
 /// and one for a waker to be called when this happens.
@@ -50,7 +50,7 @@ impl<T, E> Default for VariableActivationInner<T, E> {
     }
 }
 
-impl<T: Clone, E: Clone> VariableActivationInner<T, E> {
+impl<T, E> VariableActivationInner<T, E> {
     /// Constructs a new [`VariableActivationInner`] with no value.
     pub fn new() -> Self {
         Self::default()
@@ -117,7 +117,6 @@ impl<T: PartialEq, E: PartialEq> PartialEq for VariableActivationInner<T, E> {
 /// Represents a value that may not be done being computed.
 /// Once the value has been computed, it will be stored in its shared state.
 /// Should be used as a `Future`, and can be `await`ed in async code.
-#[derive(Clone)]
 pub struct VariableActivation<T, E> {
     /// A slot for the data once it arrives, as well as
     /// the waker to call once a result has been produced.
@@ -127,7 +126,16 @@ pub struct VariableActivation<T, E> {
     pub producer: Option<TerminationHandle>,
 }
 
-impl<T: Clone, E: Clone> VariableActivation<T, E> {
+impl<T, E> Clone for VariableActivation<T, E> {
+    fn clone(&self) -> Self {
+        Self {
+            inner: Arc::clone(&self.inner),
+            producer: self.producer.clone(),
+        }
+    }
+}
+
+impl<T, E> VariableActivation<T, E> {
     /// Returns a reference to the shared state of this variable activation.
     pub fn inner(&self) -> &Arc<Mutex<VariableActivationInner<T, E>>> {
         &self.inner
@@ -169,7 +177,7 @@ pub enum DoneState<T, E> {
     Error(Vec<E>),
 }
 
-impl<T: Clone, E: Clone> Future for VariableActivation<T, E> {
+impl<T, E: Clone> Future for VariableActivation<T, E> {
     type Output = DoneState<T, E>;
 
     fn poll(self: Pin<&mut Self>, cx: &mut std::task::Context<'_>) -> Poll<Self::Output> {

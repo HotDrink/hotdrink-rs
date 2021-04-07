@@ -13,7 +13,7 @@
 //! ```
 
 use crate::event::js_event::JsEvent;
-use hotdrink_rs::event::{Event, Identifier};
+use hotdrink_rs::event::{SolveEvent, Identifier};
 use itertools::Itertools;
 use js_sys::Function;
 use std::fmt::Debug;
@@ -110,19 +110,19 @@ impl<T: Into<JsValue> + Clone + Debug, E: Display + Debug> EventHandler<T, E> {
         // Apply the matching callback if one exists
         if let Some(cb) = self.callbacks.get(&id) {
             match e.get_event() {
-                Event::Pending => {
+                SolveEvent::Pending => {
                     if let Some(on_pending) = &cb.on_pending {
                         on_pending.call0(&JsValue::null())?;
                     }
                 }
-                Event::Ready(value) => {
+                SolveEvent::Ready(value) => {
                     if let Some(on_ready) = &cb.on_ready {
                         // TODO: Possible to remove this clone?
                         let js_value: JsValue = (*value).clone().into();
                         on_ready.call1(&JsValue::null(), &js_value)?;
                     }
                 }
-                Event::Error(error) => {
+                SolveEvent::Error(error) => {
                     if let Some(on_error) = &cb.on_error {
                         let err_msg = error.iter().map(|e| format!("{}", e)).join("\r\n");
                         on_error.call1(&JsValue::null(), &JsValue::from(err_msg))?;

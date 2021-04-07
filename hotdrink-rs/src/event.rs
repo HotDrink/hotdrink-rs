@@ -33,7 +33,7 @@ impl Identifier {
 
 /// An event from the constraint system.
 #[derive(Debug)]
-pub enum Event<T, E> {
+pub enum SolveEvent<T, E> {
     /// The value is being computed.
     Pending,
     /// The computation succeeded.
@@ -44,7 +44,7 @@ pub enum Event<T, E> {
 
 /// An attempt to avoid [`Arc`] in callbacks.
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub enum CallbackEvent<'a, T, E> {
+pub enum Event<'a, T, E> {
     /// The value is being computed.
     Pending,
     /// The computation succeeded.
@@ -53,20 +53,33 @@ pub enum CallbackEvent<'a, T, E> {
     Error(Vec<E>),
 }
 
+impl<'a, T, E> From<Event<'a, T, E>> for SolveEvent<T, E>
+where
+    T: Clone,
+{
+    fn from(e: Event<'a, T, E>) -> Self {
+        match e {
+            Event::Pending => SolveEvent::Pending,
+            Event::Ready(value) => SolveEvent::Ready(Arc::new((*value).clone())),
+            Event::Error(errors) => SolveEvent::Error(errors),
+        }
+    }
+}
+
 /// An event from [`ConstraintSystem::update`](crate::ConstraintSystem::update) with information about
 /// which variable it is, and which generation the computation is from.
 #[derive(Debug)]
-pub struct GeneralEvent<T, E> {
+pub(crate) struct SolveEventWithLoc<T, E> {
     variable: usize,
     generation: GenerationId,
-    event: Event<T, E>,
+    event: SolveEvent<T, E>,
 }
 
-impl<T, E> GeneralEvent<T, E> {
+impl<T, E> SolveEventWithLoc<T, E> {
     /// Constructs a new [`GeneralEvent`] for the specified variable.
     ///
     /// This includes the generation the computation is from, and what the event is.
-    pub fn new(variable: usize, generation: GenerationId, event: Event<T, E>) -> Self {
+    pub fn new(variable: usize, generation: GenerationId, event: SolveEvent<T, E>) -> Self {
         Self {
             variable,
             generation,
@@ -85,7 +98,7 @@ impl<T, E> GeneralEvent<T, E> {
     }
 
     /// Returns the actual event.
-    pub fn event(self) -> Event<T, E> {
+    pub fn event(self) -> SolveEvent<T, E> {
         self.event
     }
 }

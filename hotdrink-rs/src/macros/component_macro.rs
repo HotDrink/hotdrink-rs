@@ -117,14 +117,16 @@ macro_rules! component {
 /// [`ret!`] can be used with normal values like [`i32`].
 ///
 /// ```rust
+/// # use std::sync::Arc;
 /// # use hotdrink_rs::{ret, data::traits::MethodResult};
 /// let result: MethodResult<i32> = ret![3, 5];
-/// assert_eq!(result, Ok(vec![3, 5]));
+/// assert_eq!(result, Ok(vec![Arc::new(3), Arc::new(5)]));
 /// ```
 ///
 /// It can also be used with enums.
 ///
 /// ```rust
+/// # use std::sync::Arc;
 /// # use hotdrink_rs::{ret, data::traits::MethodResult};
 /// # #[derive(Debug, PartialEq)]
 /// enum Shape {
@@ -132,7 +134,7 @@ macro_rules! component {
 ///     Square(usize, usize),
 /// }
 /// let result: MethodResult<Shape> = ret![Shape::Circle(3), Shape::Square(4, 5)];
-/// assert_eq!(result, Ok(vec![Shape::Circle(3), Shape::Square(4, 5)]));
+/// assert_eq!(result, Ok(vec![Arc::new(Shape::Circle(3)), Arc::new(Shape::Square(4, 5))]));
 /// ```
 ///
 /// Even with wrapper types that implement [`From::from`] its variants.
@@ -140,6 +142,7 @@ macro_rules! component {
 /// and they will automatically be converted if possible.
 ///
 /// ```rust
+/// # use std::sync::Arc;
 /// # use hotdrink_rs::{ret, data::traits::MethodResult};
 /// # #[allow(non_camel_case_types)]
 /// # #[derive(Debug, PartialEq)]
@@ -163,7 +166,7 @@ macro_rules! component {
 /// # }
 ///
 /// let result: MethodResult<Value> = ret![3i32, 5.0f64];
-/// assert_eq!(result, Ok(vec![Value::i32(3), Value::f64(5.0)]));
+/// assert_eq!(result, Ok(vec![Arc::new(Value::i32(3)), Arc::new(Value::f64(5.0))]));
 /// ```
 #[macro_export]
 macro_rules! ret {

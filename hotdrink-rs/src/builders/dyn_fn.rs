@@ -28,7 +28,7 @@ macro_rules! dyn_fn {
 
 #[cfg(test)]
 mod tests {
-    use crate::{builders::MethodArg, MethodResult};
+    use crate::{builders::method_builder::MethodResult, builders::MethodArg};
 
     #[test]
     fn dyn_fn() {

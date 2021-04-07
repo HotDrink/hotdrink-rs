@@ -12,7 +12,7 @@ use crate::{
         traits::{MethodSpec, PlanError},
         variable_activation::{VariableActivation, VariableActivationInner},
     },
-    event::GeneralEvent,
+    event::SolveEventWithLoc,
     thread::thread_pool::ThreadPool,
 };
 use std::{
@@ -29,16 +29,16 @@ use std::{
 /// 4. The generation to know which solve new values came from.
 /// 5. A thread pool implementation for running methods in a plan.
 /// 6. A callback to pass new produced values to. These events include the component name and the generation.
-pub fn par_solve<T>(
+pub(crate) fn par_solve<T>(
     plan: &[OwnedEnforcedConstraint<Method<T>>],
     current_values: &mut Generations<VariableActivation<T, SolveError>>,
     component_name: String,
     generation: GenerationId,
     pool: &mut impl ThreadPool,
-    general_callback: impl Fn(GeneralEvent<T, SolveError>) + Send + 'static + Clone,
+    general_callback: impl Fn(SolveEventWithLoc<T, SolveError>) + Send + 'static + Clone,
 ) -> Result<(), PlanError>
 where
-    T: Clone + Send + Sync + 'static + Debug,
+    T: Send + Sync + 'static + Debug,
 {
     if !plan.is_empty() {
         log::trace!("Solving {} with plan {:?}", component_name, plan);

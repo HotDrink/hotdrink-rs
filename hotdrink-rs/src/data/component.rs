@@ -21,7 +21,7 @@ use crate::{
         traits::{ComponentSpec, ConstraintSpec},
         variable_activation::VariableActivation,
     },
-    event::{Event, GeneralEvent},
+    event::{Event, SolveEvent, SolveEventWithLoc},
     thread::{dummy_pool::DummyPool, thread_pool::ThreadPool},
     variable_ranking::{SortRanker, VariableRanker},
 };
@@ -39,7 +39,6 @@ pub type GeneralCallback<T> = Arc<Mutex<dyn Fn(T) + Send>>;
 /// A collection of variables along with constraints that should be maintained between them.
 /// Variables can get new values, values can be retrieved from the component, and the constraints can be enforced.
 /// Subscribing to variables will send a notification when the new values are ready.
-#[derive(Clone)]
 pub struct Component<T> {
     name: String,
     name_to_index: HashMap<String, usize>,
@@ -49,9 +48,25 @@ pub struct Component<T> {
     ranker: SortRanker,
     updated_since_last_solve: HashSet<usize>,
     n_ready: usize,
-    // generation: GenerationCounter,
     current_generation: usize,
     total_generation: usize,
+}
+
+impl<T> Clone for Component<T> {
+    fn clone(&self) -> Self {
+        Self {
+            name: self.name.clone(),
+            name_to_index: self.name_to_index.clone(),
+            callbacks: self.callbacks.clone(),
+            activations: self.activations.clone(),
+            constraints: self.constraints.clone(),
+            ranker: self.ranker.clone(),
+            updated_since_last_solve: self.updated_since_last_solve.clone(),
+            n_ready: self.n_ready,
+            current_generation: self.current_generation,
+            total_generation: self.total_generation,
+        }
+    }
 }
 
 impl<T: Debug> Debug for Component<T> {
@@ -64,12 +79,12 @@ impl<T: Debug> Debug for Component<T> {
     }
 }
 
-impl<T: Clone> Component<T> {
+impl<T> Component<T> {
     /// Add a callback to be called when a given variable is updated.
     pub fn subscribe<'s>(
         &mut self,
         variable: &'s str,
-        callback: impl Fn(Event<T, SolveError>) + Send + 'static,
+        callback: impl Fn(Event<'_, T, SolveError>) + Send + 'static,
     ) -> Result<(), NoSuchVariable<'s>>
     where
         T: 'static,
@@ -77,12 +92,10 @@ impl<T: Clone> Component<T> {
         if let Some(&index) = self.name_to_index.get(variable) {
             // Call the callback with current variable state
             let activation = &self.activations[index];
-            let shared_state = activation.inner();
-            let shared_state = shared_state.lock().unwrap();
-            let state = shared_state.state();
-            match state {
+            let inner = activation.inner().lock().unwrap();
+            match inner.state() {
                 State::Pending => callback(Event::Pending),
-                State::Ready(value) => callback(Event::Ready(value.clone())),
+                State::Ready(value) => callback(Event::Ready(value)),
                 State::Error(errors) => callback(Event::Error(errors.clone())),
             }
 
@@ -221,7 +234,7 @@ impl<T: Clone> Component<T> {
             move |ge| {
                 let mut lock = variable_information_clone.lock().unwrap();
                 let fcb = &mut lock[ge.variable()];
-                fcb.call_callback(ge);
+                fcb.call(ge);
             },
         )?;
 
@@ -388,11 +401,11 @@ impl<T: Clone> Component<T> {
             let va = &self.activations[vi];
             let inner = va.inner().lock().unwrap();
             let event = match inner.state() {
-                State::Ready(value) => Event::Ready(Arc::clone(value)),
-                State::Error(errors) => Event::Error(errors.clone()),
-                State::Pending => Event::Pending,
+                State::Ready(value) => SolveEvent::Ready(Arc::clone(value)),
+                State::Error(errors) => SolveEvent::Error(errors.clone()),
+                State::Pending => SolveEvent::Pending,
             };
-            v.call_callback(GeneralEvent::new(
+            v.call(SolveEventWithLoc::new(
                 vi,
                 GenerationId::new(self.current_generation, self.total_generation),
                 event,
@@ -439,7 +452,7 @@ impl<T: Clone> Component<T> {
     }
 }
 
-impl<T: Clone> ComponentSpec for Component<T> {
+impl<T> ComponentSpec for Component<T> {
     type Value = T;
     type Variable = VariableActivation<T, SolveError>;
     type Constraint = Constraint<T>;
@@ -514,7 +527,7 @@ impl<T: Clone> ComponentSpec for Component<T> {
     }
 }
 
-impl<T: Clone> Index<&str> for Component<T> {
+impl<T> Index<&str> for Component<T> {
     type Output = Constraint<T>;
 
     /// Returns a reference to the constraint with the given name.
@@ -533,7 +546,7 @@ impl<T: Clone> Index<&str> for Component<T> {
     }
 }
 
-impl<T: Clone> IndexMut<&str> for Component<T> {
+impl<T> IndexMut<&str> for Component<T> {
     /// Returns a mutable reference to the constraint with the given name.
     ///
     /// # Panics

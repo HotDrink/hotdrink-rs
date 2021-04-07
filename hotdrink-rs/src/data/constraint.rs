@@ -14,12 +14,22 @@ use std::{collections::HashSet, fmt::Debug, ops::Index};
 /// Represents a constraint in a multiway dataflow constraint system.
 /// It has a name, a set of variables it references, a set of [`Method`]s to enforce it,
 /// and an optional assertion to run to ensure that it is actually enforced upon running a method.
-#[derive(Clone)]
 pub struct Constraint<T> {
     name: String,
     variables: Vec<usize>,
     methods: Vec<Method<T>>,
     assert: Option<Assert<T>>,
+}
+
+impl<T> Clone for Constraint<T> {
+    fn clone(&self) -> Self {
+        Self {
+            name: self.name.clone(),
+            variables: self.variables.clone(),
+            methods: self.methods.clone(),
+            assert: self.assert.clone(),
+        }
+    }
 }
 
 impl<T> Debug for Constraint<T> {
@@ -30,7 +40,7 @@ impl<T> Debug for Constraint<T> {
     }
 }
 
-impl<T: Clone> ConstraintSpec for Constraint<T> {
+impl<T> ConstraintSpec for Constraint<T> {
     type Method = Method<T>;
 
     fn new(methods: Vec<Self::Method>) -> Self {
