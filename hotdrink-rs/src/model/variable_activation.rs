@@ -2,7 +2,7 @@
 //! Updating the values of a constraint system will not happen immediately, but the activations will be ready,
 //! and act as futures or promises that eventually get the new value.
 
-use crate::{event::Event, thread::thread_pool::TerminationHandle};
+use crate::{event::Event, thread::TerminationHandle};
 use futures::Future;
 use std::{
     fmt::Debug,

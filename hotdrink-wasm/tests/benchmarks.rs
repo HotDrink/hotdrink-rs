@@ -3,7 +3,7 @@ use hotdrink_rs::{
         ComponentFactory, Ladder, LinearOneway, LinearTwoway, Random, Unprunable,
     },
     model::Component,
-    thread::dummy_pool::DummyPool,
+    thread::DummyPool,
 };
 use wasm_bindgen_test::*;
 

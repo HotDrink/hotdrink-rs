@@ -6,7 +6,7 @@ use std::sync::{
     Arc,
 };
 
-/// Three possibly strategies for when to terminate workers.
+/// Strategies for when to terminate workers.
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub enum TerminationStrategy {
     /// Never terminate any threads.
@@ -42,24 +42,8 @@ pub trait ThreadPool {
     ) -> Result<TerminationHandle, Self::ExecError>;
 }
 
-/// An extension of thread pools specifically for ones that use web workers.
-/// Passing in the shim url ensures that we don't create multiple copies of it.
-pub trait WorkerPool: ThreadPool {
-    /// Constructs a new pool as usual, but with a specified
-    /// path to the Web Worker source.
-    /// This is useful to avoid creating many instances of the blob.
-    fn from_url(
-        initial: usize,
-        termination_strategy: TerminationStrategy,
-        wasm_bindgen_shim_url: &str,
-    ) -> Result<Self, Self::NewError>
-    where
-        Self: Sized;
-}
-
 /// As long as at least one clone of this handle exists,
-/// the termination flag for a worker is set to false,
-/// as it means that the result is still required.
+/// the termination flag for a worker is set to false.
 #[derive(Clone, Debug, Default)]
 pub struct TerminationHandle {
     inner: Arc<InnerHandle>,
@@ -97,5 +81,43 @@ impl InnerHandle {
 impl Drop for InnerHandle {
     fn drop(&mut self) {
         self.cancel()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    #![allow(unused_variables, clippy::mutex_atomic)]
+
+    use super::TerminationHandle;
+    use std::sync::atomic::Ordering;
+
+    #[test]
+    pub fn termination_handle_does_not_set_flag_while_in_scope() {
+        let (th, flag) = TerminationHandle::new();
+        assert_eq!(flag.load(Ordering::SeqCst), true);
+    }
+
+    #[test]
+    pub fn termination_handle_sets_flag_when_out_of_scope() {
+        let flag = {
+            let (th, flag) = TerminationHandle::new();
+            flag
+        };
+        assert_eq!(flag.load(Ordering::SeqCst), false);
+    }
+
+    #[test]
+    pub fn termination_handle_does_not_set_flag_until_all_clones_out_of_scope() {
+        let flag = {
+            let (th1, flag) = TerminationHandle::new();
+            {
+                #[allow(clippy::redundant_clone)]
+                let th2 = th1.clone();
+                assert_eq!(flag.load(Ordering::SeqCst), true);
+            }
+            assert_eq!(flag.load(Ordering::SeqCst), true);
+            flag
+        };
+        assert_eq!(flag.load(Ordering::SeqCst), false);
     }
 }

@@ -4,7 +4,7 @@ use hotdrink_rs::{
     component,
     model::ConstraintSystem,
     ret,
-    thread::{dummy_pool::DummyPool, thread_pool::TerminationStrategy},
+    thread::{DummyPool, TerminationStrategy},
 };
 use wasm_bindgen::prelude::wasm_bindgen;
 

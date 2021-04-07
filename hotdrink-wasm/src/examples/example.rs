@@ -1,10 +1,10 @@
 //! A constraint system example that shows off multiple features.
 
 use super::circle::Circle;
-use crate::thread::pool::StaticPool;
+use crate::thread::StaticPool;
 use hotdrink_rs::{
     algorithms::fib::slow_fib, component, fail, model::ConstraintSystem, ret,
-    thread::thread_pool::TerminationStrategy,
+    thread::TerminationStrategy,
 };
 use wasm_bindgen::prelude::wasm_bindgen;
 

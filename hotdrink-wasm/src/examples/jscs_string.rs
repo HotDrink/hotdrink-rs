@@ -1,7 +1,7 @@
 //! A constraint system that only contains strings.
 
-use crate::thread::pool::StaticPool;
-use hotdrink_rs::thread::thread_pool::TerminationStrategy;
+use crate::thread::StaticPool;
+use hotdrink_rs::thread::TerminationStrategy;
 
 crate::gen_js_val! {
     pub StringWrapper {

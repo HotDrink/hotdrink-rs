@@ -14,7 +14,7 @@ use crate::{
         spec::{MethodFailure, MethodFunction, MethodResult, MethodSpec},
         variable_activation::{VariableActivation, VariableActivationInner},
     },
-    thread::thread_pool::ThreadPool,
+    thread::ThreadPool,
 };
 use std::{
     fmt::Debug,

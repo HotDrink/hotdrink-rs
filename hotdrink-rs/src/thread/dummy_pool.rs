@@ -2,7 +2,7 @@
 //! It will execute the work on the main thread.
 //! Commonly used for testing and benchmarking.
 
-use super::thread_pool::{TerminationHandle, TerminationStrategy, ThreadPool, WorkerPool};
+use super::thread_pool::{TerminationHandle, TerminationStrategy, ThreadPool};
 
 /// A thread pool with no actual additional threads.
 /// It will execute the work on the main thread.
@@ -24,18 +24,5 @@ impl ThreadPool for DummyPool {
         f();
         let (th, _) = TerminationHandle::new();
         Ok(th)
-    }
-}
-
-impl WorkerPool for DummyPool {
-    fn from_url(
-        initial: usize,
-        termination_strategy: TerminationStrategy,
-        _: &str,
-    ) -> Result<Self, Self::NewError>
-    where
-        Self: Sized,
-    {
-        Self::new(initial, termination_strategy)
     }
 }

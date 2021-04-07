@@ -35,7 +35,7 @@ macro_rules! gen_js_constraint_system {
                 let event_listener =
                     crate::event::event_listener::EventListener::from_url(&worker_script_url)?;
                 // Create the worker pool for executing methods
-                let pool = hotdrink_rs::thread::thread_pool::WorkerPool::from_url(
+                let pool = crate::thread::WorkerPool::from_url(
                     $num_threads,
                     $termination_strategy,
                     &worker_script_url,
@@ -194,7 +194,7 @@ macro_rules! gen_js_constraint_system {
 mod tests {
     use hotdrink_rs::{
         model::Component,
-        thread::{dummy_pool::DummyPool, thread_pool::TerminationStrategy},
+        thread::{DummyPool, TerminationStrategy},
     };
     use wasm_bindgen::JsValue;
 

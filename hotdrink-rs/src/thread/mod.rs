@@ -1,4 +1,7 @@
 //! Thread pool traits and implementations.
 
-pub mod dummy_pool;
-pub mod thread_pool;
+mod dummy_pool;
+mod thread_pool;
+
+pub use dummy_pool::DummyPool;
+pub use thread_pool::{TerminationHandle, TerminationStrategy, ThreadPool};

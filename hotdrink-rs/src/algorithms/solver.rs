@@ -12,7 +12,7 @@ use crate::{
         variable_activation::{VariableActivation, VariableActivationInner},
         Method, {MethodSpec, PlanError},
     },
-    thread::thread_pool::ThreadPool,
+    thread::ThreadPool,
 };
 use std::{
     fmt::Debug,

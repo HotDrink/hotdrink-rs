@@ -1,9 +1,7 @@
 //! A thread pool implementation that changes its number of workers dynamically depending on need.
 
 use crate::thread::worker::generic_worker::GenericWorker;
-use hotdrink_rs::thread::thread_pool::{
-    TerminationHandle, TerminationStrategy, ThreadPool, WorkerPool,
-};
+use hotdrink_rs::thread::{TerminationHandle, TerminationStrategy, ThreadPool};
 use js_sys::Date;
 use std::sync::{
     atomic::{AtomicBool, Ordering},
@@ -11,6 +9,8 @@ use std::sync::{
     Arc, Mutex,
 };
 use wasm_bindgen::JsValue;
+
+use super::WorkerPool;
 
 /// Work to be passed to a worker.
 struct Work {

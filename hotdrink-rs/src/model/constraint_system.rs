@@ -12,7 +12,7 @@ use super::{
 };
 use crate::{
     event::Event,
-    thread::{dummy_pool::DummyPool, thread_pool::ThreadPool},
+    thread::{DummyPool, ThreadPool},
 };
 use std::{collections::HashMap, fmt::Debug, future::Future};
 

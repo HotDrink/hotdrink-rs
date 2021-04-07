@@ -1,10 +1,8 @@
 //! A thread pool implementation that has a static number of workers, but can restart any of them should they become stuck,
 //! or if their results are no longer required.
 
-use super::{pool_worker::Work, PoolWorker};
-use hotdrink_rs::thread::thread_pool::{
-    TerminationHandle, TerminationStrategy, ThreadPool, WorkerPool,
-};
+use super::{pool_worker::Work, PoolWorker, WorkerPool};
+use hotdrink_rs::thread::{TerminationHandle, TerminationStrategy, ThreadPool};
 use std::sync::{
     mpsc::{self, Sender},
     Arc, Mutex,
@@ -87,43 +85,5 @@ impl Drop for StaticPool {
         for worker in &self.workers {
             worker.terminate();
         }
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    #![allow(unused_variables, clippy::mutex_atomic)]
-
-    use hotdrink_rs::thread::thread_pool::TerminationHandle;
-    use std::sync::atomic::Ordering;
-
-    #[test]
-    pub fn termination_handle_does_not_set_flag_while_in_scope() {
-        let (th, flag) = TerminationHandle::new();
-        assert_eq!(flag.load(Ordering::SeqCst), true);
-    }
-
-    #[test]
-    pub fn termination_handle_sets_flag_when_out_of_scope() {
-        let flag = {
-            let (th, flag) = TerminationHandle::new();
-            flag
-        };
-        assert_eq!(flag.load(Ordering::SeqCst), false);
-    }
-
-    #[test]
-    pub fn termination_handle_does_not_set_flag_until_all_clones_out_of_scope() {
-        let flag = {
-            let (th1, flag) = TerminationHandle::new();
-            {
-                #[allow(clippy::redundant_clone)]
-                let th2 = th1.clone();
-                assert_eq!(flag.load(Ordering::SeqCst), true);
-            }
-            assert_eq!(flag.load(Ordering::SeqCst), true);
-            flag
-        };
-        assert_eq!(flag.load(Ordering::SeqCst), false);
     }
 }

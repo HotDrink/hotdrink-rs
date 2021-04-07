@@ -21,7 +21,7 @@ use crate::{
         spec::{ComponentSpec, ConstraintSpec},
         variable_activation::VariableActivation,
     },
-    thread::{dummy_pool::DummyPool, thread_pool::ThreadPool},
+    thread::{DummyPool, ThreadPool},
     variable_ranking::{SortRanker, VariableRanker},
 };
 use std::{
@@ -604,7 +604,7 @@ mod tests {
     use crate::{
         examples::components::numbers::sum,
         model::{spec::ComponentSpec, variable_activation::VariableActivation},
-        thread::dummy_pool::DummyPool,
+        thread::DummyPool,
     };
 
     #[test]

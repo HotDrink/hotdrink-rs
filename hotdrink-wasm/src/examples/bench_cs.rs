@@ -2,7 +2,7 @@
 
 use hotdrink_rs::{
     examples::constraint_systems::make_empty_cs,
-    thread::{dummy_pool::DummyPool, thread_pool::TerminationStrategy},
+    thread::{DummyPool, TerminationStrategy},
 };
 use wasm_bindgen::prelude::wasm_bindgen;
 
