@@ -217,10 +217,44 @@ function bench_component(name, make_component, n_variables) {
   console.log(name, "&", n_variables, "&", total / n_samples);
 }
 
-function bench_components(entry) {
+function bench_component_max(name, make_component, n_variables) {
+  let cmp = make_component(n_variables);
+  let cs = new hd.ConstraintSystem();
+  cmp.connectSystem(cs);
+
+  let max = 0;
+  let n_samples = 5;
+  for (let i = 0; i < n_samples; i++) {
+    // Collect variables
+    let variables = []
+    for (v of cmp._vars) {
+      variables.push(v);
+    }
+    // Get random index
+    let random_index = Math.floor(Math.random() * n_variables);
+    let random_variable = variables[random_index];
+
+    // Perform set/update
+    let start = performance.now();
+    random_variable.set(0);
+    cs.update();
+    max = Math.max(max, performance.now() - start);
+  }
+
+  console.log(name, "&", n_variables, "&", max);
+}
+
+function bench_components(entries) {
+  console.log("------- Average -------")
   for (let n_variables of [100, 500, 1000]) {
     for (let entry of entries) {
       bench_component(entry.name, entry.make_component, n_variables);
+    }
+  }
+  console.log("------- Max -------")
+  for (let n_variables of [100, 500, 1000]) {
+    for (let entry of entries) {
+      bench_component_max(entry.name, entry.make_component, n_variables);
     }
   }
 }
@@ -229,6 +263,6 @@ bench_components([
   { name: "linear-oneway", make_component: make_linear_oneway },
   { name: "linear-twoway", make_component: make_linear_twoway },
   { name: "ladder       ", make_component: make_ladder },
-  { name: "unprunable   ", make_component: make_unprunable },
-  { name: "random       ", make_component: make_random }
+  { name: "random       ", make_component: make_random },
+  { name: "unprunable   ", make_component: make_unprunable }
 ])
