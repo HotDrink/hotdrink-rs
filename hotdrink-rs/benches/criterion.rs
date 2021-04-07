@@ -57,7 +57,7 @@ fn bench_hierarchical_planner(
         let uniform = Uniform::new_inclusive(0, component.n_variables().saturating_sub(1));
         b.iter(|| {
             update_random(&mut component, &mut rng, uniform);
-            hierarchical_planner(&component, &component.ranking()).unwrap();
+            hierarchical_planner(&component).unwrap();
         })
     });
 }

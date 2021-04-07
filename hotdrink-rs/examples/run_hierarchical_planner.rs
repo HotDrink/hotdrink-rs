@@ -6,6 +6,6 @@ use hotdrink_rs::{
 fn main() {
     env_logger::init();
     let comp = Random::build::<()>(10000);
-    let plan = hierarchical_planner(&comp, &comp.ranking());
+    let plan = hierarchical_planner(&comp);
     dbg!(plan.is_ok());
 }

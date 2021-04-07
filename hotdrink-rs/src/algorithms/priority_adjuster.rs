@@ -112,7 +112,9 @@ mod tests {
 
     use super::{adjust_priorities, CompareByPriority};
     use crate::{
-        algorithms::hierarchical_planner::{hierarchical_planner, OwnedEnforcedConstraint},
+        algorithms::hierarchical_planner::{
+            hierarchical_planner_with_ranking, OwnedEnforcedConstraint,
+        },
         model::*,
         variable_ranking::{SortRanker, VariableRanker},
     };
@@ -181,7 +183,7 @@ mod tests {
 
         // See what happens if we don't update the ranking
         ranker.touch(2);
-        let plan = hierarchical_planner(&component, &ranker.ranking()).unwrap();
+        let plan = hierarchical_planner_with_ranking(&component, &ranker.ranking()).unwrap();
         assert_eq!(
             plan,
             vec![
@@ -202,7 +204,7 @@ mod tests {
         assert_eq!(ranking, vec![3, 0, 1, 2]);
 
         // See that the expected plan is found
-        let plan = hierarchical_planner(&component, &ranking).unwrap();
+        let plan = hierarchical_planner_with_ranking(&component, &ranking).unwrap();
         assert_eq!(
             plan,
             vec![
@@ -217,7 +219,7 @@ mod tests {
 
         // Verify that the updated ranking works as expected
         new_ranker.touch(2);
-        let plan = hierarchical_planner(&component, &new_ranker.ranking()).unwrap();
+        let plan = hierarchical_planner_with_ranking(&component, &new_ranker.ranking()).unwrap();
         assert_eq!(
             plan,
             vec![
@@ -237,7 +239,7 @@ mod tests {
         assert_eq!(ranking, vec![0, 1, 2]);
 
         // See that the expected plan is found
-        let plan = hierarchical_planner(&component, &ranking).unwrap();
+        let plan = hierarchical_planner_with_ranking(&component, &ranking).unwrap();
         assert_eq!(plan, vec![dummy("Sum", "abc", &[0, 1], &[2])]);
 
         // Update the ranking based on the plan
@@ -246,7 +248,7 @@ mod tests {
 
         // Verify that the updated ranking works as expected
         new_ranker.touch(2);
-        let plan = hierarchical_planner(&component, &new_ranker.ranking()).unwrap();
+        let plan = hierarchical_planner_with_ranking(&component, &new_ranker.ranking()).unwrap();
         assert_eq!(plan, vec![dummy("Sum", "acb", &[0, 2], &[1]),]);
     }
 }

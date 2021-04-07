@@ -296,14 +296,13 @@ where
 mod tests {
     extern crate test;
     use super::unprunable;
-    use crate::{algorithms::hierarchical_planner, model::ComponentSpec};
+    use crate::algorithms::hierarchical_planner;
     use test::Bencher;
 
     #[bench]
     fn bench_unprunable(b: &mut Bencher) {
         let cs = unprunable::<()>(1, 400);
         let comp = cs.component("0").unwrap();
-        let ranking: Vec<usize> = (0..comp.n_variables()).collect();
-        b.iter(|| hierarchical_planner(comp, &ranking));
+        b.iter(|| hierarchical_planner(comp));
     }
 }

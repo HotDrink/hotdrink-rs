@@ -189,8 +189,7 @@ impl<T> Component<T> {
         T: Send + Sync + 'static + Debug,
     {
         // Rank variables and run planner
-        let ranking = self.ranker.ranking();
-        let plan = hierarchical_planner(self, &ranking)?;
+        let plan = hierarchical_planner(self)?;
         self.solve(pool, plan)?;
         Ok(())
     }
@@ -548,6 +547,10 @@ impl<T> ComponentSpec for Component<T> {
 
     fn remove_constraint(&mut self, idx: usize) -> Self::Constraint {
         self.constraints.remove(idx)
+    }
+
+    fn ranking(&self) -> Vec<usize> {
+        self.ranking()
     }
 }
 

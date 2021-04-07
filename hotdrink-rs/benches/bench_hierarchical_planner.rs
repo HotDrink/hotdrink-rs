@@ -11,7 +11,6 @@ use hotdrink_rs::{
             singleoutput_singleway,
         },
     },
-    model::ComponentSpec,
 };
 use test::Bencher;
 
@@ -25,8 +24,7 @@ macro_rules! bench_hierarchical_planner {
             fn $name(b: &mut Bencher) {
                 let cs = $make_cs::<()>(N_COMPONENTS, N_VARIABLES);
                 let comp = cs.component("0").unwrap();
-                let ranking: Vec<usize> = (0..comp.n_variables()).collect();
-                b.iter(|| hierarchical_planner(comp, &ranking));
+                b.iter(|| hierarchical_planner(comp));
             }
         )*
     };

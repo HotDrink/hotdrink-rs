@@ -118,4 +118,6 @@ pub trait ComponentSpec: Index<&'static str> + IndexMut<&'static str> {
         Self::Value: Send + Sync + 'static + Debug;
     /// Converts a variable name to its index in the component.
     fn name_to_idx(&self, name: &str) -> Option<usize>;
+    /// Returns the ranking of variables.
+    fn ranking(&self) -> Vec<usize>;
 }

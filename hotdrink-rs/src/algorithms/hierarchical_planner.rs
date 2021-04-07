@@ -19,7 +19,7 @@
 //!     }
 //! };
 //! assert_eq!(
-//!     hierarchical_planner(&component, &[0, 1, 2]),
+//!     hierarchical_planner(&component),
 //!     Ok(vec![OwnedEnforcedConstraint::new(
 //!         "C",
 //!         component["C"]["m1"].clone()
@@ -139,7 +139,16 @@ pub type OwnedPlan<M> = Vec<OwnedEnforcedConstraint<M>>;
 /// Then try adding a stay constraint for the leftmost variable (highest priority), and see if the simple planner succeeds.
 /// If it does, then keep the stay constraint and move on to the next variable.
 /// If it does not succceed, then remove the stay constraint and move on to the next variable.
-pub fn hierarchical_planner<T, M, C, Comp>(
+pub fn hierarchical_planner<T, M, C, Comp>(component: &Comp) -> Result<OwnedPlan<M>, PlanError>
+where
+    M: MethodSpec<Arg = T> + Clone,
+    C: ConstraintSpec<Method = M> + Debug + Clone,
+    Comp: ComponentSpec<Constraint = C> + Clone,
+{
+    hierarchical_planner_with_ranking(component, &component.ranking())
+}
+
+pub(crate) fn hierarchical_planner_with_ranking<T, M, C, Comp>(
     component: &Comp,
     ranking: &[usize],
 ) -> Result<OwnedPlan<M>, PlanError>
@@ -226,7 +235,7 @@ where
 #[cfg(test)]
 mod tests {
 
-    use super::{hierarchical_planner, OwnedEnforcedConstraint};
+    use super::{hierarchical_planner_with_ranking, OwnedEnforcedConstraint};
     use crate::{
         model::{Component, ComponentSpec, Constraint, ConstraintSpec, Method, MethodSpec},
         ret,
@@ -243,17 +252,17 @@ mod tests {
             vec![Constraint::new(vec![a_to_b.clone(), b_to_a.clone()])],
         );
         assert_eq!(
-            hierarchical_planner::<&str, _, _, _>(&component, &[0, 1]),
+            hierarchical_planner_with_ranking::<&str, _, _, _>(&component, &[0, 1]),
             Ok(vec![OwnedEnforcedConstraint::new("", a_to_b)])
         );
         assert_eq!(
-            hierarchical_planner::<&str, _, _, _>(&component, &[1, 0]),
+            hierarchical_planner_with_ranking::<&str, _, _, _>(&component, &[1, 0]),
             Ok(vec![OwnedEnforcedConstraint::new("", b_to_a)])
         );
     }
 
     #[test]
-    fn hierarchical_planner_2() {
+    fn hierarchical_planner_with_ranking_2() {
         let component: Component<i32> = crate::component! {
             component Comp {
                 let a: i32 = 0, b: i32 = 0, c: i32 = 0;
@@ -265,7 +274,7 @@ mod tests {
             }
         };
         assert_eq!(
-            hierarchical_planner(&component, &[0, 1, 2]),
+            hierarchical_planner_with_ranking(&component, &[0, 1, 2]),
             Ok(vec![OwnedEnforcedConstraint::new(
                 "C",
                 component["C"]["m1"].clone()
@@ -274,7 +283,7 @@ mod tests {
     }
 
     #[test]
-    fn hierarchical_planner_two_way_chain() {
+    fn hierarchical_planner_with_ranking_two_way_chain() {
         let component = crate::dummy_component! {
             let a, b, c, d;
             constraint A {
@@ -291,7 +300,7 @@ mod tests {
             }
         };
         assert_eq!(
-            hierarchical_planner(&component, &[0, 1, 2, 3]),
+            hierarchical_planner_with_ranking(&component, &[0, 1, 2, 3]),
             Ok(vec![
                 OwnedEnforcedConstraint::new("A", component["A"]["a1"].clone()),
                 OwnedEnforcedConstraint::new("B", component["B"]["b1"].clone()),
@@ -301,14 +310,14 @@ mod tests {
     }
 
     #[test]
-    fn hierarchical_planner_ladder() {
+    fn hierarchical_planner_with_ranking_ladder() {
         env_logger::builder()
             .filter_level(log::LevelFilter::Debug)
             .is_test(true)
             .init();
         let component: Component<()> = crate::examples::components::ladder::ladder(12);
         pretty_assertions::assert_eq!(
-            hierarchical_planner(&component, &(0..12).collect::<Vec<_>>()),
+            hierarchical_planner_with_ranking(&component, &(0..12).collect::<Vec<_>>()),
             Ok(vec![
                 OwnedEnforcedConstraint::new("c0", component["c0"]["lower2"].clone()),
                 OwnedEnforcedConstraint::new("c1", component["c1"]["upper2"].clone()),
