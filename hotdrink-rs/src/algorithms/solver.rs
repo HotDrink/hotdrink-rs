@@ -7,8 +7,8 @@ use crate::{
     event::SolveEventWithLoc,
     model::{
         generation_id::GenerationId,
-        generations::Generations,
         solve_error::{Reason, SolveError},
+        undo_vec::UndoVec,
         variable_activation::{VariableActivation, VariableActivationInner},
         Method, {MethodSpec, PlanError},
     },
@@ -30,7 +30,7 @@ use std::{
 /// 6. A callback to pass new produced values to. These events include the component name and the generation.
 pub(crate) fn par_solve<T>(
     plan: &[OwnedEnforcedConstraint<Method<T>>],
-    current_values: &mut Generations<VariableActivation<T, SolveError>>,
+    current_values: &mut UndoVec<VariableActivation<T, SolveError>>,
     component_name: String,
     generation: GenerationId,
     pool: &mut impl ThreadPool,

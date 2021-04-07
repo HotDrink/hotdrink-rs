@@ -13,10 +13,10 @@ mod constraint_system;
 pub(crate) mod errors;
 pub(crate) mod filtered_callback;
 pub(crate) mod generation_id;
-pub(crate) mod generations;
 mod method;
 pub(crate) mod solve_error;
 mod spec;
+pub(crate) mod undo_vec;
 pub(crate) mod variable_activation;
 
 pub use component::Component;

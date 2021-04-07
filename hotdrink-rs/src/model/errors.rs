@@ -1,8 +1,7 @@
 //! Errors from the API of [`ConstraintSystem`](crate::model::ConstraintSystem) and [`Component`](crate::model::Component).
 
+use super::undo_vec::{NoMoreRedo, NoMoreUndo};
 use std::fmt::Display;
-
-use super::generations::{NoMoreRedo, NoMoreUndo};
 
 /// An error occured while using the API.
 #[derive(Clone, Debug, PartialEq, Eq)]

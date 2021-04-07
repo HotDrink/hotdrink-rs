@@ -24,14 +24,4 @@ impl GenerationId {
             total_generation,
         }
     }
-
-    /// Returns the current generation.
-    pub fn current_generation(&self) -> usize {
-        self.current_generation
-    }
-
-    /// Returns the total generation.
-    pub fn total_generation(&self) -> usize {
-        self.current_generation
-    }
 }

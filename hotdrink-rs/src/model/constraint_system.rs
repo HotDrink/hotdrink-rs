@@ -5,9 +5,9 @@
 use super::{
     component::Component,
     errors::{ApiError, NoSuchComponent},
-    generations::{NoMoreRedo, NoMoreUndo},
     solve_error::SolveError,
     spec::PlanError,
+    undo_vec::{NoMoreRedo, NoMoreUndo, UndoLimit},
     variable_activation::DoneState,
 };
 use crate::{
@@ -229,6 +229,13 @@ impl<T: Debug> ConstraintSystem<T> {
         let _ = component.redo()?;
         self.undo_stack.push(last_redone);
         Ok(())
+    }
+
+    /// Sets the undo-limit per component in the system.
+    pub fn set_undo_limit(&mut self, limit: UndoLimit) {
+        for component in &mut self.components {
+            component.set_undo_limit(limit);
+        }
     }
 }
 

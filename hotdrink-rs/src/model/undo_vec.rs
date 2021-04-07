@@ -1,4 +1,4 @@
-//! A data structure to allow undo and redo of operations.
+//! A [`Vec`]-like data structure to allow undo and redo of operations.
 
 use std::{collections::VecDeque, fmt::Display, ops::Index};
 
@@ -33,7 +33,7 @@ impl Display for NoMoreRedo {
 
 /// Represents values over time to allow for undo and redo.
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub struct Generations<T> {
+pub struct UndoVec<T> {
     /// The generation we are currently on.
     current_generation: usize,
     /// The index of the current value of each variable.
@@ -48,8 +48,8 @@ pub struct Generations<T> {
     undo_limit: UndoLimit,
 }
 
-impl<T> Generations<T> {
-    /// Constructs a new [`Generations`] with the specified default values.
+impl<T> UndoVec<T> {
+    /// Constructs a new [`UndoVec`] with the specified default values.
     pub fn new(start_values: Vec<T>) -> Self {
         Self {
             current_generation: 0,
@@ -64,7 +64,7 @@ impl<T> Generations<T> {
         }
     }
 
-    /// Constructs a new [`Generations`] with the specified default values and history limit.
+    /// Constructs a new [`UndoVec`] with the specified default values and history limit.
     pub fn new_with_limit(start_values: Vec<T>, undo_limit: usize) -> Self {
         let mut without_cap = Self::new(start_values);
         without_cap.undo_limit = UndoLimit::Limited(undo_limit);
@@ -166,15 +166,6 @@ impl<T> Generations<T> {
             .collect()
     }
 
-    /// Returns mutable references to the current values.
-    pub fn values_mut(&mut self) -> Vec<&mut T> {
-        self.values
-            .iter_mut()
-            .zip(&self.current_idx)
-            .map(|(v, &index)| &mut v[index])
-            .collect()
-    }
-
     /// Stores a checkpoint that can be returned to with [`undo`](#method.undo) or [`redo`](#method.redo).
     pub fn commit(&mut self) {
         self.is_modified = false;
@@ -215,7 +206,7 @@ impl<T> Generations<T> {
     }
 }
 
-impl<T> Index<usize> for Generations<T> {
+impl<T> Index<usize> for UndoVec<T> {
     type Output = T;
 
     fn index(&self, index: usize) -> &Self::Output {
@@ -223,7 +214,7 @@ impl<T> Index<usize> for Generations<T> {
     }
 }
 
-impl<T> From<Vec<T>> for Generations<T> {
+impl<T> From<Vec<T>> for UndoVec<T> {
     fn from(vec: Vec<T>) -> Self {
         Self::new(vec)
     }
@@ -231,37 +222,37 @@ impl<T> From<Vec<T>> for Generations<T> {
 
 #[cfg(test)]
 mod tests {
-    use super::{Generations, NoMoreRedo, NoMoreUndo};
+    use super::{NoMoreRedo, NoMoreUndo, UndoVec};
 
     #[test]
     fn new_has_correct_len() {
-        let g = Generations::new(vec![1, 2, 3]);
+        let g = UndoVec::new(vec![1, 2, 3]);
         assert_eq!(g.n_variables(), 3);
     }
 
     #[test]
     fn new_has_correct_values() {
-        let g = Generations::new(vec![1, 2, 3]);
+        let g = UndoVec::new(vec![1, 2, 3]);
         assert_eq!(g.values(), vec![&1, &2, &3])
     }
 
     #[test]
     fn has_correct_values_after_set() {
-        let mut gs = Generations::new(vec![0]);
+        let mut gs = UndoVec::new(vec![0]);
         gs.set(0, 3);
         assert_eq!(gs.values(), vec![&3]);
     }
 
     #[test]
     fn undo_at_start_is_idempotent() {
-        let mut g = Generations::new(vec![0]);
+        let mut g = UndoVec::new(vec![0]);
         assert_eq!(g.undo(), Err(NoMoreUndo));
         assert_eq!(g.values(), vec![&0]);
     }
 
     #[test]
     fn do_then_undo_is_identity() {
-        let mut gs = Generations::new(vec![0]);
+        let mut gs = UndoVec::new(vec![0]);
         gs.set(0, 3);
         assert_eq!(gs.undo(), Ok(()));
         assert_eq!(gs.values(), vec![&0]);
@@ -269,14 +260,14 @@ mod tests {
 
     #[test]
     fn redo_at_start_is_idempotent() {
-        let mut g = Generations::new(vec![0]);
+        let mut g = UndoVec::new(vec![0]);
         assert_eq!(g.redo(), Err(NoMoreRedo));
         assert_eq!(g.values(), vec![&0]);
     }
 
     #[test]
     fn undo_redo_is_identity() {
-        let mut gs = Generations::new(vec![0]);
+        let mut gs = UndoVec::new(vec![0]);
         gs.set(0, 3);
         assert_eq!(gs.undo(), Ok(()));
         assert_eq!(gs.redo(), Ok(()));
@@ -285,7 +276,7 @@ mod tests {
 
     #[test]
     fn set_deletes_redo_history() {
-        let mut gs = Generations::new(vec![0]);
+        let mut gs = UndoVec::new(vec![0]);
         gs.set(0, 3);
         gs.commit();
         gs.undo().unwrap();
@@ -296,7 +287,7 @@ mod tests {
 
     #[test]
     fn do_undo_redo_mix() {
-        let mut gs = Generations::new(vec![0, 0]);
+        let mut gs = UndoVec::new(vec![0, 0]);
         // Assert default values
         assert_eq!(gs.values(), vec![&0, &0]);
         // Try moving a bit, but only 1 generation
@@ -327,12 +318,12 @@ mod tests {
     #[test]
     fn undo_limit_zero_gives_no_undo() {
         // Without commit
-        let mut gs = Generations::new_with_limit(vec![0], 0);
+        let mut gs = UndoVec::new_with_limit(vec![0], 0);
         gs.set(0, 3);
         assert_eq!(gs.undo(), Err(NoMoreUndo));
 
         // With commit
-        let mut gs = Generations::new_with_limit(vec![0], 0);
+        let mut gs = UndoVec::new_with_limit(vec![0], 0);
         gs.set(0, 3);
         gs.commit();
         assert_eq!(gs.undo(), Err(NoMoreUndo));
@@ -341,13 +332,13 @@ mod tests {
     #[test]
     fn undo_limit_one_gives_one_undo() {
         // Without commit
-        let mut gs = Generations::new_with_limit(vec![0], 1);
+        let mut gs = UndoVec::new_with_limit(vec![0], 1);
         gs.set(0, 3);
         assert_eq!(gs.undo(), Ok(()));
         assert_eq!(gs.undo(), Err(NoMoreUndo));
 
         // With commit
-        let mut gs = Generations::new_with_limit(vec![0], 1);
+        let mut gs = UndoVec::new_with_limit(vec![0], 1);
         gs.set(0, 3);
         gs.commit();
         assert_eq!(gs.undo(), Ok(()));
@@ -357,7 +348,7 @@ mod tests {
     #[test]
     fn undo_limit_n_gives_n_undos() {
         for undo_limit in 0..10 {
-            let mut gs = Generations::new_with_limit(vec![0], undo_limit);
+            let mut gs = UndoVec::new_with_limit(vec![0], undo_limit);
             for _ in 0..undo_limit {
                 gs.set(0, 1);
                 gs.commit();

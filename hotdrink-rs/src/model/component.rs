@@ -5,9 +5,9 @@ use super::{
     errors::NoSuchVariable,
     filtered_callback::FilteredCallback,
     generation_id::GenerationId,
-    generations::{Generations, NoMoreRedo, NoMoreUndo},
     method::Method,
     spec::PlanError,
+    undo_vec::{NoMoreRedo, NoMoreUndo, UndoLimit, UndoVec},
     variable_activation::{DoneState, State},
 };
 use super::{solve_error::SolveError, spec::MethodSpec};
@@ -39,7 +39,7 @@ pub struct Component<T> {
     name: String,
     name_to_index: HashMap<String, usize>,
     callbacks: Arc<Mutex<Vec<FilteredCallback<T, SolveError>>>>,
-    activations: Generations<VariableActivation<T, SolveError>>,
+    activations: UndoVec<VariableActivation<T, SolveError>>,
     constraints: Vec<Constraint<T>>,
     ranker: SortRanker,
     updated_since_last_solve: HashSet<usize>,
@@ -446,6 +446,34 @@ impl<T> Component<T> {
 
         Ok(())
     }
+
+    /// Constructs a new [`Component`] with the specified undo limit.
+    pub fn new_with_undo_limit(
+        name: String,
+        values: Vec<T>,
+        constraints: Vec<Constraint<T>>,
+        limit: usize,
+    ) -> Self {
+        let n_variables = values.len();
+        let values = UndoVec::new_with_limit(values.into_iter().map(|v| v.into()).collect(), limit);
+        Self {
+            name,
+            name_to_index: HashMap::new(),
+            activations: values,
+            callbacks: Arc::new(Mutex::new(vec![FilteredCallback::new(); n_variables])),
+            constraints,
+            ranker: VariableRanker::of_size(n_variables),
+            updated_since_last_solve: (0..n_variables).collect(),
+            n_ready: n_variables,
+            current_generation: 0,
+            total_generation: 0,
+        }
+    }
+
+    /// Sets the undo-limit on the values of the component.
+    pub fn set_undo_limit(&mut self, limit: UndoLimit) {
+        self.activations.set_limit(limit);
+    }
 }
 
 impl<T> ComponentSpec for Component<T> {
@@ -459,7 +487,7 @@ impl<T> ComponentSpec for Component<T> {
         constraints: Vec<Self::Constraint>,
     ) -> Self {
         let n_variables = values.len();
-        let values = Generations::new(values.into_iter().map(|v| v.into()).collect());
+        let values = UndoVec::new(values.into_iter().map(|v| v.into()).collect());
         Self {
             name,
             name_to_index: HashMap::new(),
