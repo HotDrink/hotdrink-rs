@@ -2,7 +2,7 @@
 
 /// Generate a JavaScript wrapper around an inner type to use in a constraint system.
 /// [`gen_js_val!`] is to a constraint system made with [`gen_js_constraint_system!`](crate::gen_js_constraint_system!), as
-/// [`gen_val!`](hotdrink_rs::gen_val) is to [`ConstraintSystem`](hotdrink_rs::ConstraintSystem).
+/// [`gen_val!`](hotdrink_rs::gen_val) is to [`ConstraintSystem`](hotdrink_rs::model::ConstraintSystem).
 #[macro_export]
 macro_rules! gen_js_val {
     (

@@ -1,9 +1,8 @@
 //! A generic function for constructing [`ConstraintSystem`]s.
 
 use crate::{
-    data::constraint_system::ConstraintSystem,
     macros::{RawComponent, RawConstraint},
-    Component,
+    model::{Component, ConstraintSystem},
 };
 use std::fmt::Debug;
 

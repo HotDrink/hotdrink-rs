@@ -2,8 +2,7 @@
 extern crate test;
 
 use hotdrink_rs::{
-    algorithms::hierarchical_planner::hierarchical_planner,
-    data::traits::ComponentSpec,
+    algorithms::hierarchical_planner,
     examples::constraint_systems::{
         linear::linear_twoway,
         linear_oneway, make_dense_cs, make_empty_cs, make_sparse_cs,
@@ -12,6 +11,7 @@ use hotdrink_rs::{
             singleoutput_singleway,
         },
     },
+    model::ComponentSpec,
 };
 use test::Bencher;
 

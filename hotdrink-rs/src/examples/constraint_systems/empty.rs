@@ -1,7 +1,7 @@
 //! A function for creating empty constraint systems.
 
-use crate::data::constraint_system::ConstraintSystem;
 use crate::macros::raw_component::RawComponent;
+use crate::model::ConstraintSystem;
 use std::fmt::Debug;
 
 /// Constructs a constraint system with components and variables,

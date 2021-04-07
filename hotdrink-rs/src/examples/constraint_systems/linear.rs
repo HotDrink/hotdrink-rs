@@ -3,8 +3,8 @@
 use std::{fmt::Debug, sync::Arc};
 
 use crate::{
-    data::constraint_system::ConstraintSystem,
     macros::{RawComponent, RawConstraint, RawMethod},
+    model::ConstraintSystem,
 };
 
 /// Constructs a constraint system with long chains of constraints between variables.

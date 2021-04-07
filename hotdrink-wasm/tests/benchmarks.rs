@@ -1,13 +1,9 @@
 use hotdrink_rs::{
     examples::components::{
-        ladder::Ladder,
-        linear::{LinearOneway, LinearTwoway},
-        random::Random,
-        unprunable::Unprunable,
-        ComponentFactory,
+        ComponentFactory, Ladder, LinearOneway, LinearTwoway, Random, Unprunable,
     },
+    model::Component,
     thread::dummy_pool::DummyPool,
-    Component,
 };
 use wasm_bindgen_test::*;
 

@@ -2,9 +2,12 @@
 
 pub mod experimental_planners;
 pub mod fib;
-pub mod hierarchical_planner;
-pub mod priority_adjuster;
-pub mod pruner;
-pub mod simple_planner;
-pub mod solver;
-pub mod toposorter;
+pub(self) mod hierarchical_planner;
+pub(crate) mod priority_adjuster;
+pub(self) mod pruner;
+pub(self) mod simple_planner;
+pub(crate) mod solver;
+pub(self) mod toposorter;
+
+pub use hierarchical_planner::{hierarchical_planner, OwnedEnforcedConstraint, Vertex};
+pub use simple_planner::{simple_planner, simple_planner_toposort, EnforcedConstraint};

@@ -26,7 +26,7 @@
 //! # Examples
 //!
 //! ```
-//! use hotdrink_rs::{component, ret, ConstraintSystem, event::Event};
+//! use hotdrink_rs::{component, ret, model::ConstraintSystem, Event};
 //!
 //! // Define a set of variables and relations between them
 //! let mut component = component! {
@@ -93,20 +93,12 @@
 
 pub mod algorithms;
 pub mod builders;
-pub mod data;
-pub mod event;
+pub(crate) mod event;
 pub mod examples;
 pub mod macros;
+pub mod model;
 pub mod thread;
-pub mod variable_ranking;
+pub(crate) mod variable_ranking;
 
-pub use data::{
-    component::Component,
-    constraint::Constraint,
-    constraint_system::ConstraintSystem,
-    method::Method,
-    traits::{
-        ComponentSpec, ConstraintSpec, MethodFailure, MethodFunction, MethodResult, MethodSpec,
-    },
-};
-pub use event::Event;
+pub use event::{Event, Identifier, SolveEvent};
+pub use model::{PlanError, SolveError};

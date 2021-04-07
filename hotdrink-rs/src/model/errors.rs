@@ -1,4 +1,4 @@
-//! Errors from the API of [`ConstraintSystem`](crate::ConstraintSystem) and [`Component`](crate::Component).
+//! Errors from the API of [`ConstraintSystem`](crate::model::ConstraintSystem) and [`Component`](crate::model::Component).
 
 use std::fmt::Display;
 

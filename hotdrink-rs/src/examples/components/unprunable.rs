@@ -3,7 +3,7 @@
 use crate::{
     examples::constraint_systems::factory::make_component,
     macros::{RawConstraint, RawMethod},
-    Component,
+    model::Component,
 };
 use std::{fmt::Debug, sync::Arc};
 
@@ -77,7 +77,7 @@ impl ComponentFactory for Unprunable {
 mod tests {
     use super::Unprunable;
     use crate::examples::components::factory::ComponentFactory;
-    use crate::{Component, ComponentSpec};
+    use crate::model::{Component, ComponentSpec};
 
     #[test]
     fn right_number_of_variables() {

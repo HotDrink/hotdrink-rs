@@ -7,21 +7,20 @@ use super::{
     generation_id::GenerationId,
     generations::{Generations, NoMoreRedo, NoMoreUndo},
     method::Method,
-    traits::PlanError,
+    spec::PlanError,
     variable_activation::{DoneState, State},
 };
-use super::{solve_error::SolveError, traits::MethodSpec};
+use super::{solve_error::SolveError, spec::MethodSpec};
 use crate::{
     algorithms::{
-        hierarchical_planner::{self, OwnedEnforcedConstraint, Vertex},
-        priority_adjuster::adjust_priorities,
-        solver,
-    },
-    data::{
-        traits::{ComponentSpec, ConstraintSpec},
-        variable_activation::VariableActivation,
+        hierarchical_planner, priority_adjuster::adjust_priorities, solver,
+        OwnedEnforcedConstraint, Vertex,
     },
     event::{Event, SolveEvent, SolveEventWithLoc},
+    model::{
+        spec::{ComponentSpec, ConstraintSpec},
+        variable_activation::VariableActivation,
+    },
     thread::{dummy_pool::DummyPool, thread_pool::ThreadPool},
     variable_ranking::{SortRanker, VariableRanker},
 };
@@ -32,9 +31,6 @@ use std::{
     ops::{Index, IndexMut},
     sync::{Arc, Mutex},
 };
-
-/// A callback that responds some input `T`.
-pub type GeneralCallback<T> = Arc<Mutex<dyn Fn(T) + Send>>;
 
 /// A collection of variables along with constraints that should be maintained between them.
 /// Variables can get new values, values can be retrieved from the component, and the constraints can be enforced.
@@ -194,7 +190,7 @@ impl<T> Component<T> {
     {
         // Rank variables and run planner
         let ranking = self.ranker.ranking();
-        let plan = hierarchical_planner::hierarchical_planner(self, &ranking)?;
+        let plan = hierarchical_planner(self, &ranking)?;
         self.solve(pool, plan)?;
         Ok(())
     }
@@ -578,8 +574,8 @@ impl<T: PartialEq> PartialEq for Component<T> {
 mod tests {
     use super::Component;
     use crate::{
-        data::{traits::ComponentSpec, variable_activation::VariableActivation},
         examples::components::numbers::sum,
+        model::{spec::ComponentSpec, variable_activation::VariableActivation},
         thread::dummy_pool::DummyPool,
     };
 

@@ -3,7 +3,7 @@
 use super::factory::{cname, vname, ComponentFactory};
 use crate::{
     macros::{RawComponent, RawConstraint, RawMethod},
-    Component,
+    model::Component,
 };
 use std::{fmt::Debug, sync::Arc};
 
@@ -106,7 +106,7 @@ impl ComponentFactory for LinearTwoway {
 #[cfg(test)]
 mod tests {
     use super::{super::factory::ComponentFactory, LinearOneway};
-    use crate::{Component, ComponentSpec};
+    use crate::model::{Component, ComponentSpec};
 
     #[test]
     fn linear_oneway_right_number_of_constraints() {

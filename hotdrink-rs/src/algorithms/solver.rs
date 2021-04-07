@@ -4,15 +4,14 @@
 
 use super::hierarchical_planner::{OwnedEnforcedConstraint, Vertex};
 use crate::{
-    data::{
+    event::SolveEventWithLoc,
+    model::{
         generation_id::GenerationId,
         generations::Generations,
-        method::Method,
         solve_error::{Reason, SolveError},
-        traits::{MethodSpec, PlanError},
         variable_activation::{VariableActivation, VariableActivationInner},
+        Method, {MethodSpec, PlanError},
     },
-    event::SolveEventWithLoc,
     thread::thread_pool::ThreadPool,
 };
 use std::{

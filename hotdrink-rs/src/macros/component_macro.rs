@@ -3,12 +3,12 @@
 /// A macro for specifying components.
 ///
 /// This can be used to construct constraint systems declaratively by
-/// combining the desired components in a [`ConstraintSystem`](crate::ConstraintSystem).
+/// combining the desired components in a [`ConstraintSystem`](crate::model::ConstraintSystem).
 ///
 /// # Examples
 ///
 /// ```rust
-/// # use hotdrink_rs::{Component, component, ret};
+/// # use hotdrink_rs::{model::Component, component, ret};
 /// let component: Component<i32> = component! {
 ///     component SumAndProduct {
 ///         let a: i32 = 0, b: i32 = 0, c: i32 = 0, d: i32 = 0;
@@ -57,18 +57,18 @@ macro_rules! component {
         }
         ),* ];
         // Component
-        $crate::macros::raw_component::RawComponent::new(
+        $crate::macros::RawComponent::new(
             stringify!($component_name),
             variables,
             values,
             // Constraints
             vec![ $(
-                $crate::macros::raw_constraint::RawConstraint::new_with_assert(
+                $crate::macros::RawConstraint::new_with_assert(
                     stringify!($constraint_name),
                     // Methods
                     vec![ $(
                         #[allow(unused_mut)]
-                        $crate::macros::raw_method::RawMethod::new(
+                        $crate::macros::RawMethod::new(
                             stringify!($method_name),
                             vec![ $( stringify!($inp) ),* ],
                             vec![ $( $( stringify!($out) ),* )? ],
@@ -81,13 +81,13 @@ macro_rules! component {
                                         let $inp = &values.get(var_idx);
                                         // Verify that it exists
                                         if $inp.is_none() {
-                                            return Err($crate::data::traits::MethodFailure::NoSuchVariable(stringify!($inp).to_owned()));
+                                            return Err($crate::model::MethodFailure::NoSuchVariable(stringify!($inp).to_owned()));
                                         }
                                         // Convert it to the appropriate type
                                         let $inp = std::convert::TryInto::<$inp_ty>::try_into(&**$inp.unwrap());
                                         // Verify that it worked
                                         if $inp.is_err() {
-                                            return Err($crate::data::traits::MethodFailure::TypeConversionFailure(stringify!($inp), stringify!($inp_ty)));
+                                            return Err($crate::model::MethodFailure::TypeConversionFailure(stringify!($inp), stringify!($inp_ty)));
                                         }
                                         let $inp = $inp.unwrap();
 
@@ -109,7 +109,7 @@ macro_rules! component {
 
 /// Turns a list of inputs into a successful [`MethodResult`]().
 /// This can be used defining methods in components with [`component!`].
-/// To make returning the possible values of a sum type used in a [`Component`](crate::Component) easier,
+/// To make returning the possible values of a sum type used in a [`Component`](crate::model::Component) easier,
 /// it will automatically call [`Into::into`] on each argument.
 ///
 /// # Examples
@@ -118,7 +118,7 @@ macro_rules! component {
 ///
 /// ```rust
 /// # use std::sync::Arc;
-/// # use hotdrink_rs::{ret, data::traits::MethodResult};
+/// # use hotdrink_rs::{ret, model::MethodResult};
 /// let result: MethodResult<i32> = ret![3, 5];
 /// assert_eq!(result, Ok(vec![Arc::new(3), Arc::new(5)]));
 /// ```
@@ -127,7 +127,7 @@ macro_rules! component {
 ///
 /// ```rust
 /// # use std::sync::Arc;
-/// # use hotdrink_rs::{ret, data::traits::MethodResult};
+/// # use hotdrink_rs::{ret, model::MethodResult};
 /// # #[derive(Debug, PartialEq)]
 /// enum Shape {
 ///     Circle(usize),
@@ -143,7 +143,7 @@ macro_rules! component {
 ///
 /// ```rust
 /// # use std::sync::Arc;
-/// # use hotdrink_rs::{ret, data::traits::MethodResult};
+/// # use hotdrink_rs::{ret, model::MethodResult};
 /// # #[allow(non_camel_case_types)]
 /// # #[derive(Debug, PartialEq)]
 /// enum Value {
@@ -179,25 +179,22 @@ macro_rules! ret {
 /// # Examples
 ///
 /// ```rust
-/// # use hotdrink_rs::{fail, data::traits::MethodResult, data::traits::MethodFailure};
+/// # use hotdrink_rs::{fail, model::MethodResult, model::MethodFailure};
 /// let result: MethodResult<()> = fail!("Expected {} to be equal to {}", 2, 3);
 /// assert_eq!(result, Err(MethodFailure::Custom(String::from("Expected 2 to be equal to 3"))));
 /// ```
 #[macro_export]
 macro_rules! fail {
     ($($arg:tt)*) => {{
-        Err($crate::data::traits::MethodFailure::Custom(format!($($arg)*)))
+        Err($crate::model::MethodFailure::Custom(format!($($arg)*)))
     }};
 }
 
 #[cfg(test)]
 mod tests {
     use crate::{
-        data::{
-            component::Component,
-            traits::{ComponentSpec, ConstraintSpec, MethodFailure, MethodSpec},
-        },
         gen_val,
+        model::{Component, ComponentSpec, ConstraintSpec, MethodFailure, MethodSpec},
     };
     use std::convert::TryFrom;
 

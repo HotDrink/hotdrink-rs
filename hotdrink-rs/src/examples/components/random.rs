@@ -2,7 +2,7 @@
 //! The goal is to have them approximate what the average user would need.
 
 use super::factory::ComponentFactory;
-use crate::{Component, Constraint, Method, MethodSpec};
+use crate::model::{Component, Constraint, Method, MethodSpec};
 use std::{fmt::Debug, sync::Arc};
 
 fn random_inclusive(min: usize, max: usize) -> Option<usize> {
@@ -175,7 +175,7 @@ impl ComponentFactory for Random {
 #[cfg(test)]
 mod tests {
     use super::{super::ComponentFactory, choose, make_random, random_inclusive, Random};
-    use crate::Component;
+    use crate::model::Component;
 
     #[test]
     fn generate_random_zero() {
@@ -215,14 +215,14 @@ mod tests {
         for _ in 0..1000 {
             let size = random_inclusive(0, 100).unwrap();
             let random: Component<i32> = make_random(size, 5);
-            assert!(crate::algorithms::simple_planner::simple_planner(&random).is_some())
+            assert!(crate::algorithms::simple_planner(&random).is_some())
         }
     }
 
     #[test]
     #[ignore = "TODO: Should this work? Would be nice for benchmarks to guarantee it."]
     fn random_makes_enough_constraints() {
-        use crate::ComponentSpec;
+        use crate::model::ComponentSpec;
         for _ in 0..1000 {
             let size = random_inclusive(0, 100).unwrap();
             let random: Component<i32> = make_random(size, 5);

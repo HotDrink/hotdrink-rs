@@ -7,7 +7,7 @@ use super::{
     errors::{ApiError, NoSuchComponent},
     generations::{NoMoreRedo, NoMoreUndo},
     solve_error::SolveError,
-    traits::PlanError,
+    spec::PlanError,
     variable_activation::DoneState,
 };
 use crate::{
@@ -141,7 +141,7 @@ impl<T: Debug> ConstraintSystem<T> {
     ///
     /// # Examples
     /// ```rust
-    /// use hotdrink_rs::{data::constraint_system::ConstraintSystem, component, ret, event::Event};
+    /// use hotdrink_rs::{model::ConstraintSystem, component, ret, Event};
     /// let component = component! {
     ///     component Comp {
     ///         let x: i32 = 0, y: i32 = 0;

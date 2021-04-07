@@ -1,7 +1,7 @@
 use hotdrink_rs::{
     component,
-    data::{traits::ComponentSpec, variable_activation::DoneState},
-    ret, Component,
+    model::{Component, ComponentSpec, DoneState},
+    ret,
 };
 use iced::{text_input::State, Align, Column, Element, Length, Sandbox, Settings, TextInput};
 

@@ -1,6 +1,6 @@
 //! A macro for easily generating conversion traits on a sum type.
 
-use crate::MethodFailure;
+use crate::model::MethodFailure;
 
 /// The enum was not the desired variant, and could not be converted.
 #[derive(Copy, Clone, Debug, Default, PartialEq, Eq)]

@@ -2,9 +2,9 @@
 
 pub mod component_macro;
 pub mod dummy_component;
-pub mod raw_component;
-pub mod raw_constraint;
-pub mod raw_method;
+pub(crate) mod raw_component;
+pub(crate) mod raw_constraint;
+pub(crate) mod raw_method;
 pub mod value_macro;
 
 pub use raw_component::RawComponent;

@@ -1,6 +1,6 @@
 //! Errors that can happen during solving of a constraint system.
 
-use super::traits::MethodFailure;
+use super::spec::MethodFailure;
 use crate::builders::method_builder::MutabilityMismatch;
 use std::fmt::Display;
 

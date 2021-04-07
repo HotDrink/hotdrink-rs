@@ -1,7 +1,7 @@
 //! A constraint system example that demonstrates a case where we should adjust the priorities of variables.
 
 use super::jscs_string::StringJsCs;
-use hotdrink_rs::{component, data::constraint_system::ConstraintSystem, ret};
+use hotdrink_rs::{component, model::ConstraintSystem, ret};
 use wasm_bindgen::prelude::wasm_bindgen;
 
 /// Constructs a [`StringJsCs`].

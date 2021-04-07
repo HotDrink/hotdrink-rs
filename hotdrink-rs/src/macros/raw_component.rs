@@ -1,12 +1,12 @@
 //! Types and operations for creating [`RawComponent`]s that are easier to make manually than [`Component`].
 //! They can then be converted to real [`Component`]s later.
 //!
-//! [`Component`]: crate::Component
+//! [`Component`]: crate::model::Component
 
 use itertools::Itertools;
 
 use super::raw_constraint::RawConstraint;
-use crate::data::component::Component;
+use crate::model::Component;
 use std::{collections::HashMap, fmt::Debug};
 
 /// An intermediate struct for constructing [`Component`]s.

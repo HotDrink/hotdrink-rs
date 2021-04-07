@@ -1,19 +1,19 @@
 //! Types for constraint satisfaction methods.
-//! A [`Method`] in a [`Constraint`](crate::Constraint) should enforce the relation
+//! A [`Method`] in a [`Constraint`](super::Constraint) should enforce the relation
 //! that the constraint represents.
 
 use super::{
     generation_id::GenerationId,
     solve_error::{Reason, SolveError},
 };
-use crate::data::variable_activation::DoneState;
+use crate::model::variable_activation::DoneState;
 use crate::{
-    algorithms::hierarchical_planner::Vertex,
-    data::{
-        traits::{MethodFailure, MethodFunction, MethodResult, MethodSpec},
+    algorithms::Vertex,
+    event::{SolveEvent, SolveEventWithLoc},
+    model::{
+        spec::{MethodFailure, MethodFunction, MethodResult, MethodSpec},
         variable_activation::{VariableActivation, VariableActivationInner},
     },
-    event::{SolveEvent, SolveEventWithLoc},
     thread::thread_pool::ThreadPool,
 };
 use std::{
@@ -21,7 +21,7 @@ use std::{
     sync::{Arc, Mutex},
 };
 
-/// A method for enforcing a [`Constraint`](crate::Constraint).
+/// A method for enforcing a [`Constraint`](super::Constraint).
 /// It usually has a set of input-variables, a set of output-variables,
 /// and a function for creating the outputs from the inputs.
 pub struct Method<T> {

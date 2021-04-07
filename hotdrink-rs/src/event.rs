@@ -1,6 +1,6 @@
 //! Types for representing events from the constraint system.
 
-use crate::data::generation_id::GenerationId;
+use crate::model::generation_id::GenerationId;
 use std::{fmt::Debug, sync::Arc};
 
 /// Uniquely identifies a variable in a component

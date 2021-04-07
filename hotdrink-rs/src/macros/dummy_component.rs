@@ -1,6 +1,6 @@
-//! A macro for quickly and easily defining a [`Component<()>`](crate::Component).
+//! A macro for quickly and easily defining a [`Component<()>`](crate::model::Component).
 
-/// A macro for quickly and easily defining a [`Component<()>`](crate::Component).
+/// A macro for quickly and easily defining a [`Component<()>`](crate::model::Component).
 /// This is useful for testing and benchmarks.
 #[macro_export]
 macro_rules! dummy_component {

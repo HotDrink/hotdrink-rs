@@ -1,8 +1,6 @@
 //! Useful traits for constraint systems that define the interface required for planning.
 
-use crate::{
-    algorithms::hierarchical_planner::Vertex, builders::method_builder::MutabilityMismatch,
-};
+use crate::{algorithms::Vertex, builders::method_builder::MutabilityMismatch};
 use std::{
     fmt::Debug,
     ops::{Index, IndexMut},

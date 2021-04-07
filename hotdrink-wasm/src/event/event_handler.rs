@@ -13,7 +13,7 @@
 //! ```
 
 use crate::event::js_event::JsEvent;
-use hotdrink_rs::event::{SolveEvent, Identifier};
+use hotdrink_rs::{Identifier, SolveEvent};
 use itertools::Itertools;
 use js_sys::Function;
 use std::fmt::Debug;

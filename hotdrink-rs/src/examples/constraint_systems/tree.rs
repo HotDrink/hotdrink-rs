@@ -4,8 +4,8 @@ use std::{fmt::Debug, sync::Arc};
 
 use super::factory::make_cs;
 use crate::{
-    data::constraint_system::ConstraintSystem,
     macros::{RawConstraint, RawMethod},
+    model::ConstraintSystem,
 };
 
 /// Root has two constraints, one to each of its children.
@@ -296,9 +296,7 @@ where
 mod tests {
     extern crate test;
     use super::unprunable;
-    use crate::{
-        algorithms::hierarchical_planner::hierarchical_planner, data::traits::ComponentSpec,
-    };
+    use crate::{algorithms::hierarchical_planner, model::ComponentSpec};
     use test::Bencher;
 
     #[bench]

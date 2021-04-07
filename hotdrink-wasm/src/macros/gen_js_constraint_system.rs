@@ -14,18 +14,11 @@ macro_rules! gen_js_constraint_system {
         #[wasm_bindgen::prelude::wasm_bindgen]
         #[allow(missing_debug_implementations)]
         pub struct $cs_name {
-            inner: std::sync::Mutex<
-                hotdrink_rs::data::constraint_system::ConstraintSystem<$inner_type>,
-            >,
-            event_listener: crate::event::event_listener::EventListener<
-                $inner_type,
-                hotdrink_rs::data::solve_error::SolveError,
-            >,
+            inner: std::sync::Mutex<hotdrink_rs::model::ConstraintSystem<$inner_type>>,
+            event_listener:
+                crate::event::event_listener::EventListener<$inner_type, hotdrink_rs::SolveError>,
             event_handler: std::sync::Mutex<
-                crate::event::event_handler::EventHandler<
-                    $inner_type,
-                    hotdrink_rs::data::solve_error::SolveError,
-                >,
+                crate::event::event_handler::EventHandler<$inner_type, hotdrink_rs::SolveError>,
             >,
             pool: std::sync::Mutex<$thread_pool_type>,
         }
@@ -34,7 +27,7 @@ macro_rules! gen_js_constraint_system {
             /// Wraps an existing constraint system,
             /// and initializes the struct.
             pub fn wrap(
-                inner: hotdrink_rs::data::constraint_system::ConstraintSystem<$inner_type>,
+                inner: hotdrink_rs::model::ConstraintSystem<$inner_type>,
             ) -> Result<$cs_name, wasm_bindgen::JsValue> {
                 // Create the worker script blob
                 let worker_script_url = crate::thread::worker::worker_script::create();
@@ -127,7 +120,7 @@ macro_rules! gen_js_constraint_system {
             /// Notifies the constraint system of an event, such as a thread having updated a value.
             pub fn notify(&self, event_ptr: u32) {
                 use crate::event::js_event::JsEvent;
-                use hotdrink_rs::data::solve_error::SolveError;
+                use hotdrink_rs::SolveError;
                 let event =
                     unsafe { Box::from_raw(event_ptr as *mut JsEvent<$inner_type, SolveError>) };
                 let mut event_handler = self.event_handler.lock().unwrap();
@@ -200,7 +193,7 @@ macro_rules! gen_js_constraint_system {
 #[cfg(test)]
 mod tests {
     use hotdrink_rs::{
-        data::component::Component,
+        model::Component,
         thread::{dummy_pool::DummyPool, thread_pool::TerminationStrategy},
     };
     use wasm_bindgen::JsValue;
@@ -208,7 +201,7 @@ mod tests {
     #[ignore = "Simply for verification that it compiles"]
     #[test]
     fn it_compiles() {
-        use hotdrink_rs::data::constraint_system::ConstraintSystem;
+        use hotdrink_rs::model::ConstraintSystem;
 
         // Generate constraint system value and a JS wrapper for it
         crate::gen_js_val! {

@@ -1,6 +1,6 @@
 //! A trait for structs that can build components.
 
-use crate::Component;
+use crate::model::Component;
 use std::fmt::Debug;
 
 /// Convert a variable id to a name.

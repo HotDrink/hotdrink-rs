@@ -1,7 +1,7 @@
 //! A function for creating ladder-shaped constraint systems.
 //! See [ladder](crate::examples::components::ladder) for more information.
 
-use crate::{data::constraint_system::ConstraintSystem, examples::components::ladder};
+use crate::{examples::components::ladder, model::ConstraintSystem};
 use std::fmt::Debug;
 
 /// Constructs a "ladder"-shaped constraint system.

@@ -4,7 +4,7 @@
 //! read from and write to form a directed acyclic graph.
 
 use super::{hierarchical_planner::Vertex, toposorter::toposort};
-use crate::data::traits::{ComponentSpec, ConstraintSpec, MethodSpec};
+use crate::model::{ComponentSpec, ConstraintSpec, MethodSpec};
 use itertools::Itertools;
 use std::{collections::VecDeque, fmt::Debug};
 
@@ -110,7 +110,7 @@ pub type Plan<'a, M> = Vec<EnforcedConstraint<'a, M>>;
 /// # Examples
 ///
 /// ```rust
-/// # use hotdrink_rs::{component, ret, algorithms::simple_planner::{simple_planner, EnforcedConstraint}, Method};
+/// # use hotdrink_rs::{component, ret, algorithms::{simple_planner, EnforcedConstraint}, model::Method};
 ///
 /// // Construct a component
 /// let component = component! {
@@ -202,7 +202,7 @@ where
 /// Runs the [`simple_planner`], and then topologically sorts the resulting plan.
 /// If successful, this plan can then be run to enforce all the constraints in the input-component.
 #[allow(clippy::needless_lifetimes)]
-pub fn new_simple_planner_toposort<'a, M, C, Comp>(
+pub fn simple_planner_toposort<'a, M, C, Comp>(
     component: &'a Comp,
 ) -> Option<Vec<EnforcedConstraint<'a, M>>>
 where
@@ -220,12 +220,12 @@ mod tests {
     use super::EnforcedConstraint;
     use crate::{
         algorithms::{
-            simple_planner::{new_simple_planner_toposort, simple_planner},
+            simple_planner::{simple_planner, simple_planner_toposort},
             toposorter::toposort,
         },
-        data::{component::Component, traits::ComponentSpec},
+        model::{Component, ComponentSpec},
     };
-    use crate::{data::constraint_system::ConstraintSystem, ret};
+    use crate::{model::ConstraintSystem, ret};
 
     #[test]
     fn empty_component_gives_empty_plan() {
@@ -274,7 +274,7 @@ mod tests {
         };
         let p1 = &comp["Product"]["p1"];
         let s1 = &comp["Sum"]["s1"];
-        let plan = new_simple_planner_toposort(&comp);
+        let plan = simple_planner_toposort(&comp);
         assert_eq!(
             plan,
             Some(vec![

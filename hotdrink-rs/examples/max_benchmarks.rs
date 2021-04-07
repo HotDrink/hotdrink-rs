@@ -1,9 +1,8 @@
 use hotdrink_rs::{
     examples::components::{
-        ladder::Ladder, linear::LinearOneway, linear::LinearTwoway, random::Random,
-        unprunable::Unprunable, ComponentFactory,
+        ComponentFactory, Ladder, LinearOneway, LinearTwoway, Random, Unprunable,
     },
-    Component, ComponentSpec,
+    model::{Component, ComponentSpec},
 };
 use rand::{distributions::Uniform, prelude::ThreadRng, Rng};
 

@@ -1,6 +1,6 @@
 use hotdrink_rs::{
-    algorithms::hierarchical_planner::hierarchical_planner,
-    examples::components::{random::Random, ComponentFactory},
+    algorithms::hierarchical_planner,
+    examples::components::{ComponentFactory, Random},
 };
 
 fn main() {

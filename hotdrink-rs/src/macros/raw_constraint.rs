@@ -1,10 +1,10 @@
 //! Types and operations for creating [`RawConstraint`]s that are easier to make manually than [`Constraint`].
 //! They can then be converted to real [`Constraint`]s later.
 //!
-//! [`Constraint`]: crate::Constraint
+//! [`Constraint`]: crate::model::Constraint
 
 use super::raw_method::RawMethod;
-use crate::data::constraint::Constraint;
+use crate::model::Constraint;
 use std::{collections::HashMap, fmt::Debug, sync::Arc};
 
 /// A type for an assertion statement for the constraint.

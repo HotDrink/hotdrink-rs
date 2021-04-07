@@ -1,11 +1,11 @@
 //! A module to simplify method construction.
 
-use crate::MethodFailure;
+use crate::model::MethodFailure;
 use itertools::Itertools;
 use std::sync::Arc;
 use std::{convert::TryInto, fmt::Debug};
 
-/// A slightly different version of [`crate::MethodResult`].
+/// A slightly different version of [`crate::model::MethodResult`].
 pub type MethodResult<T> = Result<Vec<T>, MethodFailure>;
 
 /// A parameter for a method.
@@ -253,7 +253,7 @@ impl<T> Eq for MethodBuilder<T> {}
 #[cfg(test)]
 mod tests {
     use super::{MethodArg, MethodBuilder, MethodFunctionInner, MethodOutput, MutabilityMismatch};
-    use crate::MethodFailure;
+    use crate::model::MethodFailure;
     use std::sync::Arc;
 
     // Define a wrapper struct

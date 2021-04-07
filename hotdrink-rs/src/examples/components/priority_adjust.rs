@@ -1,6 +1,6 @@
 //! An example component for testing the variable priority adjuster.
 
-use crate::{component, ret, Component};
+use crate::{component, model::Component, ret};
 
 /// An example that would component that would be solved
 /// in an unexpected manner unless variable priorities are adjusted.

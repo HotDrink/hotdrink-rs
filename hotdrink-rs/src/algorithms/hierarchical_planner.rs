@@ -7,7 +7,7 @@
 //! # Examples
 //!
 //! ```rust
-//! # use hotdrink_rs::{component, ret, algorithms::hierarchical_planner::{hierarchical_planner, OwnedEnforcedConstraint}, Component};
+//! # use hotdrink_rs::{component, ret, algorithms::{hierarchical_planner, OwnedEnforcedConstraint}, model::Component};
 //! let component: Component<i32> = component! {
 //!     component Comp {
 //!         let a: i32 = 0, b: i32 = 0, c: i32 = 0;
@@ -27,7 +27,7 @@
 //! );
 //! ```
 //!
-//! [`Component`]: crate::Component
+//! [`Component`]: crate::model::Component
 
 use super::{
     pruner::{create_var_to_constraint, prune},
@@ -35,7 +35,7 @@ use super::{
 };
 use crate::{
     algorithms::toposorter::toposort,
-    data::traits::{ComponentSpec, ConstraintSpec, MethodSpec, PlanError},
+    model::{ComponentSpec, ConstraintSpec, MethodSpec, PlanError},
 };
 use std::fmt::Debug;
 
@@ -229,12 +229,7 @@ mod tests {
 
     use super::{hierarchical_planner, OwnedEnforcedConstraint};
     use crate::{
-        data::{
-            component::Component,
-            constraint::Constraint,
-            method::Method,
-            traits::{ComponentSpec, ConstraintSpec, MethodSpec},
-        },
+        model::{Component, ComponentSpec, Constraint, ConstraintSpec, Method, MethodSpec},
         ret,
     };
     use std::sync::Arc;

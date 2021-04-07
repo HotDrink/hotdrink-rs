@@ -2,7 +2,7 @@
 //! It was originally defined [here](https://github.com/HotDrink/hotdrink/blob/3f9bc25751079c69f8277918521a75dd1163bee4/test/models/ladder-10.js).
 
 use super::factory::ComponentFactory;
-use crate::{Component, Constraint, Method, MethodFailure, MethodSpec};
+use crate::model::{Component, Constraint, Method, MethodFailure, MethodSpec};
 use std::{collections::HashMap, sync::Arc};
 
 fn avg<T: Default>(_: Vec<T>) -> Result<Vec<T>, MethodFailure> {
@@ -79,7 +79,7 @@ impl ComponentFactory for Ladder {
 mod tests {
     use super::{ladder, Ladder};
     use crate::examples::components::factory::ComponentFactory;
-    use crate::{Component, ComponentSpec};
+    use crate::model::{Component, ComponentSpec};
 
     #[test]
     fn constructs_without_error() {

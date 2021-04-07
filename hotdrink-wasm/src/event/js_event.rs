@@ -1,6 +1,6 @@
 //! A wrapper around events that contains information about which variable was updated.
 
-use hotdrink_rs::event::SolveEvent;
+use hotdrink_rs::SolveEvent;
 
 /// A wrapper around events that contains information about which variable was updated.
 #[derive(Debug)]

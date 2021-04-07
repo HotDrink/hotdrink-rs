@@ -1,16 +1,11 @@
 //! Types and operations for creating [`RawMethod`]s that are easier to make manually than [`Method`].
 //! They can then be converted to real [`Method`]s later.
 //!
-//! [`Method`]: crate::Method
+//! [`Method`]: crate::model::Method
 
-use std::{collections::HashMap, fmt::Debug};
-
+use crate::model::{Method, MethodFunction, MethodSpec};
 use itertools::Itertools;
-
-use crate::data::{
-    method::Method,
-    traits::{MethodFunction, MethodSpec},
-};
+use std::{collections::HashMap, fmt::Debug};
 
 /// An intermediate struct for constructing [`Method`]s.
 pub struct RawMethod<T> {

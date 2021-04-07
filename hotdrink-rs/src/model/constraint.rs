@@ -1,13 +1,13 @@
-//! Types for a [`Constraint`], an relation between variables in a [`Component`](crate::Component) that should hold.
+//! Types for a [`Constraint`], an relation between variables in a [`Component`](super::Component) that should hold.
 //!
-//! A [`Constraint`] contains a number of [`Method`](crate::Method)s that read from and write to different variables,
+//! A [`Constraint`] contains a number of [`Method`](super::Method)s that read from and write to different variables,
 //! and can be executed in order to enforce the constraint.
 
 use super::method::Method;
 use crate::{
-    algorithms::hierarchical_planner::Vertex,
-    data::traits::{ConstraintSpec, MethodSpec},
+    algorithms::Vertex,
     macros::raw_constraint::Assert,
+    model::spec::{ConstraintSpec, MethodSpec},
 };
 use std::{collections::HashSet, fmt::Debug, ops::Index};
 
@@ -97,12 +97,12 @@ impl<T> Constraint<T> {
         }
     }
 
-    /// Constructs a new [`Component`](crate::Component) with the specified name.
+    /// Constructs a new [`Component`](super::Component) with the specified name.
     pub fn new_with_name(name: String, methods: Vec<Method<T>>) -> Self {
         Self::new_with_name_and_assert(name, methods, None)
     }
 
-    /// Constructs a new [`Component`](crate::Component) with the specified name and assertion.
+    /// Constructs a new [`Component`](super::Component) with the specified name and assertion.
     pub fn new_with_name_and_assert(
         name: String,
         methods: Vec<Method<T>>,

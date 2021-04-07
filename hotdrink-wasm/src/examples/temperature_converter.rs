@@ -2,7 +2,7 @@
 
 use hotdrink_rs::{
     component,
-    data::constraint_system::ConstraintSystem,
+    model::ConstraintSystem,
     ret,
     thread::{dummy_pool::DummyPool, thread_pool::TerminationStrategy},
 };

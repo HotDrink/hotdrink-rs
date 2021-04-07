@@ -3,7 +3,7 @@
 //! This can often make planning a lot faster by shrinking the constraint graph.
 
 use crate::algorithms::hierarchical_planner::Vertex;
-use crate::data::traits::{ComponentSpec, ConstraintSpec, MethodSpec};
+use crate::model::{ComponentSpec, ConstraintSpec, MethodSpec};
 use std::collections::HashSet;
 
 /// Create a map from variables to all components they are used in.
@@ -105,7 +105,7 @@ pub fn prune<C>(
 #[cfg(test)]
 mod tests {
     use super::{create_var_to_constraint, prune};
-    use crate::{data::traits::ComponentSpec, dummy_component, ret};
+    use crate::{dummy_component, model::ComponentSpec, ret};
 
     #[test]
     fn prune_one_way_chain_should_do_nothing() {

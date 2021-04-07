@@ -3,7 +3,7 @@
 use super::circle::Circle;
 use crate::thread::pool::StaticPool;
 use hotdrink_rs::{
-    algorithms::fib::slow_fib, component, data::constraint_system::ConstraintSystem, fail, ret,
+    algorithms::fib::slow_fib, component, fail, model::ConstraintSystem, ret,
     thread::thread_pool::TerminationStrategy,
 };
 use wasm_bindgen::prelude::wasm_bindgen;
