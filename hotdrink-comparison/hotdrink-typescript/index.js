@@ -217,12 +217,45 @@ function bench_component(name, make_component, n_variables) {
     console.log(name, "&", n_variables, "&", total / n_samples);
 }
 
+function bench_component_max(name, make_component, n_variables) {
+
+    let max = 0;
+    let n_samples = 5;
+    for (let i = 0; i < n_samples; i++) {
+        // Generate a new component (for random)
+        var pm = new hd.PropertyModel();
+        pm.add(make_component(n_variables));
+
+        let entries = Object.entries(pm.variables);
+        let random_number = Math.floor(Math.random() * entries.length);
+        for (let [k, v] of entries) {
+            if (k.startsWith(vname(random_number))) {
+                pm.variableChanged(v);
+            }
+        }
+        let start = performance.now();
+        pm.update();
+        max = Math.max(max, performance.now() - start);
+    }
+
+    console.log(name, "&", n_variables, "&", max);
+}
+
 function bench_components(entries) {
+    console.log("------- Average -------")
     for (let n_variables of [100, 500, 1000]) {
         for (let entry of entries) {
             let name = entry.name;
             let make_component = entry.make_component;
             bench_component(name, make_component, n_variables);
+        }
+    }
+    console.log("------- Max -------")
+    for (let n_variables of [100, 500, 1000]) {
+        for (let entry of entries) {
+            let name = entry.name;
+            let make_component = entry.make_component;
+            bench_component_max(name, make_component, n_variables);
         }
     }
 }

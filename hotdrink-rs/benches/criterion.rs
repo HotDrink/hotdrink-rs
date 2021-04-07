@@ -166,8 +166,8 @@ fn simple_planner_benches_max(c: &mut Criterion) {
         bench_simple_planner(&mut group, "linear-oneway", i, LINEAR_TWOWAY);
         bench_simple_planner(&mut group, "linear-twoway", i, LINEAR_TWOWAY);
         bench_simple_planner(&mut group, "ladder", i, LADDER);
-        bench_simple_planner(&mut group, "unprunable", i, UNPRUNABLE);
         bench_simple_planner(&mut group, "random", i, RANDOM);
+        bench_simple_planner(&mut group, "unprunable", i, UNPRUNABLE);
     }
     group.finish();
 }
