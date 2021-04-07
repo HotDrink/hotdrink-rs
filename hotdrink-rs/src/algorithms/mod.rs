@@ -1,11 +1,13 @@
 //! Algorithms used in planning and solving of constraint systems.
 
-pub mod experimental_planners;
+// TODO: Finish experimental planners.
+// pub mod experimental_planners;
+
 pub mod fib;
-pub(self) mod hierarchical_planner;
+mod hierarchical_planner;
 pub(crate) mod priority_adjuster;
 pub(self) mod pruner;
-pub(self) mod simple_planner;
+mod simple_planner;
 pub(crate) mod solver;
 pub(self) mod toposorter;
 

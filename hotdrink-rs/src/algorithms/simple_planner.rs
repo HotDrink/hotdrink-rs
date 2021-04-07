@@ -57,8 +57,7 @@ impl VariableRefCounter {
     }
 }
 
-/// A constraint with name `name` that has been enforced with `method`.
-/// This variation of `EnforcedConstraint` references the name.
+/// A constraint with a [`&str`] `name` that has been enforced with `method`.
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub struct EnforcedConstraint<'a, M> {
     /// The name of enforced constraint.
@@ -100,12 +99,12 @@ impl<'a, M: Vertex> Vertex for EnforcedConstraint<'a, M> {
     }
 }
 
-/// A plan that consists of a `Vec` of `EnforcedConstraint`.
+/// A plan that consists of a [`Vec`] of [`EnforcedConstraint`].
 /// Each constraint must be enforced by a method for it to be a solution graph,
 /// and the graph must also be a DAG.
 pub type Plan<'a, M> = Vec<EnforcedConstraint<'a, M>>;
 
-/// Attempts to construct a plan from something `ComponentLike`.
+/// Attempts to construct a plan from something that implements [`ComponentSpec`].
 ///
 /// # Examples
 ///

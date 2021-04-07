@@ -67,8 +67,7 @@ pub trait Vertex {
     fn is_stay(&self) -> bool;
 }
 
-/// A constraint with name `name` that has been enforced with `method`.
-/// This variation of `EnforcedConstraint` owns the name.
+/// A constraint with a [`String`] `name` that has been enforced with `method`.
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct OwnedEnforcedConstraint<M> {
     /// The name of enforced constraint.
