@@ -130,36 +130,40 @@ fn simple_planner_benches(c: &mut Criterion) {
 
 fn update_benches_max(c: &mut Criterion) {
     let mut group = c.benchmark_group("update_max");
-    for i in &[20000] {
+    for i in &[5000] {
         bench_update(&mut group, "linear-oneway", i, LINEAR_ONEWAY);
         bench_update(&mut group, "linear-twoway", i, LINEAR_TWOWAY);
     }
-    for i in &[750] {
+    for i in &[1000] {
         bench_update(&mut group, "ladder", i, LADDER);
-        bench_update(&mut group, "unprunable", i, UNPRUNABLE);
         bench_update(&mut group, "random", i, RANDOM);
+    }
+    for i in &[500] {
+        bench_update(&mut group, "unprunable", i, UNPRUNABLE);
     }
     group.finish();
 }
 
 fn hierarchical_planner_benches_max(c: &mut Criterion) {
     let mut group = c.benchmark_group("hierarchical_planner_max");
-    for i in &[30000] {
-        bench_hierarchical_planner(&mut group, "linear-oneway", i, LINEAR_ONEWAY);
+    for i in &[20000] {
+        bench_hierarchical_planner(&mut group, "linear-oneway", i, LINEAR_TWOWAY);
         bench_hierarchical_planner(&mut group, "linear-twoway", i, LINEAR_TWOWAY);
+    }
+    for i in &[1000] {
         bench_hierarchical_planner(&mut group, "ladder", i, LADDER);
+        bench_hierarchical_planner(&mut group, "random", i, RANDOM);
     }
     for i in &[500] {
         bench_hierarchical_planner(&mut group, "unprunable", i, UNPRUNABLE);
-        bench_hierarchical_planner(&mut group, "random", i, RANDOM);
     }
     group.finish();
 }
 
 fn simple_planner_benches_max(c: &mut Criterion) {
     let mut group = c.benchmark_group("simple_planner_max");
-    for i in &[150000] {
-        bench_simple_planner(&mut group, "linear-oneway", i, LINEAR_ONEWAY);
+    for i in &[75000] {
+        bench_simple_planner(&mut group, "linear-oneway", i, LINEAR_TWOWAY);
         bench_simple_planner(&mut group, "linear-twoway", i, LINEAR_TWOWAY);
         bench_simple_planner(&mut group, "ladder", i, LADDER);
         bench_simple_planner(&mut group, "unprunable", i, UNPRUNABLE);
