@@ -16,7 +16,7 @@ use crate::{
         hierarchical_planner, priority_adjuster::adjust_priorities, solver,
         OwnedEnforcedConstraint, Vertex,
     },
-    event::{Event, SolveEvent, SolveEventWithLoc},
+    event::{Event, EventWithLocation},
     model::{
         spec::{ComponentSpec, ConstraintSpec},
         variable_activation::VariableActivation,
@@ -395,11 +395,11 @@ impl<T> Component<T> {
             let va = &self.activations[vi];
             let inner = va.inner().lock().unwrap();
             let event = match inner.state() {
-                State::Ready(value) => SolveEvent::Ready(Arc::clone(value)),
-                State::Error(errors) => SolveEvent::Error(errors.clone()),
-                State::Pending => SolveEvent::Pending,
+                State::Ready(value) => Event::Ready(value.as_ref()),
+                State::Error(errors) => Event::Error(errors.clone()),
+                State::Pending => Event::Pending,
             };
-            v.call(SolveEventWithLoc::new(
+            v.call(EventWithLocation::new(
                 vi,
                 GenerationId::new(self.current_generation, self.total_generation),
                 event,

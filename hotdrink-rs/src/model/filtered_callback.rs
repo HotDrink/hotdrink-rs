@@ -1,7 +1,7 @@
 //! Extra information about a variable, such as its status, generation, and callbacks.
 
 use super::{generation_id::GenerationId, variable_activation::EventCallback};
-use crate::event::{Event, SolveEvent, SolveEventWithLoc};
+use crate::event::{Event, EventWithLocation};
 use std::fmt::Debug;
 use std::sync::{Arc, Mutex};
 
@@ -53,7 +53,7 @@ impl<T, E: Clone> FilteredCallback<T, E> {
     /// Calls the callback of the variable if one exists.
     ///
     /// Old events will be ignored, and new ones will update the current status of the variable.
-    pub fn call(&self, ge: SolveEventWithLoc<T, E>) {
+    pub fn call(&self, ge: EventWithLocation<'_, T, E>) {
         let generation = ge.generation();
 
         // Ignore events from another generation
@@ -64,9 +64,9 @@ impl<T, E: Clone> FilteredCallback<T, E> {
         // Call callback
         if let Some(callback) = &self.callback {
             match ge.event() {
-                SolveEvent::Pending => callback.lock().unwrap()(Event::Pending),
-                SolveEvent::Ready(value) => callback.lock().unwrap()(Event::Ready(value.as_ref())),
-                SolveEvent::Error(errors) => callback.lock().unwrap()(Event::Error(errors)),
+                Event::Pending => callback.lock().unwrap()(Event::Pending),
+                Event::Ready(value) => callback.lock().unwrap()(Event::Ready(value)),
+                Event::Error(errors) => callback.lock().unwrap()(Event::Error(errors)),
             };
         }
     }

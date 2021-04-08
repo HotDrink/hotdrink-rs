@@ -9,7 +9,7 @@ use super::{
 use crate::model::variable_activation::DoneState;
 use crate::{
     algorithms::Vertex,
-    event::{SolveEvent, SolveEventWithLoc},
+    event::{Event, EventWithLocation},
     model::{
         spec::{MethodFailure, MethodFunction, MethodResult, MethodSpec},
         variable_activation::{VariableActivation, VariableActivationInner},
@@ -109,16 +109,16 @@ pub type SharedVariableActivationInner<T> = Arc<Mutex<VariableActivationInner<T,
 fn handle_error<T>(
     output_indices: &[usize],
     shared_states: &Arc<Vec<SharedVariableActivationInner<T>>>,
-    general_callback: &(impl Fn(SolveEventWithLoc<T, SolveError>) + Send + 'static),
+    general_callback: &(impl Fn(EventWithLocation<'_, T, SolveError>) + Send + 'static),
     generation: GenerationId,
     errors: Vec<SolveError>,
 ) {
     log::error!("{:?}", errors);
     for &o in output_indices {
-        general_callback(SolveEventWithLoc::new(
+        general_callback(EventWithLocation::new(
             o,
             generation,
-            SolveEvent::Error(errors.clone()),
+            Event::Error(errors.clone()),
         ));
     }
     for shared_state in shared_states.iter() {
@@ -136,7 +136,7 @@ impl<T> Method<T> {
         location: (String, String),
         generation: GenerationId,
         pool: &mut impl ThreadPool,
-        general_callback: impl Fn(SolveEventWithLoc<T, SolveError>) + Send + 'static,
+        general_callback: impl Fn(EventWithLocation<'_, T, SolveError>) + Send + 'static,
     ) -> Vec<VariableActivation<T, SolveError>>
     where
         T: Send + Sync + 'static + Debug,
@@ -160,7 +160,7 @@ impl<T> Method<T> {
 
         // Set pending
         for &o in &output_indices {
-            general_callback(SolveEventWithLoc::new(o, generation, SolveEvent::Pending));
+            general_callback(EventWithLocation::new(o, generation, Event::Pending));
         }
 
         // We need a clone of the computation to move into the thread
@@ -252,10 +252,10 @@ impl<T> Method<T> {
                         for ((st, res), &o) in
                             shared_states_clone.iter().zip(outputs).zip(&output_indices)
                         {
-                            general_callback(SolveEventWithLoc::new(
+                            general_callback(EventWithLocation::new(
                                 o,
                                 generation,
-                                SolveEvent::Ready(res.clone()),
+                                Event::Ready(&res),
                             ));
                             let mut shared_state = st.lock().unwrap();
                             // Set the new value

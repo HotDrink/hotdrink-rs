@@ -141,7 +141,7 @@ impl<T, E> VariableActivation<T, E> {
         &self.inner
     }
 
-    /// Drops the termination handle reference
+    /// Marks this activation for cancellation.
     pub fn cancel(&mut self, e: E) {
         let mut inner = self.inner.lock().unwrap();
         // Only set to cancelled if no value was computed in time

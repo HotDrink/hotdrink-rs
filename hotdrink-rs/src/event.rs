@@ -1,18 +1,7 @@
 //! Types for representing events from the constraint system.
 
 use crate::model::generation_id::GenerationId;
-use std::{fmt::Debug, sync::Arc};
-
-/// An event from the constraint system.
-#[derive(Debug)]
-pub(crate) enum SolveEvent<T, E> {
-    /// The value is being computed.
-    Pending,
-    /// The computation succeeded.
-    Ready(Arc<T>),
-    /// The computation failed.
-    Error(Vec<E>),
-}
+use std::fmt::Debug;
 
 /// An event from the constraint system.
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -28,17 +17,17 @@ pub enum Event<'a, T, E> {
 /// An event from [`ConstraintSystem::update`](crate::ConstraintSystem::update) with information about
 /// which variable it is, and which generation the computation is from.
 #[derive(Debug)]
-pub(crate) struct SolveEventWithLoc<T, E> {
+pub(crate) struct EventWithLocation<'a, T, E> {
     variable: usize,
     generation: GenerationId,
-    event: SolveEvent<T, E>,
+    event: Event<'a, T, E>,
 }
 
-impl<T, E> SolveEventWithLoc<T, E> {
+impl<'a, T, E> EventWithLocation<'a, T, E> {
     /// Constructs a new [`GeneralEvent`] for the specified variable.
     ///
     /// This includes the generation the computation is from, and what the event is.
-    pub fn new(variable: usize, generation: GenerationId, event: SolveEvent<T, E>) -> Self {
+    pub fn new(variable: usize, generation: GenerationId, event: Event<'a, T, E>) -> Self {
         Self {
             variable,
             generation,
@@ -57,7 +46,7 @@ impl<T, E> SolveEventWithLoc<T, E> {
     }
 
     /// Returns the actual event.
-    pub fn event(self) -> SolveEvent<T, E> {
+    pub fn event(self) -> Event<'a, T, E> {
         self.event
     }
 }

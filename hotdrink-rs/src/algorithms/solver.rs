@@ -4,7 +4,7 @@
 
 use super::hierarchical_planner::{OwnedEnforcedConstraint, Vertex};
 use crate::{
-    event::SolveEventWithLoc,
+    event::EventWithLocation,
     model::{
         generation_id::GenerationId,
         solve_error::{Reason, SolveError},
@@ -34,7 +34,7 @@ pub(crate) fn par_solve<T>(
     component_name: String,
     generation: GenerationId,
     pool: &mut impl ThreadPool,
-    general_callback: impl Fn(SolveEventWithLoc<T, SolveError>) + Send + 'static + Clone,
+    general_callback: impl Fn(EventWithLocation<'_, T, SolveError>) + Send + 'static + Clone,
 ) -> Result<(), PlanError>
 where
     T: Send + Sync + 'static + Debug,
