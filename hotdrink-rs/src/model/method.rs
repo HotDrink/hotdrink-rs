@@ -80,7 +80,7 @@ impl<T> MethodSpec for Method<T> {
     }
 
     /// Apply the inner function of this method
-    fn apply(&self, input: Vec<Arc<T>>) -> MethodResult<T> {
+    fn apply(&self, input: Vec<Arc<T>>) -> MethodResult<Arc<T>> {
         // Verify that all inputs are defined
         if input.len() != self.n_inputs() {
             return Err(MethodFailure::WrongInputCount(self.n_inputs(), input.len()));

@@ -96,8 +96,9 @@ macro_rules! component {
                                         var_idx += 1;
                                     )*
 
-                                    // Evaluate user code
-                                    $m_expr
+                                    use std::sync::Arc;
+                                    // Evaluate user code and wrap in [`Arc`]s
+                                    $m_expr.map(|v| v.into_iter().map(Arc::new).collect())
                                 })
                             }
                         )
@@ -122,7 +123,7 @@ macro_rules! component {
 /// # use std::sync::Arc;
 /// # use hotdrink_rs::{ret, model::MethodResult};
 /// let result: MethodResult<i32> = ret![3, 5];
-/// assert_eq!(result, Ok(vec![Arc::new(3), Arc::new(5)]));
+/// assert_eq!(result, Ok(vec![3, 5]));
 /// ```
 ///
 /// It can also be used with enums.
@@ -136,7 +137,7 @@ macro_rules! component {
 ///     Square(usize, usize),
 /// }
 /// let result: MethodResult<Shape> = ret![Shape::Circle(3), Shape::Square(4, 5)];
-/// assert_eq!(result, Ok(vec![Arc::new(Shape::Circle(3)), Arc::new(Shape::Square(4, 5))]));
+/// assert_eq!(result, Ok(vec![Shape::Circle(3), Shape::Square(4, 5)]));
 /// ```
 ///
 /// Even with wrapper types that implement [`From::from`] its variants.
@@ -168,11 +169,11 @@ macro_rules! component {
 /// # }
 ///
 /// let result: MethodResult<Value> = ret![3i32, 5.0f64];
-/// assert_eq!(result, Ok(vec![Arc::new(Value::i32(3)), Arc::new(Value::f64(5.0))]));
+/// assert_eq!(result, Ok(vec![Value::i32(3), Value::f64(5.0)]));
 /// ```
 #[macro_export]
 macro_rules! ret {
-    ($($e:expr),*) => {{ Ok(vec![$(std::sync::Arc::new($e.into())),*]) }}
+    ($($e:expr),*) => {{ Ok(vec![$($e.into()),*]) }}
 }
 
 /// Turns a list of inputs into a failed [`MethodResult`]().

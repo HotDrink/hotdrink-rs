@@ -253,7 +253,7 @@ impl<T> Eq for MethodBuilder<T> {}
 #[cfg(test)]
 mod tests {
     use super::{MethodArg, MethodBuilder, MethodFunctionInner, MethodOutput, MutabilityMismatch};
-    use crate::model::MethodFailure;
+    use crate::{model::MethodFailure, ret};
     use std::sync::Arc;
 
     // Define a wrapper struct
@@ -362,7 +362,7 @@ mod tests {
             fn m(a: &A, b: &mut B) -> [c, d] {
                 let a: &A = a;
                 let b: &B = b;
-                ret2![*a, *b]
+                ret![*a, *b]
             }
         };
     }
