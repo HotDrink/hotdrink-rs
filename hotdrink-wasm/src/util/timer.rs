@@ -69,6 +69,16 @@ impl Timer {
         self.times.iter().sum::<f64>() / self.n_checkpoints() as f64
     }
 
+    /// Returns the maximum time passed between each checkpoint so far in milliseconds.
+    pub fn maximum(&self) -> f64 {
+        self.times.iter().copied().fold(f64::NEG_INFINITY, f64::max)
+    }
+
+    /// Returns the minumum time passed between each checkpoint so far in milliseconds.
+    pub fn minimum(&self) -> f64 {
+        self.times.iter().copied().fold(f64::INFINITY, f64::min)
+    }
+
     /// Returns the number of checkpoints.
     pub fn n_checkpoints(&self) -> usize {
         self.times.len()
