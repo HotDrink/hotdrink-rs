@@ -109,5 +109,5 @@ pub mod model;
 pub mod thread;
 pub(crate) mod variable_ranking;
 
-pub use event::{Event, Identifier, SolveEvent};
+pub use event::Event;
 pub use model::{PlanError, SolveError};

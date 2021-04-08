@@ -13,12 +13,30 @@
 //! ```
 
 use crate::event::js_event::JsEvent;
-use hotdrink_rs::{Identifier, SolveEvent};
 use itertools::Itertools;
 use js_sys::Function;
 use std::fmt::Debug;
 use std::{collections::HashMap, fmt::Display, marker::PhantomData};
 use wasm_bindgen::{prelude::wasm_bindgen, JsValue};
+
+use super::js_event::JsEventInner;
+
+/// Uniquely identifies a variable in a component.
+#[derive(Debug, PartialEq, Eq, Hash, Clone, PartialOrd, Ord)]
+struct VariableId {
+    component: String,
+    variable: String,
+}
+
+impl VariableId {
+    /// Constructs a new [`VariableId`].
+    pub fn new<S1: Into<String>, S2: Into<String>>(component: S1, variable: S2) -> Self {
+        Self {
+            component: component.into(),
+            variable: variable.into(),
+        }
+    }
+}
 
 /// A callback for handling events.
 #[wasm_bindgen]
@@ -33,7 +51,7 @@ pub struct JsCallback {
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct EventHandler<T, E> {
     /// The actions to perform when a given variable is updated.
-    callbacks: HashMap<Identifier, JsCallback>,
+    callbacks: HashMap<VariableId, JsCallback>,
     /// To lock the event type
     phantom_data: PhantomData<(T, E)>,
 }
@@ -60,7 +78,7 @@ impl<T: Into<JsValue> + Clone + Debug, E: Display + Debug> EventHandler<T, E> {
         variable: &str,
         on_pending: Function,
     ) -> Option<()> {
-        let id = Identifier::new(component, variable);
+        let id = VariableId::new(component, variable);
         let callbacks = self.callbacks.entry(id).or_insert_with(JsCallback::default);
         callbacks.on_pending = Some(on_pending);
         Some(())
@@ -73,7 +91,7 @@ impl<T: Into<JsValue> + Clone + Debug, E: Display + Debug> EventHandler<T, E> {
         variable: &str,
         on_ready: Function,
     ) -> Option<()> {
-        let id = Identifier::new(component, variable);
+        let id = VariableId::new(component, variable);
         let callbacks = self.callbacks.entry(id).or_insert_with(JsCallback::default);
         callbacks.on_ready = Some(on_ready);
         Some(())
@@ -86,7 +104,7 @@ impl<T: Into<JsValue> + Clone + Debug, E: Display + Debug> EventHandler<T, E> {
         variable: &str,
         on_error: Function,
     ) -> Option<()> {
-        let id = Identifier::new(component, variable);
+        let id = VariableId::new(component, variable);
         let callbacks = self.callbacks.entry(id).or_insert_with(JsCallback::default);
         callbacks.on_error = Some(on_error);
         Some(())
@@ -94,7 +112,7 @@ impl<T: Into<JsValue> + Clone + Debug, E: Display + Debug> EventHandler<T, E> {
 
     /// Removes the callback for a specific variable from the event handler.
     pub fn unsubscribe(&mut self, component: &str, variable: &str) {
-        let id = Identifier::new(component, variable);
+        let id = VariableId::new(component, variable);
         if self.callbacks.remove(&id).is_none() {
             log::error!(
                 "Attempted to unsubscribe from {}.{} before subscribing",
@@ -105,24 +123,22 @@ impl<T: Into<JsValue> + Clone + Debug, E: Display + Debug> EventHandler<T, E> {
     }
 
     /// Handles an event based on the attached callbacks.
-    pub fn handle_event(&mut self, e: JsEvent<T, E>) -> Result<(), JsValue> {
-        let id = Identifier::new(&e.get_component(), &e.get_variable());
+    pub fn handle_event(&mut self, event: JsEvent<T, E>) -> Result<(), JsValue> {
+        let id = VariableId::new(event.get_component(), event.get_variable());
         // Apply the matching callback if one exists
         if let Some(cb) = self.callbacks.get(&id) {
-            match e.get_event() {
-                SolveEvent::Pending => {
+            match event.into_inner() {
+                JsEventInner::Pending => {
                     if let Some(on_pending) = &cb.on_pending {
                         on_pending.call0(&JsValue::null())?;
                     }
                 }
-                SolveEvent::Ready(value) => {
+                JsEventInner::Ready(value) => {
                     if let Some(on_ready) = &cb.on_ready {
-                        // TODO: Possible to remove this clone?
-                        let js_value: JsValue = (*value).clone().into();
-                        on_ready.call1(&JsValue::null(), &js_value)?;
+                        on_ready.call1(&JsValue::null(), &value.into())?;
                     }
                 }
-                SolveEvent::Error(error) => {
+                JsEventInner::Error(error) => {
                     if let Some(on_error) = &cb.on_error {
                         let err_msg = error.iter().map(|e| format!("{}", e)).join("\r\n");
                         on_error.call1(&JsValue::null(), &JsValue::from(err_msg))?;
