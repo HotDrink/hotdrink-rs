@@ -160,8 +160,13 @@ impl<T> Component<T> {
     }
 
     /// Returns a [`Vec<&str>`] of names of variables in this component.
-    pub fn variable_names(&self) -> Vec<&str> {
+    pub fn variables(&self) -> Vec<&str> {
         self.name_to_index.keys().map(String::as_str).collect()
+    }
+
+    /// Returns a `Vec` of the current activations.
+    pub fn values(&self) -> Vec<&VariableActivation<T, SolveError>> {
+        self.activations.values()
     }
 
     /// Constructs a new component from a precomputed map from variable names to indices.
@@ -182,8 +187,19 @@ impl<T> Component<T> {
         component
     }
 
-    /// Solves a component by spawning method activations in parallel,
-    /// and updates the futures of values in the constraint system instead.
+    /// Enforces all constraints in the component.
+    ///
+    /// Returns [`PlanError`] if the system is overconstrained.
+    pub fn update(&mut self) -> Result<(), PlanError>
+    where
+        T: Send + Sync + 'static + Debug,
+    {
+        self.par_update(&mut DummyPool)
+    }
+
+    /// Enforces all constraints in the component concurrently.
+    ///
+    /// Returns [`PlanError`] if the system is overconstrained.
     pub fn par_update(&mut self, pool: &mut impl ThreadPool) -> Result<(), PlanError>
     where
         T: Send + Sync + 'static + Debug,
@@ -501,28 +517,8 @@ impl<T> ComponentSpec for Component<T> {
         }
     }
 
-    fn update(&mut self) -> Result<(), PlanError>
-    where
-        T: Send + Sync + 'static + Debug,
-    {
-        self.par_update(&mut DummyPool)
-    }
-
     fn n_variables(&self) -> usize {
         self.activations.n_variables()
-    }
-
-    fn variables(&self) -> Vec<&Self::Variable> {
-        self.activations.values()
-    }
-
-    fn get(&self, i: usize) -> &Self::Variable {
-        &self.activations[i]
-    }
-
-    fn set(&mut self, i: usize, value: impl Into<Self::Value>) {
-        self.activations
-            .set(i, VariableActivation::from(value.into()));
     }
 
     fn constraints(&self) -> &[Self::Constraint] {
@@ -533,16 +529,12 @@ impl<T> ComponentSpec for Component<T> {
         &mut self.constraints
     }
 
-    fn push(&mut self, constraint: Self::Constraint) {
+    fn add_constraint(&mut self, constraint: Self::Constraint) {
         self.constraints.push(constraint)
     }
 
-    fn pop(&mut self) -> Option<Self::Constraint> {
+    fn pop_constraint(&mut self) -> Option<Self::Constraint> {
         self.constraints.pop()
-    }
-
-    fn name_to_idx(&self, name: &str) -> Option<usize> {
-        self.name_to_index.get(name).copied()
     }
 
     fn remove_constraint(&mut self, idx: usize) -> Self::Constraint {
@@ -605,8 +597,7 @@ impl<T: PartialEq> PartialEq for Component<T> {
 mod tests {
     use super::Component;
     use crate::{
-        examples::components::numbers::sum,
-        model::{spec::ComponentSpec, variable_activation::VariableActivation},
+        examples::components::numbers::sum, model::variable_activation::VariableActivation,
         thread::DummyPool,
     };
 
@@ -616,7 +607,7 @@ mod tests {
         let mut component: Component<i32> = sum();
 
         assert_eq!(
-            &component.variables(),
+            &component.values(),
             &[
                 &VariableActivation::from(0),
                 &VariableActivation::from(0),
@@ -629,7 +620,7 @@ mod tests {
         component.par_update(&mut DummyPool).unwrap();
 
         assert_eq!(
-            &component.variables(),
+            &component.values(),
             &[
                 &VariableActivation::from(3),
                 &VariableActivation::from(0),
@@ -642,7 +633,7 @@ mod tests {
         component.update().unwrap();
 
         assert_eq!(
-            &component.variables(),
+            &component.values(),
             &[
                 &VariableActivation::from(3),
                 &VariableActivation::from(-1),
@@ -664,7 +655,7 @@ mod tests {
 
         // It should pick b, since it is not pinned and has a lower priority than a
         assert_eq!(
-            &component.variables(),
+            &component.values(),
             &[
                 &VariableActivation::from(val1),
                 &VariableActivation::from(-val1),
@@ -681,7 +672,7 @@ mod tests {
 
         // It should pick c, since c is no longer pinned
         assert_eq!(
-            &component.variables(),
+            &component.values(),
             &[
                 &VariableActivation::from(val2),
                 &VariableActivation::from(-val1),
@@ -700,7 +691,7 @@ mod tests {
 
         // Verify that change happened
         assert_eq!(
-            &component.variables(),
+            &component.values(),
             &[
                 &VariableActivation::from(3),
                 &VariableActivation::from(0),
@@ -713,7 +704,7 @@ mod tests {
 
         // Verify that change was undone
         assert_eq!(
-            &component.variables(),
+            &component.values(),
             &[
                 &VariableActivation::from(0),
                 &VariableActivation::from(0),
@@ -726,7 +717,7 @@ mod tests {
 
         // Verify that change was redone
         assert_eq!(
-            &component.variables(),
+            &component.values(),
             &[
                 &VariableActivation::from(3),
                 &VariableActivation::from(0),

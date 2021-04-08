@@ -92,12 +92,6 @@ pub trait ComponentSpec: Index<&'static str> + IndexMut<&'static str> {
     ) -> Self;
     /// Returns the number of variables in the component.
     fn n_variables(&self) -> usize;
-    /// Returns the variables of the component.
-    fn variables(&self) -> Vec<&Self::Variable>;
-    /// Returns a specific variable from a component.
-    fn get(&self, i: usize) -> &Self::Variable;
-    /// Sets the value of a variable.
-    fn set(&mut self, i: usize, value: impl Into<Self::Value>);
     /// Returns the number of constraints in the component.
     fn n_constraints(&self) -> usize {
         self.constraints().len()
@@ -107,17 +101,13 @@ pub trait ComponentSpec: Index<&'static str> + IndexMut<&'static str> {
     /// Returns a mutable slice of the constraints in the component.
     fn constraints_mut(&mut self) -> &mut [Self::Constraint];
     /// Adds a new constraint to the component.
-    fn push(&mut self, constraint: Self::Constraint);
+    fn add_constraint(&mut self, constraint: Self::Constraint);
     /// Removes the last constraint from the component.
-    fn pop(&mut self) -> Option<Self::Constraint>;
+    fn pop_constraint(&mut self) -> Option<Self::Constraint>;
     /// Removes a specific constraint from a component.
     fn remove_constraint(&mut self, idx: usize) -> Self::Constraint;
-    /// Tries to enforce all constraints in the component.
-    fn update(&mut self) -> Result<(), PlanError>
-    where
-        Self::Value: Send + Sync + 'static + Debug;
-    /// Converts a variable name to its index in the component.
-    fn name_to_idx(&self, name: &str) -> Option<usize>;
+    // /// Converts a variable name to its index in the component.
+    // fn name_to_idx(&self, name: &str) -> Option<usize>;
     /// Returns the ranking of variables.
     fn ranking(&self) -> Vec<usize>;
 }

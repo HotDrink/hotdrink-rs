@@ -1,6 +1,6 @@
 use hotdrink_rs::{
     component,
-    model::{Component, ComponentSpec, DoneState},
+    model::{Component, DoneState},
     ret,
 };
 use iced::{text_input::State, Align, Column, Element, Length, Sandbox, Settings, TextInput};

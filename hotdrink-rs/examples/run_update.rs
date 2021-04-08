@@ -1,7 +1,4 @@
-use hotdrink_rs::{
-    examples::components::{ComponentFactory, Random},
-    model::ComponentSpec,
-};
+use hotdrink_rs::examples::components::{ComponentFactory, Random};
 
 fn main() {
     env_logger::init();

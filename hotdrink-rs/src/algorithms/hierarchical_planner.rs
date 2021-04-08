@@ -176,7 +176,7 @@ where
         // Create a stay constraint
         let stay_method = M::stay(var_id);
         let stay_constraint = C::new(vec![stay_method]);
-        component.push(stay_constraint);
+        component.add_constraint(stay_constraint);
 
         // If the constraint is a source in the solution graph, adding it is no issue.
         if let Some(bs) = &best_solution {
@@ -203,7 +203,7 @@ where
             }
             None => {
                 // Can't satisfy this stay constraint, pop it.
-                component.pop();
+                component.pop_constraint();
             }
         }
 
@@ -226,8 +226,8 @@ where
         .ok_or(PlanError::Overconstrained)?;
     let best_solution: Vec<OwnedEnforcedConstraint<_>> =
         best_solution.into_iter().filter(|m| !m.is_stay()).collect();
-    let sorted = toposort(&best_solution, component.variables().len())
-        .map(|v| v.into_iter().cloned().collect());
+    let sorted =
+        toposort(&best_solution, component.n_variables()).map(|v| v.into_iter().cloned().collect());
 
     sorted.ok_or(PlanError::Overconstrained)
 }
