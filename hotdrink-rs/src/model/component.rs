@@ -75,7 +75,7 @@ impl<T> Component<T> {
             match inner.state() {
                 State::Pending => callback(Event::Pending),
                 State::Ready(value) => callback(Event::Ready(value)),
-                State::Error(errors) => callback(Event::Error(errors.clone())),
+                State::Error(errors) => callback(Event::Error(errors)),
             }
 
             // Update the stored callback
@@ -396,7 +396,7 @@ impl<T> Component<T> {
             let inner = va.inner().lock().unwrap();
             let event = match inner.state() {
                 State::Ready(value) => Event::Ready(value.as_ref()),
-                State::Error(errors) => Event::Error(errors.clone()),
+                State::Error(errors) => Event::Error(errors),
                 State::Pending => Event::Pending,
             };
             v.call(EventWithLocation::new(

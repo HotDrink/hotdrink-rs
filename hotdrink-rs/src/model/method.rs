@@ -115,11 +115,7 @@ fn handle_error<T>(
 ) {
     log::error!("{:?}", errors);
     for &o in output_indices {
-        general_callback(EventWithLocation::new(
-            o,
-            generation,
-            Event::Error(errors.clone()),
-        ));
+        general_callback(EventWithLocation::new(o, generation, Event::Error(&errors)));
     }
     for shared_state in shared_states.iter() {
         shared_state.lock().unwrap().set_error(errors.clone());

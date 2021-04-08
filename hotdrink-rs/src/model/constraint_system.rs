@@ -156,7 +156,7 @@ impl<T: Debug> ConstraintSystem<T> {
     /// cs.subscribe("Comp", "x", |e| match e {
     ///     Event::Pending => {}
     ///     Event::Ready(v) => assert_eq!(*v, 0),
-    ///     Event::Error(errors) => panic!(errors),
+    ///     Event::Error(errors) => panic!("{:?}", errors),
     /// });
     /// ```
     pub fn subscribe(

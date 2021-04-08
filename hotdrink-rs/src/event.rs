@@ -11,7 +11,7 @@ pub enum Event<'a, T, E> {
     /// The computation succeeded.
     Ready(&'a T),
     /// The computation failed.
-    Error(Vec<E>),
+    Error(&'a Vec<E>),
 }
 
 /// An event from [`ConstraintSystem::update`](crate::ConstraintSystem::update) with information about

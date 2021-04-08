@@ -16,12 +16,13 @@ pub enum JsEventInner<T, E> {
 impl<'a, T, E> From<Event<'a, T, E>> for JsEventInner<T, E>
 where
     T: Clone,
+    E: Clone,
 {
     fn from(e: Event<'a, T, E>) -> Self {
         match e {
             Event::Pending => JsEventInner::Pending,
             Event::Ready(value) => JsEventInner::Ready(value.clone()),
-            Event::Error(errors) => JsEventInner::Error(errors),
+            Event::Error(errors) => JsEventInner::Error(errors.clone()),
         }
     }
 }
