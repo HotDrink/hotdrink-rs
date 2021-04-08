@@ -39,7 +39,8 @@
 //!     // Define a component `Component`.
 //!     component Component {
 //!         // Define variables and their default values.
-//!         let a: i32 = 0, b: i32 = 0, c: i32 = 0;
+//!         // The value can be omitted for any type that implements `Default`.
+//!         let a: i32 = 0, b: i32, c: i32 = 3;
 //!         // Define a constraint `Sum` that must hold between variables.
 //!         constraint Sum {
 //!             // Provide three ways to enforce the constraint.

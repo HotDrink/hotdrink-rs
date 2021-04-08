@@ -27,11 +27,13 @@
 /// ```
 #[macro_export]
 macro_rules! component {
+    (@value_or_default: $t:ty ) => {{ <$t>::default() }};
+    (@value_or_default: $t:ty = $value:expr) => {{ $value }};
     (
         // Match a component, its name, and constraints.
         component $component_name:ident {
             // Match variables, their types, and default values.
-            let $($i:ident: $val_ty:ty = $e:expr),*;
+            let $($i:ident: $val_ty:ty $( = $e:expr )? ),*;
             $(
                 // Match a constraint, its name, and methods.
                 constraint $constraint_name:ident {
@@ -52,7 +54,7 @@ macro_rules! component {
     ) => {{
         let variables = vec![ $( stringify!($i) ),* ];
         let values = vec![ $( {
-            let value: $val_ty = $e.into();
+            let value: $val_ty = $crate::component!(@value_or_default: $val_ty $( = $e.into() )?);
             value.into()
         }
         ),* ];
@@ -323,5 +325,16 @@ mod tests {
     }
 
     #[test]
-    fn assertion_is_run() {}
+    fn component_macro_provides_default_values() {
+        let _: Component<i32> = component! {
+            component Comp {
+                let i: i32 = 0, j: i32;
+            }
+        };
+        let _: Component<String> = component! {
+            component Comp {
+                let i: String = "abc", j: String;
+            }
+        };
+    }
 }
