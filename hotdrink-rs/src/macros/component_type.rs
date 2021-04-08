@@ -1,7 +1,7 @@
-//! A macro for automatically generating an enum that has a variation for each type to use in a constraint system.
+//! A macro for automatically generating an enum that has a variant for each type to use in a constraint system.
 
-/// A macro for automatically generating an enum that has a variation for each type to use in a constraint system.
-/// It will also implement [`From`] and [`TryInto`](std::convert::TryInto) implementations for each of these variations.
+/// A macro for automatically generating an enum that has a variant for each type to use in a constraint system.
+/// It will also implement [`From`](std::convert::From) and [`TryInto`](std::convert::TryInto) implementations for each of these variants.
 ///
 /// # Examples
 /// ```rust
@@ -10,9 +10,9 @@
 /// struct Foo;
 ///
 /// // Generate the struct and impls
-/// hotdrink_rs::gen_val! {
+/// hotdrink_rs::component_type! {
 ///     #[derive(Debug, PartialEq)]
-///     MyType {
+///     enum MyType {
 ///       i32,
 ///       f64,
 ///       Foo
@@ -32,10 +32,10 @@
 /// assert_eq!(y, Ok(23));
 /// ```
 #[macro_export]
-macro_rules! gen_val {
+macro_rules! component_type {
     (
         $(#[$meta:meta])*
-        $vis:vis $type_name:ident { $( $constr:ident ),* $(,)? }
+        $vis:vis enum $type_name:ident { $( $constr:ident ),* $(,)? }
     ) => {
         // Generate enum
         $(#[$meta])*

@@ -12,10 +12,10 @@ use wasm_bindgen::prelude::wasm_bindgen;
 pub struct Unit;
 
 // The type of value to store in the constraint system.
-crate::gen_js_val! {
-    pub CsValueWrapper {
+crate::component_type_wrapper! {
+    pub struct CsValueWrapper {
         #[derive(Debug, Clone)]
-        pub CsValue {
+        pub enum CsValue {
             Unit
         }
     }
@@ -28,7 +28,7 @@ impl Default for CsValue {
 }
 
 // A constraint system wrapper to access from JavaScript.
-crate::gen_js_constraint_system!(
+crate::constraint_system_wrapper!(
     BenchConstraintSystem,
     CsValueWrapper,
     CsValue,

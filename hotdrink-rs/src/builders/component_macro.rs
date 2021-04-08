@@ -1,7 +1,6 @@
 //! A macro that provides a DSL for constructing components.
 
 /// A macro for declaratively making components.
-#[macro_export]
 macro_rules! build_component {
     (@value_or_default: $t:ty ) => {{ <$t>::default() }};
     (@value_or_default: $t:ty = $value:expr) => {{ $value }};
@@ -21,20 +20,18 @@ macro_rules! build_component {
             )*
         }
     ) => {{
-        use $crate::builders::{ComponentBuilder, ConstraintBuilder};
-
         #[allow(unused_mut)]
-        let mut component_builder = ComponentBuilder::new(stringify!($component_name));
+        let mut component_builder = $crate::builders::ComponentBuilder::new(stringify!($component_name));
 
         // Add immutable variables
         $( $(
-            let let_value: $let_variable_type = ($crate::build_component!(@value_or_default: $let_variable_type $( = $let_value )?)).into();
+            let let_value: $let_variable_type = (build_component!(@value_or_default: $let_variable_type $( = $let_value )?)).into();
             component_builder = component_builder.variable(stringify!($let_variable), let_value.into());
         )* )?
 
         // Add mutable variables
         $( $(
-            let mut_value: $mut_variable_type = ($crate::build_component!(@value_or_default: $mut_variable_type $( = $mut_value )?)).into();
+            let mut_value: $mut_variable_type = (build_component!(@value_or_default: $mut_variable_type $( = $mut_value )?)).into();
             component_builder = component_builder.variable_mut(stringify!($mut_variable), mut_value.into());
         )* )?
 
@@ -42,9 +39,9 @@ macro_rules! build_component {
         component_builder $(
             .constraint({
                 #[allow(unused_mut)]
-                ConstraintBuilder::new(stringify!($constraint_name)) $(
+                $crate::builders::ConstraintBuilder::new(stringify!($constraint_name)) $(
                     .method(
-                        $crate::method!(
+                        method!(
                             $(@$impure)?
                             fn $method_name
                                 ( $( $param )* )
@@ -64,7 +61,7 @@ mod tests {
 
     #[test]
     fn build_component() {
-        crate::sum_type! {
+        sum_type! {
             #[derive(Debug)]
             enum Foo {
                 i32,

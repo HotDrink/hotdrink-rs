@@ -284,7 +284,7 @@ mod tests {
 
     #[test]
     fn hierarchical_planner_with_ranking_two_way_chain() {
-        let component = crate::dummy_component! {
+        let component = dummy_component! {
             let a, b, c, d;
             constraint A {
                 a1(a) -> [b];

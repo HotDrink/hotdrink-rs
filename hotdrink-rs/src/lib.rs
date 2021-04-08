@@ -99,11 +99,12 @@
 #![feature(concat_idents)]
 #![feature(vec_into_raw_parts)]
 
+#[macro_use]
+pub mod macros;
 pub mod algorithms;
 pub mod builders;
 pub(crate) mod event;
 pub mod examples;
-pub mod macros;
 pub mod model;
 pub mod thread;
 pub(crate) mod variable_ranking;

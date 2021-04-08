@@ -1,12 +1,12 @@
-//! A macro for generating a [`ConstraintSystem`](hotdrink_rs) that can be compiled to WebAssembly.
+//! A macro for generating a [`ConstraintSystem`](hotdrink_rs::model::ConstraintSystem) that can be compiled to WebAssembly.
 
-/// A macro for generating a [`ConstraintSystem`](hotdrink_rs) that can be compiled to WebAssembly.
+/// A macro for generating a [`ConstraintSystem`](hotdrink_rs::model::ConstraintSystem) that can be compiled to WebAssembly.
 ///
-/// By providing an identifier, wrapper type, inner type (the two last generated with [`gen_js_val!`](crate::gen_js_val)),
+/// By providing an identifier, wrapper type, inner type (the two last generated with [`component_type_wrapper!`](crate::component_type_wrapper!)),
 /// a thread pool implementation, the number of threads to use, and a termination strategy, it will automatically generate
 /// a wrapper that can be returned to and used from JavaScript.
 #[macro_export]
-macro_rules! gen_js_constraint_system {
+macro_rules! constraint_system_wrapper {
     ($cs_name:ident, $wrapper_type:ty, $inner_type:ty, $thread_pool_type:ty, $num_threads:expr, $termination_strategy:expr) => {
         /// A wrapper around the internal constraint system.
         /// A macro is used to construct the type that the library user wants,
@@ -204,10 +204,10 @@ mod tests {
         use hotdrink_rs::model::ConstraintSystem;
 
         // Generate constraint system value and a JS wrapper for it
-        crate::gen_js_val! {
-            pub Wrapper {
+        crate::component_type_wrapper! {
+            pub struct Wrapper {
                 #[derive(Clone, Debug)]
-                pub Inner {
+                pub enum Inner {
                     i32,
                     f64
                 }
@@ -215,7 +215,7 @@ mod tests {
         };
 
         // Generate a JS wrapper for the constraint system
-        crate::gen_js_constraint_system!(
+        crate::constraint_system_wrapper!(
             System,
             Wrapper,
             Inner,

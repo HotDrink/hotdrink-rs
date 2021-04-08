@@ -10,10 +10,10 @@ use wasm_bindgen::prelude::wasm_bindgen;
 
 type DbResult = Option<i32>;
 
-crate::gen_js_val! {
-    pub MyValueWrapper {
+crate::component_type_wrapper! {
+    pub struct MyValueWrapper {
         #[derive(Debug, Clone)]
-        pub MyValue {
+        pub enum MyValue {
             f64,
             String,
             Circle,
@@ -22,7 +22,7 @@ crate::gen_js_val! {
     }
 }
 
-crate::gen_js_constraint_system!(
+crate::constraint_system_wrapper!(
     JsConstraintSystem,
     MyValueWrapper,
     MyValue,

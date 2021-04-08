@@ -65,7 +65,6 @@ impl<T> ComponentBuilder<T> {
 mod tests {
     use super::ComponentBuilder;
     use crate::builders::ConstraintBuilder;
-    use crate::method;
 
     #[test]
     fn builder_builds() {

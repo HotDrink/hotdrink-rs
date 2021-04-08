@@ -113,7 +113,6 @@ impl<'a, T> DerefMut for ValueWriteGuard<'a, T> {
 }
 
 /// Declare variables as references or mutable references.
-#[macro_export]
 macro_rules! make_variables {
     (
             let $( $let_variable:ident = $let_value:expr ),*;
@@ -138,7 +137,6 @@ macro_rules! make_variables {
 }
 
 /// Use variables as references or mutable references.
-#[macro_export]
 macro_rules! use_variables {
     (
         let $( $let_variable:ident ),*;

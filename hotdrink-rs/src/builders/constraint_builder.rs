@@ -32,17 +32,17 @@ mod tests {
     #[test]
     fn make_constraint() {
         let _: ConstraintBuilder<i32> = ConstraintBuilder::new("Sum")
-            .method(crate::method!(
+            .method(method!(
                 fn m1(a: &i32, b: &i32) -> [c] {
                     Ok(vec![*a + *b])
                 }
             ))
-            .method(crate::method!(
+            .method(method!(
                 fn m2(a: &i32, c: &i32) -> [b] {
                     Ok(vec![*c - *a])
                 }
             ))
-            .method(crate::method!(
+            .method(method!(
                 fn m3(b: &i32, c: &mut i32) -> [a] {
                     Ok(vec![*c - *b])
                 }

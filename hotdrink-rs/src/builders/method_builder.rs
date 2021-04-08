@@ -262,7 +262,7 @@ mod tests {
     #[derive(Copy, Clone, Debug, PartialEq)]
     struct B;
 
-    crate::sum_type! {
+    sum_type! {
         #[derive(Debug, PartialEq)]
         enum AB {
             A,
@@ -357,12 +357,12 @@ mod tests {
 
     #[test]
     fn make_method() {
-        let _: MethodBuilder<AB> = crate::method! {
+        let _: MethodBuilder<AB> = method! {
             @impure
             fn m(a: &A, b: &mut B) -> [c, d] {
                 let a: &A = a;
                 let b: &B = b;
-                crate::ret2![*a, *b]
+                ret2![*a, *b]
             }
         };
     }

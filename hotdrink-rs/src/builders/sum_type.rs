@@ -19,7 +19,6 @@ impl From<WrongEnumVariant> for MethodFailure {
 /// 1. From<Variant> to Foo.
 /// 2. TryFrom<&'a Foo> to &'a Variant.
 /// 3. TryFrom<&'a mut Foo> to &'a mut Variant.
-#[macro_export]
 macro_rules! sum_type {
     (
         $( #[$meta:meta] )*
@@ -76,7 +75,7 @@ mod tests {
         struct A;
         #[derive(Debug, PartialEq)]
         struct B;
-        crate::sum_type! {
+        sum_type! {
             #[derive(Debug, PartialEq)]
             enum AB {
                 A,

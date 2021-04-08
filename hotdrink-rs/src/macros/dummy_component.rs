@@ -2,7 +2,7 @@
 
 /// A macro for quickly and easily defining a [`Component<()>`](crate::model::Component).
 /// This is useful for testing and benchmarks.
-#[macro_export]
+#[allow(unused_macros)] // Used in tests
 macro_rules! dummy_component {
     (
         // Declarations

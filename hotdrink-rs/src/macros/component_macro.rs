@@ -195,7 +195,7 @@ macro_rules! fail {
 #[cfg(test)]
 mod tests {
     use crate::{
-        gen_val,
+        component_type,
         model::{Component, ComponentSpec, ConstraintSpec, MethodFailure, MethodSpec},
     };
     use std::convert::TryFrom;
@@ -205,9 +205,9 @@ mod tests {
     }
 
     // Generate an enum for standard types
-    gen_val! {
+    component_type! {
         #[derive(Debug, PartialEq, Clone)]
-        Standard { i32, f64, String }
+        enum Standard { i32, f64, String }
     }
 
     // A custom type
@@ -219,9 +219,9 @@ mod tests {
     }
 
     // Generate an enum for custom types
-    gen_val! {
+    component_type! {
         #[derive(Debug, PartialEq, Clone)]
-        Custom { i32, Circle }
+        enum Custom { i32, Circle }
     }
 
     #[test]
@@ -263,8 +263,8 @@ mod tests {
     #[ignore = "This can not be verified with `apply` anymore. Must be done higher up."]
     #[test]
     fn methods_fail_when_undefined_variable() {
-        gen_val! {
-            Value { i32, String }
+        component_type! {
+            enum Value { i32, String }
         }
 
         #[allow(unused_variables)]

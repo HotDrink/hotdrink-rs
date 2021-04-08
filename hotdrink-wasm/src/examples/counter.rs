@@ -9,17 +9,17 @@ use hotdrink_rs::{
 use wasm_bindgen::prelude::wasm_bindgen;
 
 // Generate the value type.
-crate::gen_js_val! {
-    pub CounterValueWrapper {
+crate::component_type_wrapper! {
+    pub struct CounterValueWrapper {
         #[derive(Debug, Clone)]
-        pub CounterValue {
+        pub enum CounterValue {
             i32
         }
     }
 }
 
 // Generate the constraint system wrapper.
-crate::gen_js_constraint_system!(
+crate::constraint_system_wrapper!(
     CounterConstraintSystem,
     CounterValueWrapper,
     CounterValue,

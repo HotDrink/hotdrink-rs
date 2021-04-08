@@ -9,17 +9,17 @@ use hotdrink_rs::{
 use wasm_bindgen::prelude::wasm_bindgen;
 
 // Generate the value type.
-crate::gen_js_val! {
-    pub TemperatureConverterValueWrapper {
+crate::component_type_wrapper! {
+    pub struct TemperatureConverterValueWrapper {
         #[derive(Debug, Clone)]
-        pub TemperatureConverterValue {
+        pub enum TemperatureConverterValue {
             f64
         }
     }
 }
 
 // Generate the constraint system wrapper.
-crate::gen_js_constraint_system!(
+crate::constraint_system_wrapper!(
     TemperatureConverterConstraintSystem,
     TemperatureConverterValueWrapper,
     TemperatureConverterValue,

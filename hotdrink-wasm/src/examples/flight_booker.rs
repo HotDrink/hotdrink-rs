@@ -28,10 +28,10 @@ impl From<FlightType> for JsValue {
 }
 
 // Generate the value type.
-crate::gen_js_val! {
-    pub FlightBookerValueWrapper {
+crate::component_type_wrapper! {
+    pub struct FlightBookerValueWrapper {
         #[derive(Debug, Clone)]
-        pub FlightBookerValue {
+        pub enum FlightBookerValue {
             FlightType,
             f64
         }
@@ -39,7 +39,7 @@ crate::gen_js_val! {
 }
 
 // Generate the constraint system wrapper.
-crate::gen_js_constraint_system!(
+crate::constraint_system_wrapper!(
     FlightBookerConstraintSystem,
     FlightBookerValueWrapper,
     FlightBookerValue,

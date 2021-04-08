@@ -3,16 +3,16 @@
 use crate::thread::StaticPool;
 use hotdrink_rs::thread::TerminationStrategy;
 
-crate::gen_js_val! {
-    pub StringWrapper {
+crate::component_type_wrapper! {
+    pub struct StringWrapper {
         #[derive(Debug, Clone)]
-        pub StringValue {
+        pub enum StringValue {
             String
         }
     }
 }
 
-crate::gen_js_constraint_system!(
+crate::constraint_system_wrapper!(
     StringJsCs,
     StringWrapper,
     StringValue,

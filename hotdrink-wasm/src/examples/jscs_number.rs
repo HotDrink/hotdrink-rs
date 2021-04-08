@@ -3,16 +3,16 @@
 use crate::thread::StaticPool;
 use hotdrink_rs::thread::TerminationStrategy;
 
-crate::gen_js_val! {
-    pub I32Wrapper {
+crate::component_type_wrapper! {
+    pub struct I32Wrapper {
         #[derive(Debug, Clone)]
-        pub I32 {
+        pub enum I32 {
             i32
         }
     }
 }
 
-crate::gen_js_constraint_system!(
+crate::constraint_system_wrapper!(
     NumberJsCs,
     I32Wrapper,
     I32,

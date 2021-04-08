@@ -1,21 +1,21 @@
-//! Generate a JavaScript wrapper around an inner type to use in a constraint system.
+//! Generate a WebAssembly wrapper around an inner type to use in a constraint system.
 
-/// Generate a JavaScript wrapper around an inner type to use in a constraint system.
-/// [`gen_js_val!`] is to a constraint system made with [`gen_js_constraint_system!`](crate::gen_js_constraint_system!), as
-/// [`gen_val!`](hotdrink_rs::gen_val) is to [`ConstraintSystem`](hotdrink_rs::model::ConstraintSystem).
+/// Generate a WebAssembly wrapper around an inner type to use in a constraint system.
+/// [`component_type_wrapper!`] is to a constraint system made with [`constraint_system_wrapper!`](crate::constraint_system_wrapper!), as
+/// [`component_type!`](hotdrink_rs::component_type) is to [`ConstraintSystem`](hotdrink_rs::model::ConstraintSystem).
 #[macro_export]
-macro_rules! gen_js_val {
+macro_rules! component_type_wrapper {
     (
         $(#[$outer_meta:meta])*
-        $wrapper_vis:vis $wrapper_type:ident {
+        $wrapper_vis:vis struct $wrapper_type:ident {
             $(#[$inner_meta:meta])*
-            $inner_vis:vis $inner_type:ident { $( $constr:ident ),* }
+            $inner_vis:vis enum $inner_type:ident { $( $constr:ident ),* }
         }
     ) => {
         // Generate the inner value
-        hotdrink_rs::gen_val! {
+        hotdrink_rs::component_type! {
             $(#[$inner_meta])*
-            $inner_vis $inner_type { $( $constr ),* }
+            $inner_vis enum $inner_type { $( $constr ),* }
         }
 
         // Remove the outer sum type and convert the "real" type to `JsValue`.
@@ -80,10 +80,10 @@ pub mod tests {
             r: usize,
         }
 
-        gen_js_val! {
-            pub MyWrapper {
+        component_type_wrapper! {
+            pub struct MyWrapper {
                 #[derive(Debug, PartialEq, Clone)]
-                pub MyType { i32, MyCircle }
+                pub enum MyType { i32, MyCircle }
             }
         };
     }

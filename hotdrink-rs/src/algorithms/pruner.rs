@@ -105,7 +105,7 @@ pub fn prune<C>(
 #[cfg(test)]
 mod tests {
     use super::{create_var_to_constraint, prune};
-    use crate::{dummy_component, model::ComponentSpec, ret};
+    use crate::{model::ComponentSpec, ret};
 
     #[test]
     fn prune_one_way_chain_should_do_nothing() {
