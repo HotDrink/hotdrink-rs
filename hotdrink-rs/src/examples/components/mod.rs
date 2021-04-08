@@ -2,7 +2,7 @@
 //! Can for instance be used for testing and benchmarking.
 
 pub(crate) mod factory;
-pub mod ladder;
+mod ladder;
 pub(crate) mod linear;
 pub mod numbers;
 pub mod priority_adjust;

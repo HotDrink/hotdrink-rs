@@ -234,8 +234,8 @@ where
 
 #[cfg(test)]
 mod tests {
-
-    use super::{hierarchical_planner_with_ranking, OwnedEnforcedConstraint};
+    use super::{hierarchical_planner, hierarchical_planner_with_ranking, OwnedEnforcedConstraint};
+    use crate::examples::components::{ComponentFactory, Ladder};
     use crate::{
         model::{Component, ComponentSpec, Constraint, ConstraintSpec, Method, MethodSpec},
         ret,
@@ -315,9 +315,9 @@ mod tests {
             .filter_level(log::LevelFilter::Debug)
             .is_test(true)
             .init();
-        let component: Component<()> = crate::examples::components::ladder::ladder(12);
+        let component: Component<()> = Ladder::build(12);
         pretty_assertions::assert_eq!(
-            hierarchical_planner_with_ranking(&component, &(0..12).collect::<Vec<_>>()),
+            hierarchical_planner(&component),
             Ok(vec![
                 OwnedEnforcedConstraint::new("c0", component["c0"]["lower2"].clone()),
                 OwnedEnforcedConstraint::new("c1", component["c1"]["upper2"].clone()),
@@ -329,6 +329,8 @@ mod tests {
                 OwnedEnforcedConstraint::new("c7", component["c7"]["upper2"].clone()),
                 OwnedEnforcedConstraint::new("c8", component["c8"]["lower2"].clone()),
                 OwnedEnforcedConstraint::new("c9", component["c9"]["upper2"].clone()),
+                OwnedEnforcedConstraint::new("c10", component["c10"]["lower2"].clone()),
+                OwnedEnforcedConstraint::new("c11", component["c11"]["upper2"].clone()),
             ])
         );
     }
