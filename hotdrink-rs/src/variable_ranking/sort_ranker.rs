@@ -7,7 +7,7 @@ use super::variable_ranker::VariableRanker;
 /// A simple ranker that keeps a counter that is incremented
 /// when a variable is updated. It stores the latest counter value
 /// for each variable, and ranks them based on their counter values.
-#[derive(Clone, PartialEq, Debug)]
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct SortRanker {
     counter: usize,
     data: Vec<usize>,
@@ -23,6 +23,10 @@ impl VariableRanker for SortRanker {
 
     fn size(&self) -> usize {
         self.data.len()
+    }
+
+    fn resize(&mut self, new_len: usize) {
+        self.data.resize(new_len, 0)
     }
 
     /// Update the ranking in O(1) time

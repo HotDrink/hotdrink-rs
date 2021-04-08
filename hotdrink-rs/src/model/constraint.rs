@@ -9,35 +9,20 @@ use crate::{
     macros::raw_constraint::Assert,
     model::spec::{ConstraintSpec, MethodSpec},
 };
-use std::{collections::HashSet, fmt::Debug, ops::Index};
+use std::{collections::HashSet, ops::Index};
 
 /// Represents a constraint in a multiway dataflow constraint system.
 /// It has a name, a set of variables it references, a set of [`Method`]s to enforce it,
 /// and an optional assertion to run to ensure that it is actually enforced upon running a method.
+#[derive(derivative::Derivative)]
+#[derivative(Clone(bound = ""), Debug)]
 pub struct Constraint<T> {
     name: String,
     variables: Vec<usize>,
     methods: Vec<Method<T>>,
+    #[derivative(Debug = "ignore")]
     assert: Option<Assert<T>>,
-}
-
-impl<T> Clone for Constraint<T> {
-    fn clone(&self) -> Self {
-        Self {
-            name: self.name.clone(),
-            variables: self.variables.clone(),
-            methods: self.methods.clone(),
-            assert: self.assert.clone(),
-        }
-    }
-}
-
-impl<T> Debug for Constraint<T> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("Constraint")
-            .field("methods", &self.methods)
-            .finish()
-    }
+    active: bool,
 }
 
 impl<T> ConstraintSpec for Constraint<T> {
@@ -97,7 +82,12 @@ impl<T> Constraint<T> {
         }
     }
 
-    /// Constructs a new [`Component`](super::Component) with the specified name.
+    /// Constructs a new [`Constraint`] with no methods.
+    pub fn new_empty(name: String) -> Self {
+        Self::new_with_name(name, vec![])
+    }
+
+    /// Constructs a new [`Constraint`] with the specified name.
     pub fn new_with_name(name: String, methods: Vec<Method<T>>) -> Self {
         Self::new_with_name_and_assert(name, methods, None)
     }
@@ -115,6 +105,7 @@ impl<T> Constraint<T> {
             variables: variables.into_iter().collect(),
             methods,
             assert,
+            active: true,
         }
     }
 }

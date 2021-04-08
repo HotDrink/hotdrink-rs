@@ -7,6 +7,8 @@ pub trait VariableRanker {
     fn of_size(size: usize) -> Self;
     /// Gets the number of variables in the ranker.
     fn size(&self) -> usize;
+    /// Resizes the ranker.
+    fn resize(&mut self, new_len: usize);
     /// Tells the ranker that a variable has been updated.
     fn touch(&mut self, index: usize);
     /// Creates a ranking based on previous inputs.

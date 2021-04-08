@@ -41,6 +41,10 @@ impl VariableRanker for LinkedListRanker {
         self.size
     }
 
+    fn resize(&mut self, _new_len: usize) {
+        unimplemented!();
+    }
+
     /// Update the ranking in O(1) time
     fn touch(&mut self, current: usize) {
         if current >= self.size {

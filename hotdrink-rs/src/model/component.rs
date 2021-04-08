@@ -35,6 +35,8 @@ use std::{
 /// A collection of variables along with constraints that should be maintained between them.
 /// Variables can get new values, values can be retrieved from the component, and the constraints can be enforced.
 /// Subscribing to variables will send a notification when the new values are ready.
+#[derive(derivative::Derivative)]
+#[derivative(Clone(bound = ""), Debug, Default(bound = ""))]
 pub struct Component<T> {
     name: String,
     name_to_index: HashMap<String, usize>,
@@ -48,34 +50,15 @@ pub struct Component<T> {
     total_generation: usize,
 }
 
-impl<T> Clone for Component<T> {
-    fn clone(&self) -> Self {
+impl<T> Component<T> {
+    /// Constructs a new [`Constraint`] with the specified name.
+    pub fn new_empty(name: String) -> Self {
         Self {
-            name: self.name.clone(),
-            name_to_index: self.name_to_index.clone(),
-            callbacks: self.callbacks.clone(),
-            activations: self.activations.clone(),
-            constraints: self.constraints.clone(),
-            ranker: self.ranker.clone(),
-            updated_since_last_solve: self.updated_since_last_solve.clone(),
-            n_ready: self.n_ready,
-            current_generation: self.current_generation,
-            total_generation: self.total_generation,
+            name,
+            ..Default::default()
         }
     }
-}
 
-impl<T: Debug> Debug for Component<T> {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.debug_struct("Component")
-            .field("name", &self.name)
-            .field("name_to_idx", &self.name_to_index)
-            .field("constraints", &self.constraints)
-            .finish()
-    }
-}
-
-impl<T> Component<T> {
     /// Add a callback to be called when a given variable is updated.
     pub fn subscribe<'s>(
         &mut self,
@@ -473,15 +456,13 @@ impl<T> Component<T> {
         let values = UndoVec::new_with_limit(values.into_iter().map(|v| v.into()).collect(), limit);
         Self {
             name,
-            name_to_index: HashMap::new(),
             activations: values,
             callbacks: Arc::new(Mutex::new(vec![FilteredCallback::new(); n_variables])),
             constraints,
             ranker: VariableRanker::of_size(n_variables),
             updated_since_last_solve: (0..n_variables).collect(),
             n_ready: n_variables,
-            current_generation: 0,
-            total_generation: 0,
+            ..Default::default()
         }
     }
 
@@ -505,15 +486,13 @@ impl<T> ComponentSpec for Component<T> {
         let values = UndoVec::new(values.into_iter().map(|v| v.into()).collect());
         Self {
             name,
-            name_to_index: HashMap::new(),
             activations: values,
             callbacks: Arc::new(Mutex::new(vec![FilteredCallback::new(); n_variables])),
             constraints,
             ranker: VariableRanker::of_size(n_variables),
             updated_since_last_solve: (0..n_variables).collect(),
             n_ready: n_variables,
-            current_generation: 0,
-            total_generation: 0,
+            ..Default::default()
         }
     }
 

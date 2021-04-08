@@ -3,9 +3,11 @@
 use std::{collections::VecDeque, fmt::Display, ops::Index};
 
 /// The limit on how much undo history to keep.
-#[derive(Copy, Clone, Debug, PartialEq, Eq)]
+#[derive(derivative::Derivative)]
+#[derivative(Copy, Clone, Debug, Default, PartialEq, Eq)]
 pub enum UndoLimit {
     /// No limit on the undo history.
+    #[derivative(Default)]
     Unlimited,
     /// A limit on the undo history.
     Limited(usize),
@@ -48,19 +50,29 @@ pub struct UndoVec<T> {
     undo_limit: UndoLimit,
 }
 
+impl<T> Default for UndoVec<T> {
+    fn default() -> Self {
+        Self {
+            current_generation: 0,
+            current_idx: Vec::new(),
+            is_modified: false,
+            values: Vec::new(),
+            diff: VecDeque::new(),
+            undo_limit: UndoLimit::Unlimited,
+        }
+    }
+}
+
 impl<T> UndoVec<T> {
     /// Constructs a new [`UndoVec`] with the specified default values.
     pub fn new(start_values: Vec<T>) -> Self {
         Self {
-            current_generation: 0,
             current_idx: vec![0; start_values.len()],
             values: start_values
                 .into_iter()
                 .map(|value| VecDeque::from(vec![value]))
                 .collect(),
-            is_modified: false,
-            diff: Default::default(),
-            undo_limit: UndoLimit::Unlimited,
+            ..Default::default()
         }
     }
 
