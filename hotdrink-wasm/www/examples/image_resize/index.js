@@ -7,30 +7,49 @@ function main() {
   const wasm = wasm_bindgen;
   const wrapper = wasm.NumberWrapper;
 
+  // Initialize constraint system
   let cs = wasm.image_scaling();
   cs.listen(e => cs.notify(e.data));
-  cs.update();
   let component = "ImageScaling";
 
-  function bind(variable, parse = s => wrapper.i32(parseInt(s))) {
+  // Set initial width and height to image size
+  let image = document.getElementById("image");
+  cs.set_variable(component, "initial_width", wrapper.i32(image.width));
+  cs.set_variable(component, "initial_height", wrapper.i32(image.height));
+  cs.update();
+
+  // A function that connects a HTML element to a constraint system variable
+  function bind(variable) {
     let box = document.getElementById(variable);
     // Send events to the constraint system
     box.addEventListener("input", () => {
-      cs.set_variable(component, variable, parse(box.value));
+      cs.set_variable(component, variable, wrapper.i32(parseInt(box.value)));
       cs.update();
     })
     // Receive events from the constraint system
-    cs.subscribe(component, variable, v => {
-      console.log(`${component}.${variable} = ${v}`);
-      box.value = v;
-    }, () => { }, e => console.error(e));
+    cs.subscribe(component, variable,
+      v => {
+        // Update the field
+        box.value = v;
+        // Update the image
+        let image = document.getElementById("image");
+        image.width = parseInt(document.getElementById("absolute_width").value);
+        image.height = parseInt(document.getElementById("absolute_height").value);
+      },
+      _ => { }, // Handle pending-events
+      console.error // Handle error-events
+    );
   }
 
-  document.getElementById("initial_height").contentEditable = false;
   bind("initial_height");
   bind("initial_width");
+
   bind("absolute_height");
+  bind("absolute_height_range");
+
   bind("absolute_width");
+  bind("absolute_width_range");
+
   bind("relative_height");
   bind("relative_width");
 

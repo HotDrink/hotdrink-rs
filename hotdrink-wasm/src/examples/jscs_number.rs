@@ -1,7 +1,7 @@
 //! A constraint system that only contains numbers.
 
 use crate::thread::StaticPool;
-use hotdrink_rs::thread::TerminationStrategy;
+use hotdrink_rs::thread::{DummyPool, TerminationStrategy};
 
 crate::component_type_wrapper! {
     pub struct I32Wrapper {
@@ -53,7 +53,7 @@ crate::constraint_system_wrapper!(
     NumberJsCs,
     NumberWrapper,
     Number,
-    StaticPool,
+    DummyPool,
     4,
-    TerminationStrategy::UnusedResultAndNotDone
+    TerminationStrategy::Never
 );

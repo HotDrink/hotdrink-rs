@@ -10,4 +10,4 @@ pub mod jscs_number;
 pub mod jscs_string;
 pub mod priority_adjust;
 pub mod temperature_converter;
-pub mod image_scaling;
+pub mod image_resize;

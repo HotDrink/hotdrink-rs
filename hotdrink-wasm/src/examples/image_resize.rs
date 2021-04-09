@@ -11,9 +11,10 @@ use wasm_bindgen::{prelude::wasm_bindgen, JsValue};
 fn image_scaling_component() -> Component<Number> {
     component! {
         component ImageScaling {
-            let initial_height: i32 = 1080, initial_width: i32 = 1920,
-                absolute_height: i32 = 1080, absolute_width: i32 = 1920,
-                relative_height: i32, relative_width: i32,
+            let initial_height: i32 = 400, initial_width: i32 = 400,
+                relative_height: i32 = 100, relative_width: i32 = 100,
+                absolute_height: i32, absolute_width: i32,
+                absolute_height_range: i32, absolute_width_range: i32,
                 aspect_ratio: f64 = 1.0;
 
             // relative_height = absolute_height / inital_height
@@ -26,6 +27,16 @@ fn image_scaling_component() -> Component<Number> {
             constraint RelativeWidth {
                 a(initial_width: &i32, absolute_width: &i32) -> [relative_width] = ret![100 * absolute_width / initial_width];
                 b(initial_width: &i32, relative_width: &i32) -> [absolute_width] = ret![initial_width * relative_width / 100];
+            }
+
+            constraint AbsoluteHeightRange {
+                a(absolute_height: &i32) -> [absolute_height_range] = ret![*absolute_height];
+                b(absolute_height_range: &i32) -> [absolute_height] = ret![*absolute_height_range];
+            }
+
+            constraint AbsoluteWidthRange {
+                a(absolute_width: &i32) -> [absolute_width_range] = ret![*absolute_width];
+                b(absolute_width_range: &i32) -> [absolute_width] = ret![*absolute_width_range];
             }
 
             // aspect_ratio = absolute_width / absolute_height
