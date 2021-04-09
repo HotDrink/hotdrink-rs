@@ -7,7 +7,8 @@ use super::{
     generation_id::GenerationId,
     method::Method,
     spec::PlanError,
-    undo_vec::{NoMoreRedo, NoMoreUndo, UndoLimit, UndoVec},
+    undo::{NoMoreRedo, NoMoreUndo, UndoLimit},
+    undo_vec::UndoVec,
     variable_activation::{ActivationResult, State},
 };
 use super::{solve_error::SolveError, spec::MethodSpec};

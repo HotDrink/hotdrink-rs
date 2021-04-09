@@ -16,7 +16,9 @@ pub(crate) mod generation_id;
 mod method;
 pub(crate) mod solve_error;
 mod spec;
+pub mod undo;
 pub(crate) mod undo_vec;
+pub mod variable;
 pub(crate) mod variable_activation;
 
 pub use component::Component;

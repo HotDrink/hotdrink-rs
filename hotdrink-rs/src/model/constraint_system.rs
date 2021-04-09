@@ -7,7 +7,7 @@ use super::{
     errors::{ApiError, NoSuchComponent},
     solve_error::SolveError,
     spec::PlanError,
-    undo_vec::{NoMoreRedo, NoMoreUndo, UndoLimit},
+    undo::{NoMoreRedo, NoMoreUndo, UndoLimit},
     variable_activation::ActivationResult,
 };
 use crate::{

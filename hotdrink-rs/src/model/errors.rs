@@ -1,6 +1,6 @@
 //! Errors from the API of [`ConstraintSystem`](crate::model::ConstraintSystem) and [`Component`](crate::model::Component).
 
-use super::undo_vec::{NoMoreRedo, NoMoreUndo};
+use super::undo::{NoMoreRedo, NoMoreUndo};
 use std::fmt::Display;
 
 /// An error occured while using the API.
@@ -19,8 +19,8 @@ pub enum ApiError<'a> {
 impl<'a> Display for ApiError<'a> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            ApiError::NoSuchComponent(nsc) => nsc.fmt(f),
-            ApiError::NoSuchVariable(nsv) => nsv.fmt(f),
+            ApiError::NoSuchComponent(e) => e.fmt(f),
+            ApiError::NoSuchVariable(e) => e.fmt(f),
             ApiError::NoMoreUndo => write!(f, "Nothing more to undo"),
             ApiError::NoMoreRedo => write!(f, "Nothing more to redo"),
         }

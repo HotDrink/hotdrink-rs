@@ -1,38 +1,8 @@
 //! A [`Vec`]-like data structure to allow undo and redo of operations.
 
-use std::{collections::VecDeque, fmt::Display, ops::Index};
+use std::{collections::VecDeque, ops::Index};
 
-/// The limit on how much undo history to keep.
-#[derive(derivative::Derivative)]
-#[derivative(Copy, Clone, Debug, Default, PartialEq, Eq)]
-pub enum UndoLimit {
-    /// No limit on the undo history.
-    #[derivative(Default)]
-    Unlimited,
-    /// A limit on the undo history.
-    Limited(usize),
-}
-
-/// Nothing more to undo.
-#[derive(Copy, Clone, Debug, Default, PartialEq, Eq)]
-pub struct NoMoreUndo;
-
-impl Display for NoMoreUndo {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "Nothing more to undo")
-    }
-}
-
-/// Nothing more to redo.
-#[derive(Copy, Clone, Debug, Default, PartialEq, Eq)]
-pub struct NoMoreRedo;
-
-impl Display for NoMoreRedo {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "Nothing more to redo")
-    }
-}
-
+use super::undo::{NoMoreRedo, NoMoreUndo, UndoLimit};
 /// Represents values over time to allow for undo and redo.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct UndoVec<T> {
