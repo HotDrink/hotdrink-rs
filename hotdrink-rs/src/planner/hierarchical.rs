@@ -7,7 +7,7 @@
 //! # Examples
 //!
 //! ```rust
-//! # use hotdrink_rs::{component, ret, algorithms::{hierarchical_planner, OwnedEnforcedConstraint}, model::Component};
+//! # use hotdrink_rs::{component, ret, planner::{hierarchical_planner, OwnedEnforcedConstraint}, model::Component};
 //! let component: Component<i32> = component! {
 //!     component Comp {
 //!         let a: i32 = 0, b: i32 = 0, c: i32 = 0;
@@ -31,12 +31,10 @@
 
 use super::{
     pruner::{create_var_to_constraint, prune},
-    simple_planner::{simple_planner, EnforcedConstraint},
+    simple::{simple_planner, EnforcedConstraint},
+    Plan,
 };
-use crate::{
-    algorithms::toposorter::toposort,
-    model::{ComponentSpec, ConstraintSpec, MethodSpec, PlanError},
-};
+use crate::planner::{toposorter::toposort, ComponentSpec, ConstraintSpec, MethodSpec, PlanError};
 use std::fmt::Debug;
 
 /// Represents a type with input- and output-indices.
@@ -130,6 +128,21 @@ impl<M: Vertex> Vertex for OwnedEnforcedConstraint<M> {
 /// Each constraint must be enforced by a method for it to be a solution graph,
 /// and the graph must also be a DAG.
 pub type OwnedPlan<M> = Vec<OwnedEnforcedConstraint<M>>;
+
+/// TODO: Implement
+#[derive(Copy, Clone, Debug, Default, PartialEq, Eq)]
+pub struct HierarchicalPlanner;
+
+impl Plan for HierarchicalPlanner {
+    fn plan<T, M, C, Comp>(_component: &Comp) -> Result<Vec<EnforcedConstraint<'_, T>>, PlanError>
+    where
+        M: MethodSpec<Arg = T> + Clone,
+        C: ConstraintSpec<Method = M> + Debug + Clone,
+        Comp: ComponentSpec<Constraint = C> + Clone,
+    {
+        todo!()
+    }
+}
 
 /// Take a component as input, as well as a ranking of variables to know which ones
 /// should not be modified if possible. The leftmost variables will be prioritized.
@@ -237,7 +250,8 @@ mod tests {
     use super::{hierarchical_planner, hierarchical_planner_with_ranking, OwnedEnforcedConstraint};
     use crate::examples::components::{ComponentFactory, Ladder};
     use crate::{
-        model::{Component, ComponentSpec, Constraint, ConstraintSpec, Method, MethodSpec},
+        model::{Component, Constraint, Method},
+        planner::{ComponentSpec, ConstraintSpec, MethodSpec},
         ret,
     };
     use std::sync::Arc;

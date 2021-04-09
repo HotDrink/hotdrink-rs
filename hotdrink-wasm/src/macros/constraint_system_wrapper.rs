@@ -15,10 +15,15 @@ macro_rules! constraint_system_wrapper {
         #[allow(missing_debug_implementations)]
         pub struct $cs_name {
             inner: std::sync::Mutex<hotdrink_rs::model::ConstraintSystem<$inner_type>>,
-            event_listener:
-                crate::event::event_listener::EventListener<$inner_type, hotdrink_rs::SolveError>,
+            event_listener: crate::event::event_listener::EventListener<
+                $inner_type,
+                hotdrink_rs::solver::SolveError,
+            >,
             event_handler: std::sync::Mutex<
-                crate::event::event_handler::EventHandler<$inner_type, hotdrink_rs::SolveError>,
+                crate::event::event_handler::EventHandler<
+                    $inner_type,
+                    hotdrink_rs::solver::SolveError,
+                >,
             >,
             pool: std::sync::Mutex<$thread_pool_type>,
         }
@@ -120,7 +125,7 @@ macro_rules! constraint_system_wrapper {
             /// Notifies the constraint system of an event, such as a thread having updated a value.
             pub fn notify(&self, event_ptr: u32) {
                 use crate::event::js_event::JsEvent;
-                use hotdrink_rs::SolveError;
+                use hotdrink_rs::solver::SolveError;
                 let event =
                     unsafe { Box::from_raw(event_ptr as *mut JsEvent<$inner_type, SolveError>) };
                 let mut event_handler = self.event_handler.lock().unwrap();

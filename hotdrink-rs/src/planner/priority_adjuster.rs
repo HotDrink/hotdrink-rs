@@ -4,7 +4,7 @@
 
 use std::{cmp::Ordering, collections::BinaryHeap};
 
-use super::hierarchical_planner::Vertex;
+use super::hierarchical::Vertex;
 use crate::variable_ranking::VariableRanker;
 
 #[derive(Eq, Debug)]
@@ -112,10 +112,11 @@ mod tests {
 
     use super::{adjust_priorities, CompareByPriority};
     use crate::{
-        algorithms::hierarchical_planner::{
-            hierarchical_planner_with_ranking, OwnedEnforcedConstraint,
-        },
         model::*,
+        planner::{
+            hierarchical::{hierarchical_planner_with_ranking, OwnedEnforcedConstraint},
+            ComponentSpec, MethodSpec,
+        },
         variable_ranking::{SortRanker, VariableRanker},
     };
 

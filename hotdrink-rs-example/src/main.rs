@@ -1,3 +1,4 @@
+use futures::executor;
 use hotdrink_rs::{component, model::Component, ret};
 use iced::{text_input::State, Align, Column, Element, Length, Sandbox, Settings, TextInput};
 
@@ -86,7 +87,7 @@ impl Sandbox for GuiState {
 }
 
 fn bind<'a>(state: &'a mut State, name: &str, cs: &Component<i64>) -> TextInput<'a, Message> {
-    let value = futures::executor::block_on(cs.variable(&name).unwrap());
+    let value = executor::block_on(cs.value(&name).unwrap());
     let value = match value {
         Ok(value) => *value,
         Err(errors) => panic!("{:?}", errors),

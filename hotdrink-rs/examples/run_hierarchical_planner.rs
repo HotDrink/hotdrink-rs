@@ -1,5 +1,5 @@
 use hotdrink_rs::{
-    algorithms::hierarchical_planner,
+    planner::hierarchical_planner,
     examples::components::{ComponentFactory, Random},
 };
 

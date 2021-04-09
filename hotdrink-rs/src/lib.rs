@@ -101,13 +101,14 @@
 
 #[macro_use]
 pub mod macros;
-pub mod algorithms;
 pub mod builders;
 pub(crate) mod event;
 pub mod examples;
 pub mod model;
+pub mod planner;
+pub mod solver;
 pub mod thread;
+pub mod util;
 pub(crate) mod variable_ranking;
 
 pub use event::Event;
-pub use model::{PlanError, SolveError};

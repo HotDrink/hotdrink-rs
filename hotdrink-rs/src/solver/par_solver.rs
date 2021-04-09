@@ -2,22 +2,26 @@
 //! If provided with a plan and the current values of a component, they will
 //! ensure that the all constraints are enforced.
 
-use super::hierarchical_planner::{OwnedEnforcedConstraint, Vertex};
 use crate::{
     event::EventWithLocation,
     model::{
+        activation::{Activation, ActivationInner},
         generation_id::GenerationId,
-        solve_error::{Reason, SolveError},
-        undo_vec::UndoVec,
-        variable_activation::{VariableActivation, VariableActivationInner},
-        Method, {MethodSpec, PlanError},
+        variables::Variables,
     },
+    planner::MethodSpec,
     thread::ThreadPool,
+};
+use crate::{
+    model::Method,
+    planner::{OwnedEnforcedConstraint, Vertex},
 };
 use std::{
     fmt::Debug,
     sync::{Arc, Mutex},
 };
+
+use super::{Reason, SolveError};
 
 /// Solves a component by executing a plan concurrently.
 ///
@@ -30,13 +34,12 @@ use std::{
 /// 6. A callback to pass new produced values to. These events include the component name and the generation.
 pub(crate) fn par_solve<T>(
     plan: &[OwnedEnforcedConstraint<Method<T>>],
-    current_values: &mut UndoVec<VariableActivation<T, SolveError>>,
+    current_values: &mut Variables<Activation<T>>,
     component_name: String,
     generation: GenerationId,
     pool: &mut impl ThreadPool,
     general_callback: impl Fn(EventWithLocation<'_, T, SolveError>) + Send + 'static + Clone,
-) -> Result<(), PlanError>
-where
+) where
     T: Send + Sync + 'static + Debug,
 {
     if !plan.is_empty() {
@@ -64,7 +67,7 @@ where
                 Reason::Cancelled,
             ));
             // Keep the old value from the previous state, but set to pending
-            let shared_state = VariableActivationInner::new();
+            let shared_state = ActivationInner::new();
             shared_states.push(Arc::new(Mutex::new(shared_state)));
         }
 
@@ -84,6 +87,4 @@ where
             .zip(m.outputs())
             .for_each(|(v, &o)| current_values.set(o, v));
     }
-
-    Ok(())
 }

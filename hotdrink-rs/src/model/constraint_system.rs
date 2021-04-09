@@ -3,18 +3,19 @@
 //! for interacting with them.
 
 use super::{
+    activation::Activation,
     component::Component,
     errors::{ApiError, NoSuchComponent},
-    solve_error::SolveError,
-    spec::PlanError,
     undo::{NoMoreRedo, NoMoreUndo, UndoLimit},
-    variable_activation::ActivationResult,
+    variable::Variable,
 };
 use crate::{
     event::Event,
+    planner::PlanError,
+    solver::SolveError,
     thread::{DummyPool, ThreadPool},
 };
-use std::{collections::HashMap, fmt::Debug, future::Future};
+use std::{collections::HashMap, fmt::Debug};
 
 /// A container for `Component`s.
 #[derive(Clone, Debug, PartialEq)]
@@ -89,9 +90,20 @@ impl<T: Debug> ConstraintSystem<T> {
         &self,
         component: &'a str,
         variable: &'a str,
-    ) -> Result<impl Future<Output = ActivationResult<T, SolveError>>, ApiError<'a>> {
+    ) -> Result<&Variable<Activation<T>>, ApiError<'a>> {
         let component = self.component(component)?;
         let variable = component.variable(variable)?;
+        Ok(variable)
+    }
+
+    /// Returns the current value of the variable with name `variable` in `component`, if one exists.
+    pub fn value<'a>(
+        &self,
+        component: &'a str,
+        variable: &'a str,
+    ) -> Result<Activation<T>, ApiError<'a>> {
+        let component = self.component(component)?;
+        let variable = component.value(variable)?;
         Ok(variable)
     }
 

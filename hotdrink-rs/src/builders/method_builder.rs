@@ -1,6 +1,6 @@
 //! A module to simplify method construction.
 
-use crate::model::MethodFailure;
+use crate::planner::MethodFailure;
 use itertools::Itertools;
 use std::sync::Arc;
 use std::{convert::TryInto, fmt::Debug};
@@ -253,7 +253,7 @@ impl<T> Eq for MethodBuilder<T> {}
 #[cfg(test)]
 mod tests {
     use super::{MethodArg, MethodBuilder, MethodFunctionInner, MethodOutput, MutabilityMismatch};
-    use crate::{model::MethodFailure, ret};
+    use crate::{planner::MethodFailure, ret};
     use std::sync::Arc;
 
     // Define a wrapper struct

@@ -7,6 +7,7 @@
 //!
 //! As well as other types used in the API.
 
+pub(crate) mod activation;
 mod component;
 mod constraint;
 mod constraint_system;
@@ -14,20 +15,13 @@ pub(crate) mod errors;
 pub(crate) mod filtered_callback;
 pub(crate) mod generation_id;
 mod method;
-pub(crate) mod solve_error;
-mod spec;
 pub mod undo;
-pub(crate) mod undo_vec;
-pub mod variable;
-pub(crate) mod variable_activation;
+mod variable;
+pub(crate) mod variables;
 
+pub use activation::{Activation, Value};
 pub use component::Component;
 pub use constraint::Constraint;
 pub use constraint_system::ConstraintSystem;
 pub use method::Method;
-pub use solve_error::{Reason, SolveError};
-pub use spec::{
-    ComponentSpec, ConstraintSpec, MethodFailure, MethodFunction, MethodResult, MethodSpec,
-    PlanError,
-};
-pub use variable_activation::State;
+pub use variable::Variable;

@@ -2,12 +2,12 @@ use criterion::{
     criterion_group, criterion_main, measurement::WallTime, BenchmarkGroup, BenchmarkId, Criterion,
 };
 use hotdrink_rs::{
-    algorithms::{hierarchical_planner, simple_planner},
     examples::components::{
         ComponentFactory, Ladder, Random, Unprunable, {LinearOneway, LinearTwoway},
     },
     model::Component,
-    model::ComponentSpec,
+    planner::ComponentSpec,
+    planner::{hierarchical_planner, simple_planner},
 };
 use rand::{distributions::Uniform, prelude::ThreadRng, Rng};
 

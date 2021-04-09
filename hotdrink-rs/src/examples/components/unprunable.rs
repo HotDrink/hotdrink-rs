@@ -77,7 +77,8 @@ impl ComponentFactory for Unprunable {
 mod tests {
     use super::Unprunable;
     use crate::examples::components::factory::ComponentFactory;
-    use crate::model::{Component, ComponentSpec};
+    use crate::model::Component;
+    use crate::planner::ComponentSpec;
 
     #[test]
     fn right_number_of_variables() {

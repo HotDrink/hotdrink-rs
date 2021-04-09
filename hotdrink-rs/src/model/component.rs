@@ -1,34 +1,31 @@
 //! Types for a [`Component`], an independent subgraph of a constraint system with values and constraints between them.
 
 use super::{
+    activation::State,
     constraint::Constraint,
     errors::NoSuchVariable,
     filtered_callback::FilteredCallback,
     generation_id::GenerationId,
     method::Method,
-    spec::PlanError,
     undo::{NoMoreRedo, NoMoreUndo, UndoLimit},
-    undo_vec::UndoVec,
-    variable_activation::{ActivationResult, State},
+    variable::Variable,
+    variables::Variables,
 };
-use super::{solve_error::SolveError, spec::MethodSpec};
 use crate::{
-    algorithms::{
-        hierarchical_planner, priority_adjuster::adjust_priorities, solver,
-        OwnedEnforcedConstraint, Vertex,
-    },
     event::{Event, EventWithLocation},
-    model::{
-        spec::{ComponentSpec, ConstraintSpec},
-        variable_activation::VariableActivation,
+    model::activation::Activation,
+    planner::{
+        hierarchical_planner, priority_adjuster::adjust_priorities, ComponentSpec, ConstraintSpec,
+        MethodSpec, OwnedEnforcedConstraint, PlanError, Vertex,
     },
+    solver::SolveError,
     thread::{DummyPool, ThreadPool},
     variable_ranking::{SortRanker, VariableRanker},
 };
+use itertools::Itertools;
 use std::{
     collections::{HashMap, HashSet},
     fmt::{self, Debug, Write},
-    future::Future,
     ops::{Index, IndexMut},
     sync::{Arc, Mutex},
 };
@@ -42,7 +39,7 @@ pub struct Component<T> {
     name: String,
     name_to_index: HashMap<String, usize>,
     callbacks: Arc<Mutex<Vec<FilteredCallback<T, SolveError>>>>,
-    activations: UndoVec<VariableActivation<T, SolveError>>,
+    variables: Variables<Activation<T>>,
     constraints: Vec<Constraint<T>>,
     ranker: SortRanker,
     updated_since_last_solve: HashSet<usize>,
@@ -71,7 +68,7 @@ impl<T> Component<T> {
     {
         if let Some(&index) = self.name_to_index.get(variable) {
             // Call the callback with current variable state
-            let activation = &self.activations[index];
+            let activation = &self.variables[index];
             let inner = activation.inner().lock().unwrap();
             match inner.state() {
                 State::Pending => callback(Event::Pending),
@@ -104,25 +101,32 @@ impl<T> Component<T> {
         variable: &'s str,
         value: T,
     ) -> Result<(), NoSuchVariable<'s>> {
-        if let Some(&idx) = self.name_to_index.get(variable) {
-            self.updated_since_last_solve.insert(idx);
-            self.ranker.touch(idx);
+        let idx = self.variable_index(variable)?;
+        self.updated_since_last_solve.insert(idx);
+        self.ranker.touch(idx);
 
-            // Create a new activation
-            self.activations.set(idx, VariableActivation::from(value));
-            Ok(())
-        } else {
-            Err(NoSuchVariable(variable))
-        }
+        // Create a new activation
+        self.variables.set(idx, Activation::from(value));
+        Ok(())
     }
 
-    /// Returns the current value of the variable with name `variable`, if one exists.
+    /// Returns the variable called `variable`, if one exists.
     pub fn variable<'a>(
         &self,
         variable: &'a str,
-    ) -> Result<impl Future<Output = ActivationResult<T, SolveError>>, NoSuchVariable<'a>> {
+    ) -> Result<&Variable<Activation<T>>, NoSuchVariable<'a>> {
         let idx = self.variable_index(variable)?;
-        Ok(self.activations[idx].clone())
+        self.variables.get(idx).ok_or(NoSuchVariable(variable))
+    }
+
+    /// Returns the current value of `variable`, if one exists.
+    pub fn value<'a>(&self, variable: &'a str) -> Result<Activation<T>, NoSuchVariable<'a>> {
+        let idx = self.variable_index(variable)?;
+        self.variables
+            .get(idx)
+            .map(Variable::get)
+            .cloned()
+            .ok_or(NoSuchVariable(variable))
     }
 
     /// Returns the index of the specified variable, if it exists.
@@ -144,13 +148,18 @@ impl<T> Component<T> {
     }
 
     /// Returns a [`Vec<&str>`] of names of variables in this component.
-    pub fn variables(&self) -> Vec<&str> {
+    pub fn variable_names(&self) -> Vec<&str> {
         self.name_to_index.keys().map(String::as_str).collect()
     }
 
-    /// Returns a `Vec` of the current activations.
-    pub fn values(&self) -> Vec<&VariableActivation<T, SolveError>> {
-        self.activations.values()
+    /// Returns the variables of the component.
+    pub fn variables(&self) -> &[Variable<Activation<T>>] {
+        self.variables.variables()
+    }
+
+    /// Returns a `Vec` of the current values.
+    pub fn values(&self) -> Vec<&Activation<T>> {
+        self.variables.values()
     }
 
     /// Constructs a new component from a precomputed map from variable names to indices.
@@ -190,16 +199,12 @@ impl<T> Component<T> {
     {
         // Rank variables and run planner
         let plan = hierarchical_planner(self)?;
-        self.solve(pool, plan)?;
+        self.solve(pool, plan);
         Ok(())
     }
 
     /// Executes `plan` using `pool` in order to enforce all constraints.
-    fn solve(
-        &mut self,
-        pool: &mut impl ThreadPool,
-        plan: Vec<OwnedEnforcedConstraint<Method<T>>>,
-    ) -> Result<(), PlanError>
+    fn solve(&mut self, pool: &mut impl ThreadPool, plan: Vec<OwnedEnforcedConstraint<Method<T>>>)
     where
         T: Send + Sync + 'static + Debug,
     {
@@ -220,9 +225,9 @@ impl<T> Component<T> {
         }
 
         // Solve based on the plan
-        solver::par_solve(
+        crate::solver::par_solve(
             &plan,
-            &mut self.activations,
+            &mut self.variables,
             component_name,
             generation,
             pool,
@@ -231,12 +236,10 @@ impl<T> Component<T> {
                 let fcb = &mut lock[ge.variable()];
                 fcb.call(ge);
             },
-        )?;
+        );
 
         // Commit changes
-        self.activations.commit();
-
-        Ok(())
+        self.variables.commit();
     }
 
     /// Pins a variable.
@@ -393,7 +396,7 @@ impl<T> Component<T> {
 
     fn notify(&self, callbacks: &[FilteredCallback<T, SolveError>]) {
         for (vi, v) in callbacks.iter().enumerate() {
-            let va = &self.activations[vi];
+            let va = &self.variables[vi];
             let inner = va.inner().lock().unwrap();
             let event = match inner.state() {
                 State::Ready(value) => Event::Ready(value.as_ref()),
@@ -412,7 +415,7 @@ impl<T> Component<T> {
     pub fn undo(&mut self) -> Result<(), NoMoreUndo> {
         // Lock callbacks and which events to respond to
         let mut callbacks = self.callbacks.lock().unwrap();
-        self.activations.undo()?;
+        self.variables.undo()?;
         self.current_generation -= 1;
         self.total_generation += 1;
         // Update target to accept events from this `notify`-call.
@@ -431,7 +434,7 @@ impl<T> Component<T> {
     pub fn redo(&mut self) -> Result<(), NoMoreRedo> {
         // Lock callbacks and which events to respond to
         let mut callbacks = self.callbacks.lock().unwrap();
-        self.activations.redo()?;
+        self.variables.redo()?;
         self.current_generation += 1;
         self.total_generation += 1;
         // Update target to accept events from this `notify`-call.
@@ -454,10 +457,11 @@ impl<T> Component<T> {
         limit: usize,
     ) -> Self {
         let n_variables = values.len();
-        let values = UndoVec::new_with_limit(values.into_iter().map(|v| v.into()).collect(), limit);
+        let values =
+            Variables::new_with_limit(values.into_iter().map(|v| v.into()).collect(), limit);
         Self {
             name,
-            activations: values,
+            variables: values,
             callbacks: Arc::new(Mutex::new(vec![FilteredCallback::new(); n_variables])),
             constraints,
             ranker: VariableRanker::of_size(n_variables),
@@ -469,25 +473,24 @@ impl<T> Component<T> {
 
     /// Sets the undo-limit on the values of the component.
     pub fn set_undo_limit(&mut self, limit: UndoLimit) {
-        self.activations.set_limit(limit);
+        self.variables.set_limit(limit);
     }
 }
 
 impl<T> ComponentSpec for Component<T> {
-    type Value = T;
-    type Variable = VariableActivation<T, SolveError>;
+    type Value = Activation<T>;
     type Constraint = Constraint<T>;
 
     fn new(
         name: String,
-        values: Vec<impl Into<Self::Variable>>,
+        values: Vec<impl Into<Self::Value>>,
         constraints: Vec<Self::Constraint>,
     ) -> Self {
         let n_variables = values.len();
-        let values = UndoVec::new(values.into_iter().map(|v| v.into()).collect());
+        let values = Variables::new(values.into_iter().map_into().collect());
         Self {
             name,
-            activations: values,
+            variables: values,
             callbacks: Arc::new(Mutex::new(vec![FilteredCallback::new(); n_variables])),
             constraints,
             ranker: VariableRanker::of_size(n_variables),
@@ -498,7 +501,7 @@ impl<T> ComponentSpec for Component<T> {
     }
 
     fn n_variables(&self) -> usize {
-        self.activations.n_variables()
+        self.variables.n_variables()
     }
 
     fn constraints(&self) -> &[Self::Constraint] {
@@ -566,7 +569,7 @@ impl<T: PartialEq> PartialEq for Component<T> {
     fn eq(&self, other: &Self) -> bool {
         self.name == other.name
             && self.name_to_index == other.name_to_index
-            && self.activations == other.activations
+            && self.variables == other.variables
             && self.constraints == other.constraints
             && self.ranker == other.ranker
             && self.updated_since_last_solve == other.updated_since_last_solve
@@ -577,8 +580,7 @@ impl<T: PartialEq> PartialEq for Component<T> {
 mod tests {
     use super::Component;
     use crate::{
-        examples::components::numbers::sum, model::variable_activation::VariableActivation,
-        thread::DummyPool,
+        examples::components::numbers::sum, model::activation::Activation, thread::DummyPool,
     };
 
     #[test]
@@ -589,9 +591,9 @@ mod tests {
         assert_eq!(
             &component.values(),
             &[
-                &VariableActivation::from(0),
-                &VariableActivation::from(0),
-                &VariableActivation::from(0)
+                &Activation::from(0),
+                &Activation::from(0),
+                &Activation::from(0)
             ]
         );
 
@@ -602,9 +604,9 @@ mod tests {
         assert_eq!(
             &component.values(),
             &[
-                &VariableActivation::from(3),
-                &VariableActivation::from(0),
-                &VariableActivation::from(3)
+                &Activation::from(3),
+                &Activation::from(0),
+                &Activation::from(3)
             ]
         );
 
@@ -615,9 +617,9 @@ mod tests {
         assert_eq!(
             &component.values(),
             &[
-                &VariableActivation::from(3),
-                &VariableActivation::from(-1),
-                &VariableActivation::from(2)
+                &Activation::from(3),
+                &Activation::from(-1),
+                &Activation::from(2)
             ]
         );
     }
@@ -637,9 +639,9 @@ mod tests {
         assert_eq!(
             &component.values(),
             &[
-                &VariableActivation::from(val1),
-                &VariableActivation::from(-val1),
-                &VariableActivation::from(0)
+                &Activation::from(val1),
+                &Activation::from(-val1),
+                &Activation::from(0)
             ]
         );
 
@@ -654,9 +656,9 @@ mod tests {
         assert_eq!(
             &component.values(),
             &[
-                &VariableActivation::from(val2),
-                &VariableActivation::from(-val1),
-                &VariableActivation::from(val2 - val1)
+                &Activation::from(val2),
+                &Activation::from(-val1),
+                &Activation::from(val2 - val1)
             ]
         );
     }
@@ -673,9 +675,9 @@ mod tests {
         assert_eq!(
             &component.values(),
             &[
-                &VariableActivation::from(3),
-                &VariableActivation::from(0),
-                &VariableActivation::from(3)
+                &Activation::from(3),
+                &Activation::from(0),
+                &Activation::from(3)
             ]
         );
 
@@ -686,9 +688,9 @@ mod tests {
         assert_eq!(
             &component.values(),
             &[
-                &VariableActivation::from(0),
-                &VariableActivation::from(0),
-                &VariableActivation::from(0)
+                &Activation::from(0),
+                &Activation::from(0),
+                &Activation::from(0)
             ]
         );
 
@@ -699,9 +701,9 @@ mod tests {
         assert_eq!(
             &component.values(),
             &[
-                &VariableActivation::from(3),
-                &VariableActivation::from(0),
-                &VariableActivation::from(3)
+                &Activation::from(3),
+                &Activation::from(0),
+                &Activation::from(3)
             ]
         );
     }

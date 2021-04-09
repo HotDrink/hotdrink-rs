@@ -106,7 +106,7 @@ impl ComponentFactory for LinearTwoway {
 #[cfg(test)]
 mod tests {
     use super::{super::factory::ComponentFactory, LinearOneway};
-    use crate::model::{Component, ComponentSpec};
+    use crate::{model::Component, planner::ComponentSpec};
 
     #[test]
     fn linear_oneway_right_number_of_constraints() {

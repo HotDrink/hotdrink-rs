@@ -83,13 +83,13 @@ macro_rules! component {
                                         let $inp = &values.get(var_idx);
                                         // Verify that it exists
                                         if $inp.is_none() {
-                                            return Err($crate::model::MethodFailure::NoSuchVariable(stringify!($inp).to_owned()));
+                                            return Err($crate::planner::MethodFailure::NoSuchVariable(stringify!($inp).to_owned()));
                                         }
                                         // Convert it to the appropriate type
                                         let $inp = std::convert::TryInto::<$inp_ty>::try_into(&**$inp.unwrap());
                                         // Verify that it worked
                                         if $inp.is_err() {
-                                            return Err($crate::model::MethodFailure::TypeConversionFailure(stringify!($inp), stringify!($inp_ty)));
+                                            return Err($crate::planner::MethodFailure::TypeConversionFailure(stringify!($inp), stringify!($inp_ty)));
                                         }
                                         let $inp = $inp.unwrap();
 
@@ -121,7 +121,7 @@ macro_rules! component {
 ///
 /// ```rust
 /// # use std::sync::Arc;
-/// # use hotdrink_rs::{ret, model::MethodResult};
+/// # use hotdrink_rs::{ret, planner::MethodResult};
 /// let result: MethodResult<i32> = ret![3, 5];
 /// assert_eq!(result, Ok(vec![3, 5]));
 /// ```
@@ -130,7 +130,7 @@ macro_rules! component {
 ///
 /// ```rust
 /// # use std::sync::Arc;
-/// # use hotdrink_rs::{ret, model::MethodResult};
+/// # use hotdrink_rs::{ret, planner::MethodResult};
 /// # #[derive(Debug, PartialEq)]
 /// enum Shape {
 ///     Circle(usize),
@@ -146,7 +146,7 @@ macro_rules! component {
 ///
 /// ```rust
 /// # use std::sync::Arc;
-/// # use hotdrink_rs::{ret, model::MethodResult};
+/// # use hotdrink_rs::{ret, planner::MethodResult};
 /// # #[allow(non_camel_case_types)]
 /// # #[derive(Debug, PartialEq)]
 /// enum Value {
@@ -182,14 +182,14 @@ macro_rules! ret {
 /// # Examples
 ///
 /// ```rust
-/// # use hotdrink_rs::{fail, model::MethodResult, model::MethodFailure};
+/// # use hotdrink_rs::{fail, planner::{MethodResult, MethodFailure}};
 /// let result: MethodResult<()> = fail!("Expected {} to be equal to {}", 2, 3);
 /// assert_eq!(result, Err(MethodFailure::Custom(String::from("Expected 2 to be equal to 3"))));
 /// ```
 #[macro_export]
 macro_rules! fail {
     ($($arg:tt)*) => {{
-        Err($crate::model::MethodFailure::Custom(format!($($arg)*)))
+        Err($crate::planner::MethodFailure::Custom(format!($($arg)*)))
     }};
 }
 
@@ -197,7 +197,8 @@ macro_rules! fail {
 mod tests {
     use crate::{
         component_type,
-        model::{Component, ComponentSpec, ConstraintSpec, MethodFailure, MethodSpec},
+        model::Component,
+        planner::{ComponentSpec, ConstraintSpec, MethodFailure, MethodSpec},
     };
     use std::convert::TryFrom;
 

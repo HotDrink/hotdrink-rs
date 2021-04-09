@@ -1,7 +1,10 @@
 //! A type for representing variables.
 
 use super::undo::{NoMoreRedo, NoMoreUndo};
-use std::{collections::VecDeque, ops::Deref};
+use std::{
+    collections::VecDeque,
+    ops::{Deref, DerefMut},
+};
 
 /// A variable that maintains its previous values.
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -29,6 +32,12 @@ impl<T> Deref for Variable<T> {
     }
 }
 
+impl<T> DerefMut for Variable<T> {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        self.get_mut()
+    }
+}
+
 impl<T> Variable<T> {
     /// Constructs a new [`Variable`] with the specified value.
     pub fn new(value: T) -> Self {
@@ -45,10 +54,17 @@ impl<T> Variable<T> {
         self.activations.push_back(value);
         self.index += 1;
     }
-    /// Returns the current value of the variable.
+
+    /// Returns a reference to the current value of the variable.
     pub fn get(&self) -> &T {
         &self.activations[self.index]
     }
+
+    /// Returns a mutable reference to the current value of the variable.
+    pub fn get_mut(&mut self) -> &mut T {
+        &mut self.activations[self.index]
+    }
+
     /// Switches to the previous value of the variable.
     pub fn undo(&mut self) -> Result<(), NoMoreUndo> {
         if self.index > 0 {
@@ -75,6 +91,11 @@ impl<T> Variable<T> {
         );
         self.index -= 1;
         self.activations.pop_front()
+    }
+
+    /// Truncates the activations to the current index.
+    pub(crate) fn truncate(&mut self) {
+        self.activations.truncate(self.index + 1);
     }
 }
 

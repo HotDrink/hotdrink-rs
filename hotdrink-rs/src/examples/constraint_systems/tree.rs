@@ -296,7 +296,7 @@ where
 mod tests {
     extern crate test;
     use super::unprunable;
-    use crate::algorithms::hierarchical_planner;
+    use crate::planner::hierarchical_planner;
     use test::Bencher;
 
     #[bench]

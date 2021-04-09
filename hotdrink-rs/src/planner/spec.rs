@@ -1,6 +1,6 @@
 //! Useful traits for constraint systems that define the interface required for planning.
 
-use crate::{algorithms::Vertex, builders::method_builder::MutabilityMismatch};
+use crate::{builders::method_builder::MutabilityMismatch, planner::Vertex};
 use std::{
     fmt::Debug,
     ops::{Index, IndexMut},
@@ -77,16 +77,14 @@ pub enum PlanError {
 /// a component, a self-contained subgraph of a constraint system.
 /// The most important part is that it contains variables and constraints between them.
 pub trait ComponentSpec: Index<&'static str> + IndexMut<&'static str> {
-    /// The value of a variable.
-    type Value;
     /// The variable type. It has more information than just the [`Value`](Self::Value).
-    type Variable;
+    type Value;
     /// The type of the constraints of the component.
     type Constraint: ConstraintSpec;
     /// Constructs a new [`ComponentSpec`] with the specified name, values and constraints.
     fn new(
         name: String,
-        values: Vec<impl Into<Self::Variable>>,
+        values: Vec<impl Into<Self::Value>>,
         constraints: Vec<Self::Constraint>,
     ) -> Self;
     /// Returns the number of variables in the component.

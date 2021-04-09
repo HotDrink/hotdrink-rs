@@ -3,7 +3,8 @@
 //!
 //! [`Method`]: crate::model::Method
 
-use crate::model::{Method, MethodFunction, MethodSpec};
+use crate::model::Method;
+use crate::planner::{MethodFunction, MethodSpec};
 use itertools::Itertools;
 use std::{collections::HashMap, fmt::Debug};
 

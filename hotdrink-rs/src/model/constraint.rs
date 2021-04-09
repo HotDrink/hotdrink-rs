@@ -5,9 +5,8 @@
 
 use super::method::Method;
 use crate::{
-    algorithms::Vertex,
     macros::raw_constraint::Assert,
-    model::spec::{ConstraintSpec, MethodSpec},
+    planner::{ConstraintSpec, MethodSpec, Vertex},
 };
 use std::{collections::HashSet, ops::Index};
 

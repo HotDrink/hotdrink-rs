@@ -1,47 +1,43 @@
 //! A [`Vec`]-like data structure to allow undo and redo of operations.
 
+use super::{
+    undo::{NoMoreRedo, NoMoreUndo, UndoLimit},
+    variable::Variable,
+};
 use std::{collections::VecDeque, ops::Index};
 
-use super::undo::{NoMoreRedo, NoMoreUndo, UndoLimit};
 /// Represents values over time to allow for undo and redo.
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub struct UndoVec<T> {
+pub struct Variables<T> {
     /// The generation we are currently on.
     current_generation: usize,
-    /// The index of the current value of each variable.
-    current_idx: Vec<usize>,
     /// If values have been modified since last commit.
     is_modified: bool,
     /// A list of values for each variable.
-    values: Vec<VecDeque<T>>,
+    variables: Vec<Variable<T>>,
     /// `diff[n]` gives the difference between generation `n` and `n+1`.
     diff: VecDeque<Vec<usize>>,
     /// The maximum number of generations to keep.
     undo_limit: UndoLimit,
 }
 
-impl<T> Default for UndoVec<T> {
+impl<T> Default for Variables<T> {
     fn default() -> Self {
         Self {
             current_generation: 0,
-            current_idx: Vec::new(),
             is_modified: false,
-            values: Vec::new(),
+            variables: Vec::new(),
             diff: VecDeque::new(),
             undo_limit: UndoLimit::Unlimited,
         }
     }
 }
 
-impl<T> UndoVec<T> {
+impl<T> Variables<T> {
     /// Constructs a new [`UndoVec`] with the specified default values.
     pub fn new(start_values: Vec<T>) -> Self {
         Self {
-            current_idx: vec![0; start_values.len()],
-            values: start_values
-                .into_iter()
-                .map(|value| VecDeque::from(vec![value]))
-                .collect(),
+            variables: start_values.into_iter().map(Variable::from).collect(),
             ..Default::default()
         }
     }
@@ -61,7 +57,7 @@ impl<T> UndoVec<T> {
 
     /// Returns the number of variables per generation.
     pub fn n_variables(&self) -> usize {
-        self.values.len()
+        self.variables.len()
     }
 
     /// Returns the number of generations stored.
@@ -70,25 +66,21 @@ impl<T> UndoVec<T> {
     }
 
     /// Returns a reference to a specified variable.
-    pub fn get(&self, index: usize) -> Option<&T> {
-        let current_idx = *self.current_idx.get(index)?;
-        let res = self.values.get(index)?.get(current_idx)?;
-        Some(res)
+    pub fn get(&self, index: usize) -> Option<&Variable<T>> {
+        self.variables.get(index)
     }
 
     /// Returns a mutable reference to a specified variable.
-    pub fn get_mut(&mut self, index: usize) -> Option<&mut T> {
-        let current_idx = *self.current_idx.get(index)?;
-        let res = self.values.get_mut(index)?.get_mut(current_idx)?;
-        Some(res)
+    pub fn get_mut(&mut self, index: usize) -> Option<&mut Variable<T>> {
+        self.variables.get_mut(index)
     }
 
     /// Clears the future.
     /// This function can be used to clear an future invalidated by modifying the past.
     fn clear_future(&mut self) {
         self.diff.truncate(self.current_generation);
-        for (vi, current_index) in self.current_idx.iter().enumerate() {
-            self.values[vi].truncate(current_index + 1);
+        for v in &mut self.variables {
+            v.truncate();
         }
     }
 
@@ -112,8 +104,7 @@ impl<T> UndoVec<T> {
                     .expect("Diff did not have enough generations");
                 // Pop earliest value for each variable
                 for vi in earliest_diff {
-                    self.values[vi].pop_front();
-                    self.current_idx[vi] -= 1;
+                    self.variables[vi].pop_front();
                 }
                 self.current_generation -= 1;
             }
@@ -129,8 +120,7 @@ impl<T> UndoVec<T> {
         }
 
         self.diff[self.current_generation - 1].push(index);
-        self.current_idx[index] += 1;
-        self.values[index].push_back(value);
+        self.variables[index].set(value);
 
         if !self.is_modified {
             self.clear_past();
@@ -139,13 +129,14 @@ impl<T> UndoVec<T> {
         self.is_modified = true;
     }
 
+    /// Returns references to the current variables.
+    pub fn variables(&self) -> &[Variable<T>] {
+        &self.variables
+    }
+
     /// Returns references to the current values.
     pub fn values(&self) -> Vec<&T> {
-        self.values
-            .iter()
-            .zip(&self.current_idx)
-            .map(|(v, &index)| &v[index])
-            .collect()
+        self.variables.iter().map(Variable::get).collect()
     }
 
     /// Stores a checkpoint that can be returned to with [`undo`](#method.undo) or [`redo`](#method.redo).
@@ -164,7 +155,9 @@ impl<T> UndoVec<T> {
 
         // Move pointers for modified variables back one generation
         for &vid in &self.diff[self.current_generation] {
-            self.current_idx[vid] -= 1;
+            self.variables[vid]
+                .undo()
+                .expect("is in diff, should have another undo");
         }
 
         Ok(())
@@ -178,7 +171,9 @@ impl<T> UndoVec<T> {
 
         // Move pointers for modified variables forward one generation
         for &vid in &self.diff[self.current_generation] {
-            self.current_idx[vid] += 1;
+            self.variables[vid]
+                .redo()
+                .expect("is in diff, should have another redo");
         }
 
         self.current_generation += 1;
@@ -188,7 +183,7 @@ impl<T> UndoVec<T> {
     }
 }
 
-impl<T> Index<usize> for UndoVec<T> {
+impl<T> Index<usize> for Variables<T> {
     type Output = T;
 
     fn index(&self, index: usize) -> &Self::Output {
@@ -196,7 +191,7 @@ impl<T> Index<usize> for UndoVec<T> {
     }
 }
 
-impl<T> From<Vec<T>> for UndoVec<T> {
+impl<T> From<Vec<T>> for Variables<T> {
     fn from(vec: Vec<T>) -> Self {
         Self::new(vec)
     }
@@ -204,37 +199,37 @@ impl<T> From<Vec<T>> for UndoVec<T> {
 
 #[cfg(test)]
 mod tests {
-    use super::{NoMoreRedo, NoMoreUndo, UndoVec};
+    use super::{NoMoreRedo, NoMoreUndo, Variables};
 
     #[test]
     fn new_has_correct_len() {
-        let g = UndoVec::new(vec![1, 2, 3]);
+        let g = Variables::new(vec![1, 2, 3]);
         assert_eq!(g.n_variables(), 3);
     }
 
     #[test]
     fn new_has_correct_values() {
-        let g = UndoVec::new(vec![1, 2, 3]);
+        let g = Variables::new(vec![1, 2, 3]);
         assert_eq!(g.values(), vec![&1, &2, &3])
     }
 
     #[test]
     fn has_correct_values_after_set() {
-        let mut gs = UndoVec::new(vec![0]);
+        let mut gs = Variables::new(vec![0]);
         gs.set(0, 3);
         assert_eq!(gs.values(), vec![&3]);
     }
 
     #[test]
     fn undo_at_start_is_idempotent() {
-        let mut g = UndoVec::new(vec![0]);
+        let mut g = Variables::new(vec![0]);
         assert_eq!(g.undo(), Err(NoMoreUndo));
         assert_eq!(g.values(), vec![&0]);
     }
 
     #[test]
     fn do_then_undo_is_identity() {
-        let mut gs = UndoVec::new(vec![0]);
+        let mut gs = Variables::new(vec![0]);
         gs.set(0, 3);
         assert_eq!(gs.undo(), Ok(()));
         assert_eq!(gs.values(), vec![&0]);
@@ -242,14 +237,14 @@ mod tests {
 
     #[test]
     fn redo_at_start_is_idempotent() {
-        let mut g = UndoVec::new(vec![0]);
+        let mut g = Variables::new(vec![0]);
         assert_eq!(g.redo(), Err(NoMoreRedo));
         assert_eq!(g.values(), vec![&0]);
     }
 
     #[test]
     fn undo_redo_is_identity() {
-        let mut gs = UndoVec::new(vec![0]);
+        let mut gs = Variables::new(vec![0]);
         gs.set(0, 3);
         assert_eq!(gs.undo(), Ok(()));
         assert_eq!(gs.redo(), Ok(()));
@@ -258,7 +253,7 @@ mod tests {
 
     #[test]
     fn set_deletes_redo_history() {
-        let mut gs = UndoVec::new(vec![0]);
+        let mut gs = Variables::new(vec![0]);
         gs.set(0, 3);
         gs.commit();
         gs.undo().unwrap();
@@ -269,7 +264,7 @@ mod tests {
 
     #[test]
     fn do_undo_redo_mix() {
-        let mut gs = UndoVec::new(vec![0, 0]);
+        let mut gs = Variables::new(vec![0, 0]);
         // Assert default values
         assert_eq!(gs.values(), vec![&0, &0]);
         // Try moving a bit, but only 1 generation
@@ -300,12 +295,12 @@ mod tests {
     #[test]
     fn undo_limit_zero_gives_no_undo() {
         // Without commit
-        let mut gs = UndoVec::new_with_limit(vec![0], 0);
+        let mut gs = Variables::new_with_limit(vec![0], 0);
         gs.set(0, 3);
         assert_eq!(gs.undo(), Err(NoMoreUndo));
 
         // With commit
-        let mut gs = UndoVec::new_with_limit(vec![0], 0);
+        let mut gs = Variables::new_with_limit(vec![0], 0);
         gs.set(0, 3);
         gs.commit();
         assert_eq!(gs.undo(), Err(NoMoreUndo));
@@ -314,13 +309,13 @@ mod tests {
     #[test]
     fn undo_limit_one_gives_one_undo() {
         // Without commit
-        let mut gs = UndoVec::new_with_limit(vec![0], 1);
+        let mut gs = Variables::new_with_limit(vec![0], 1);
         gs.set(0, 3);
         assert_eq!(gs.undo(), Ok(()));
         assert_eq!(gs.undo(), Err(NoMoreUndo));
 
         // With commit
-        let mut gs = UndoVec::new_with_limit(vec![0], 1);
+        let mut gs = Variables::new_with_limit(vec![0], 1);
         gs.set(0, 3);
         gs.commit();
         assert_eq!(gs.undo(), Ok(()));
@@ -330,7 +325,7 @@ mod tests {
     #[test]
     fn undo_limit_n_gives_n_undos() {
         for undo_limit in 0..10 {
-            let mut gs = UndoVec::new_with_limit(vec![0], undo_limit);
+            let mut gs = Variables::new_with_limit(vec![0], undo_limit);
             for _ in 0..undo_limit {
                 gs.set(0, 1);
                 gs.commit();

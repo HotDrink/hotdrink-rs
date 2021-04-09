@@ -3,8 +3,8 @@
 //! Given a component, it will find one method per constraint to enforce it, such that the methods and the variables they
 //! read from and write to form a directed acyclic graph.
 
-use super::{hierarchical_planner::Vertex, toposorter::toposort};
-use crate::model::{ComponentSpec, ConstraintSpec, MethodSpec};
+use super::{hierarchical::Vertex, toposorter::toposort};
+use crate::planner::{ComponentSpec, ConstraintSpec, MethodSpec};
 use itertools::Itertools;
 use std::{collections::VecDeque, fmt::Debug};
 
@@ -109,7 +109,7 @@ pub type Plan<'a, M> = Vec<EnforcedConstraint<'a, M>>;
 /// # Examples
 ///
 /// ```rust
-/// # use hotdrink_rs::{component, ret, algorithms::{simple_planner, EnforcedConstraint}, model::Method};
+/// # use hotdrink_rs::{component, ret, planner::{simple_planner, EnforcedConstraint}, model::Method};
 ///
 /// // Construct a component
 /// let component = component! {
@@ -217,14 +217,15 @@ where
 #[cfg(test)]
 mod tests {
     use super::EnforcedConstraint;
-    use crate::{
-        algorithms::{
-            simple_planner::{simple_planner, simple_planner_toposort},
-            toposorter::toposort,
-        },
-        model::{Component, ComponentSpec},
+    use crate::planner::{
+        simple::{simple_planner, simple_planner_toposort},
+        toposorter::toposort,
+        ComponentSpec,
     };
-    use crate::{model::ConstraintSystem, ret};
+    use crate::{
+        model::{Component, ConstraintSystem},
+        ret,
+    };
 
     #[test]
     fn empty_component_gives_empty_plan() {

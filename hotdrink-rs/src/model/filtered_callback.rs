@@ -1,6 +1,6 @@
 //! Extra information about a variable, such as its status, generation, and callbacks.
 
-use super::{generation_id::GenerationId, variable_activation::EventCallback};
+use super::{generation_id::GenerationId, activation::EventCallback};
 use crate::event::{Event, EventWithLocation};
 use std::fmt::Debug;
 use std::sync::{Arc, Mutex};

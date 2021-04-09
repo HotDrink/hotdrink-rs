@@ -2,17 +2,12 @@
 //! A [`Method`] in a [`Constraint`](super::Constraint) should enforce the relation
 //! that the constraint represents.
 
-use super::{
-    generation_id::GenerationId,
-    solve_error::{Reason, SolveError},
-};
+use super::generation_id::GenerationId;
 use crate::{
-    algorithms::Vertex,
     event::{Event, EventWithLocation},
-    model::{
-        spec::{MethodFailure, MethodFunction, MethodResult, MethodSpec},
-        variable_activation::{VariableActivation, VariableActivationInner},
-    },
+    model::activation::{Activation, ActivationInner},
+    planner::{MethodFailure, MethodFunction, MethodResult, MethodSpec, Vertex},
+    solver::{Reason, SolveError},
     thread::ThreadPool,
 };
 use std::{
@@ -103,7 +98,7 @@ impl<T> MethodSpec for Method<T> {
 }
 
 /// A [`VariableActivationInner`] wrapped in an [`Arc`] and a [`Mutex`] so that it can be shared.
-pub type SharedVariableActivationInner<T> = Arc<Mutex<VariableActivationInner<T, SolveError>>>;
+pub type SharedVariableActivationInner<T> = Arc<Mutex<ActivationInner<T>>>;
 
 fn handle_error<T>(
     output_indices: &[usize],
@@ -126,13 +121,13 @@ impl<T> Method<T> {
     /// Instead of waiting for the values to arrive, return a list of `Value`s that will eventually resolve to them.
     pub(crate) fn activate(
         &self,
-        inputs: Vec<impl Into<VariableActivation<T, SolveError>>>,
+        inputs: Vec<impl Into<Activation<T>>>,
         shared_states: Vec<SharedVariableActivationInner<T>>,
         location: (String, String),
         generation: GenerationId,
         pool: &mut impl ThreadPool,
         general_callback: impl Fn(EventWithLocation<'_, T, SolveError>) + Send + 'static,
-    ) -> Vec<VariableActivation<T, SolveError>>
+    ) -> Vec<Activation<T>>
     where
         T: Send + Sync + 'static + Debug,
         Method<T>: Vertex,
@@ -140,8 +135,7 @@ impl<T> Method<T> {
         // Convert the input to `Value`s that we can await.
         // Using `Into<Value<T>>` for convenience, so that
         // one can pass in a vector of non-futures too.
-        let inputs: Vec<VariableActivation<T, SolveError>> =
-            inputs.into_iter().map(|v| v.into()).collect();
+        let inputs: Vec<Activation<T>> = inputs.into_iter().map(|v| v.into()).collect();
         let n_inputs = self.n_inputs();
         let n_outputs = self.n_outputs();
         let output_indices = self.outputs().to_vec();
@@ -284,7 +278,7 @@ impl<T> Method<T> {
         // Wrap the shared states and the thread references in `Value`s
         let values = shared_states
             .iter()
-            .map(|st| VariableActivation {
+            .map(|st| Activation {
                 inner: st.clone(),
                 producer: Some(handle.clone()),
             })

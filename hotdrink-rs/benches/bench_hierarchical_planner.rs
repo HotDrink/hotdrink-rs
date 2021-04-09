@@ -2,7 +2,7 @@
 extern crate test;
 
 use hotdrink_rs::{
-    algorithms::hierarchical_planner,
+    planner::hierarchical_planner,
     examples::constraint_systems::{
         linear::linear_twoway,
         linear_oneway, make_dense_cs, make_empty_cs, make_sparse_cs,

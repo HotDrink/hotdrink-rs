@@ -1,7 +1,7 @@
 //! A function for topologically sorting plans.
 //! This must be done before executing them.
 
-use super::hierarchical_planner::Vertex;
+use super::hierarchical::Vertex;
 
 /// Topologically sort a slice of method references.
 pub fn toposort<M>(methods: &[M], n_variables: usize) -> Option<Vec<&M>>
@@ -91,7 +91,7 @@ fn dfs(
 mod tests {
 
     use super::toposort;
-    use crate::algorithms::hierarchical_planner::Vertex;
+    use crate::planner::hierarchical::Vertex;
 
     /// A dummy method for testing
     #[derive(PartialEq, Eq, Debug, Clone)]
