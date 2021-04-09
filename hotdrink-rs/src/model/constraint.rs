@@ -67,6 +67,10 @@ impl<T> ConstraintSpec for Constraint<T> {
     fn variables(&self) -> &[usize] {
         &self.variables
     }
+
+    fn is_active(&self) -> bool {
+        self.active
+    }
 }
 
 impl<T> Constraint<T> {

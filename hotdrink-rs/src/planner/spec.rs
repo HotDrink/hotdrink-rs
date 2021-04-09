@@ -64,6 +64,8 @@ pub trait ConstraintSpec {
     fn remove_method(&mut self, name: &str);
     /// Returns a slice to the variables used by the methods of the constraint.
     fn variables(&self) -> &[usize];
+    /// Whether or not this constraint is active.
+    fn is_active(&self) -> bool;
 }
 
 /// Errors that can occur during planning.
