@@ -5,7 +5,7 @@ use itertools::Itertools;
 use std::sync::Arc;
 use std::{convert::TryInto, fmt::Debug};
 
-/// A slightly different version of [`crate::model::MethodResult`].
+/// A slightly different version of [`crate::planner::MethodResult`].
 pub type MethodResult<T> = Result<Vec<T>, MethodFailure>;
 
 /// A parameter for a method.

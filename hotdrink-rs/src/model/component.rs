@@ -3,7 +3,7 @@
 use super::{
     activation::State,
     constraint::Constraint,
-    errors::NoSuchVariable,
+    errors::{NoSuchConstraint, NoSuchVariable},
     filtered_callback::FilteredCallback,
     generation_id::GenerationId,
     method::Method,
@@ -160,6 +160,25 @@ impl<T> Component<T> {
     /// Returns a `Vec` of the current values.
     pub fn values(&self) -> Vec<&Activation<T>> {
         self.variables.values()
+    }
+
+    /// Returns a reference to the specified constraint.
+    pub fn constraint<'a>(&self, name: &'a str) -> Result<&Constraint<T>, NoSuchConstraint<'a>> {
+        self.constraints
+            .iter()
+            .find(|c| c.name() == name)
+            .ok_or(NoSuchConstraint(name))
+    }
+
+    /// Returns a mutable reference to the specified constraint.
+    pub fn constraint_mut<'a>(
+        &mut self,
+        name: &'a str,
+    ) -> Result<&mut Constraint<T>, NoSuchConstraint<'a>> {
+        self.constraints
+            .iter_mut()
+            .find(|c| c.name() == name)
+            .ok_or(NoSuchConstraint(name))
     }
 
     /// Constructs a new component from a precomputed map from variable names to indices.
@@ -475,6 +494,16 @@ impl<T> Component<T> {
     pub fn set_undo_limit(&mut self, limit: UndoLimit) {
         self.variables.set_limit(limit);
     }
+
+    /// Enables a specific constraint.
+    pub fn enable_constraint<'a>(&mut self, name: &'a str) -> Result<(), NoSuchConstraint<'a>> {
+        self.constraint_mut(name).map(|c| c.set_active(true))
+    }
+
+    /// Disables a specific constraint.
+    pub fn disable_constraint<'a>(&mut self, name: &'a str) -> Result<(), NoSuchConstraint<'a>> {
+        self.constraint_mut(name).map(|c| c.set_active(false))
+    }
 }
 
 impl<T> ComponentSpec for Component<T> {
@@ -508,7 +537,7 @@ impl<T> ComponentSpec for Component<T> {
         &self.constraints
     }
 
-    fn constraints_mut(&mut self) -> &mut [Self::Constraint] {
+    fn constraints_mut(&mut self) -> &mut Vec<Self::Constraint> {
         &mut self.constraints
     }
 
@@ -580,7 +609,8 @@ impl<T: PartialEq> PartialEq for Component<T> {
 mod tests {
     use super::Component;
     use crate::{
-        examples::components::numbers::sum, model::activation::Activation, thread::DummyPool,
+        component, examples::components::numbers::sum, model::activation::Activation, ret,
+        thread::DummyPool,
     };
 
     #[test]
@@ -704,6 +734,68 @@ mod tests {
                 &Activation::from(3),
                 &Activation::from(0),
                 &Activation::from(3)
+            ]
+        );
+    }
+
+    #[test]
+    fn enable_disable_constraint() {
+        let mut component = component! {
+            component A {
+                let a: i32, b: i32, c: i32, d: i32;
+                constraint Ab {
+                    right(a: &i32) -> [b] = ret![*a];
+                    left(b: &i32) -> [a] = ret![*b];
+                }
+                constraint Bc {
+                    right(b: &i32) -> [c] = ret![*b];
+                    left(c: &i32) -> [b] = ret![*c];
+                }
+                constraint Cd {
+                    right(c: &i32) -> [d] = ret![*c];
+                    left(d: &i32) -> [c] = ret![*d];
+                }
+            }
+        };
+
+        // Should chain the entire way
+        component.set_variable("a", 1).unwrap();
+        component.update().unwrap();
+        assert_eq!(
+            component.values(),
+            vec![
+                &Activation::from(1),
+                &Activation::from(1),
+                &Activation::from(1),
+                &Activation::from(1),
+            ]
+        );
+
+        // Chain is now broken
+        component.disable_constraint("Bc").unwrap();
+        component.set_variable("b", 2).unwrap();
+        component.set_variable("d", 3).unwrap();
+        component.update().unwrap();
+        assert_eq!(
+            component.values(),
+            vec![
+                &Activation::from(2),
+                &Activation::from(2),
+                &Activation::from(3),
+                &Activation::from(3),
+            ]
+        );
+
+        // Re-enable chain
+        component.enable_constraint("Bc").unwrap();
+        component.update().unwrap();
+        assert_eq!(
+            component.values(),
+            vec![
+                &Activation::from(3),
+                &Activation::from(3),
+                &Activation::from(3),
+                &Activation::from(3),
             ]
         );
     }

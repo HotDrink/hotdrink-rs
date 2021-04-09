@@ -98,15 +98,13 @@ pub trait ComponentSpec: Index<&'static str> + IndexMut<&'static str> {
     /// Returns a slice of the constraints in the component.
     fn constraints(&self) -> &[Self::Constraint];
     /// Returns a mutable slice of the constraints in the component.
-    fn constraints_mut(&mut self) -> &mut [Self::Constraint];
+    fn constraints_mut(&mut self) -> &mut Vec<Self::Constraint>;
     /// Adds a new constraint to the component.
     fn add_constraint(&mut self, constraint: Self::Constraint);
     /// Removes the last constraint from the component.
     fn pop_constraint(&mut self) -> Option<Self::Constraint>;
     /// Removes a specific constraint from a component.
     fn remove_constraint(&mut self, idx: usize) -> Self::Constraint;
-    // /// Converts a variable name to its index in the component.
-    // fn name_to_idx(&self, name: &str) -> Option<usize>;
     /// Returns the ranking of variables.
     fn ranking(&self) -> Vec<usize>;
 }

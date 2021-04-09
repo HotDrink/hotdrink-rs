@@ -8,6 +8,8 @@ use std::fmt::Display;
 pub enum ApiError<'a> {
     /// See [`NoSuchComponent`].
     NoSuchComponent(NoSuchComponent<'a>),
+    /// See [`NoSuchConstraint`].
+    NoSuchConstraint(NoSuchConstraint<'a>),
     /// See [`NoSuchVariable`].
     NoSuchVariable(NoSuchVariable<'a>),
     /// Nothing more to undo.
@@ -20,6 +22,7 @@ impl<'a> Display for ApiError<'a> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             ApiError::NoSuchComponent(e) => e.fmt(f),
+            ApiError::NoSuchConstraint(e) => e.fmt(f),
             ApiError::NoSuchVariable(e) => e.fmt(f),
             ApiError::NoMoreUndo => write!(f, "Nothing more to undo"),
             ApiError::NoMoreRedo => write!(f, "Nothing more to redo"),
@@ -30,6 +33,12 @@ impl<'a> Display for ApiError<'a> {
 impl<'a> From<NoSuchComponent<'a>> for ApiError<'a> {
     fn from(nsc: NoSuchComponent<'a>) -> Self {
         Self::NoSuchComponent(nsc)
+    }
+}
+
+impl<'a> From<NoSuchConstraint<'a>> for ApiError<'a> {
+    fn from(nsc: NoSuchConstraint<'a>) -> Self {
+        Self::NoSuchConstraint(nsc)
     }
 }
 
@@ -58,6 +67,16 @@ pub struct NoSuchComponent<'a>(pub &'a str);
 impl<'a> Display for NoSuchComponent<'a> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "Component not found: {}", self.0)
+    }
+}
+
+/// The specified constraint does not exist.
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
+pub struct NoSuchConstraint<'a>(pub &'a str);
+
+impl<'a> Display for NoSuchConstraint<'a> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "Constraint not found: {}", self.0)
     }
 }
 

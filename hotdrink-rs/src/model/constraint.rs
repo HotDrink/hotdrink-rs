@@ -111,6 +111,13 @@ impl<T> Constraint<T> {
             active: true,
         }
     }
+
+    /// Enables or disables the constraint.
+    ///
+    /// This decides if the constraint should be enforced during planning.
+    pub fn set_active(&mut self, active: bool) {
+        self.active = active;
+    }
 }
 
 impl<T> PartialEq for Constraint<T> {

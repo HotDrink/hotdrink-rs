@@ -249,6 +249,28 @@ impl<T: Debug> ConstraintSystem<T> {
             component.set_undo_limit(limit);
         }
     }
+
+    /// Enables the specified constraint.
+    pub fn enable_constraint<'a>(
+        &mut self,
+        component: &'a str,
+        variable: &'a str,
+    ) -> Result<(), ApiError<'a>> {
+        let component = self.component_mut(component)?;
+        component.enable_constraint(variable)?;
+        Ok(())
+    }
+
+    /// Disabled the specified constraint.
+    pub fn disable_constraint<'a>(
+        &mut self,
+        component: &'a str,
+        variable: &'a str,
+    ) -> Result<(), ApiError<'a>> {
+        let component = self.component_mut(component)?;
+        component.disable_constraint(variable)?;
+        Ok(())
+    }
 }
 
 #[cfg(test)]

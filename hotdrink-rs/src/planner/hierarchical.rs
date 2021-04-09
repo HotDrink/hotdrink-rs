@@ -176,6 +176,8 @@ where
 
     // Clone the component to be able to modify it
     let mut component = component.clone();
+    // Filter out inactive constraints
+    component.constraints_mut().retain(C::is_active);
     // Lock variables that can't have a stay constraint
     let mut can_stay = vec![true; ranking.len()];
     // Create a map from variables to constraints
