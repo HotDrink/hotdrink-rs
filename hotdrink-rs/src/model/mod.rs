@@ -28,4 +28,4 @@ pub use spec::{
     ComponentSpec, ConstraintSpec, MethodFailure, MethodFunction, MethodResult, MethodSpec,
     PlanError,
 };
-pub use variable_activation::{DoneState, State};
+pub use variable_activation::State;

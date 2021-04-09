@@ -168,17 +168,11 @@ impl<T, E> From<T> for VariableActivation<T, E> {
     }
 }
 
-/// Similar to [`State`], but this one can no longer be pending.
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub enum DoneState<T, E> {
-    /// The computation succeeded.
-    Ready(Arc<T>),
-    /// The computation failed.
-    Error(Vec<E>),
-}
+/// The resulting value of a [`VariableActivation`].
+pub type ActivationResult<T, E> = Result<Arc<T>, Vec<E>>;
 
 impl<T, E: Clone> Future for VariableActivation<T, E> {
-    type Output = DoneState<T, E>;
+    type Output = ActivationResult<T, E>;
 
     fn poll(self: Pin<&mut Self>, cx: &mut std::task::Context<'_>) -> Poll<Self::Output> {
         let mut inner = self.inner.lock().unwrap();
@@ -189,8 +183,8 @@ impl<T, E: Clone> Future for VariableActivation<T, E> {
                 Poll::Pending
             }
             // It is complete, either Ready or Error.
-            State::Ready(value) => Poll::Ready(DoneState::Ready(Arc::clone(value))),
-            State::Error(errors) => Poll::Ready(DoneState::Error(errors.clone())),
+            State::Ready(value) => Poll::Ready(Ok(Arc::clone(value))),
+            State::Error(errors) => Poll::Ready(Err(errors.clone())),
         }
     }
 }

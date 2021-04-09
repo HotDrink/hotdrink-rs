@@ -1,8 +1,4 @@
-use hotdrink_rs::{
-    component,
-    model::{Component, DoneState},
-    ret,
-};
+use hotdrink_rs::{component, model::Component, ret};
 use iced::{text_input::State, Align, Column, Element, Length, Sandbox, Settings, TextInput};
 
 pub fn main() -> iced::Result {
@@ -92,8 +88,8 @@ impl Sandbox for GuiState {
 fn bind<'a>(state: &'a mut State, name: &str, cs: &Component<i64>) -> TextInput<'a, Message> {
     let value = futures::executor::block_on(cs.variable(&name).unwrap());
     let value = match value {
-        DoneState::Ready(value) => *value,
-        DoneState::Error(errors) => panic!("{:?}", errors),
+        Ok(value) => *value,
+        Err(errors) => panic!("{:?}", errors),
     };
     let name_clone = name.to_string();
     TextInput::new(state, name, &value.to_string(), move |v| {

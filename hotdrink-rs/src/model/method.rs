@@ -6,7 +6,6 @@ use super::{
     generation_id::GenerationId,
     solve_error::{Reason, SolveError},
 };
-use crate::model::variable_activation::DoneState;
 use crate::{
     algorithms::Vertex,
     event::{Event, EventWithLocation},
@@ -178,8 +177,8 @@ impl<T> Method<T> {
                 let mut errors = Vec::new();
                 for state in input_results {
                     match state {
-                        DoneState::Ready(value) => inputs.push(value),
-                        DoneState::Error(es) => errors.extend(es),
+                        Ok(value) => inputs.push(value),
+                        Err(es) => errors.extend(es),
                     }
                 }
 

@@ -8,7 +8,7 @@ use super::{
     method::Method,
     spec::PlanError,
     undo_vec::{NoMoreRedo, NoMoreUndo, UndoLimit, UndoVec},
-    variable_activation::{DoneState, State},
+    variable_activation::{ActivationResult, State},
 };
 use super::{solve_error::SolveError, spec::MethodSpec};
 use crate::{
@@ -115,11 +115,11 @@ impl<T> Component<T> {
         }
     }
 
-    /// Returns the current value of the variable with name `var`, if one exists.
-    pub fn variable<'s>(
+    /// Returns the current value of the variable with name `variable`, if one exists.
+    pub fn variable<'a>(
         &self,
-        variable: &'s str,
-    ) -> Result<impl Future<Output = DoneState<T, SolveError>>, NoSuchVariable<'s>> {
+        variable: &'a str,
+    ) -> Result<impl Future<Output = ActivationResult<T, SolveError>>, NoSuchVariable<'a>> {
         let idx = self.variable_index(variable)?;
         Ok(self.activations[idx].clone())
     }

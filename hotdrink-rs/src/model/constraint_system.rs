@@ -8,7 +8,7 @@ use super::{
     solve_error::SolveError,
     spec::PlanError,
     undo_vec::{NoMoreRedo, NoMoreUndo, UndoLimit},
-    variable_activation::DoneState,
+    variable_activation::ActivationResult,
 };
 use crate::{
     event::Event,
@@ -84,12 +84,12 @@ impl<T: Debug> ConstraintSystem<T> {
         Ok(())
     }
 
-    /// Returns the current value of the variable with name `var`, if one exists.
-    pub fn get_variable<'s>(
+    /// Returns the current value of the variable with name `variable` in `component`, if one exists.
+    pub fn variable<'a>(
         &self,
-        component: &'s str,
-        variable: &'s str,
-    ) -> Result<impl Future<Output = DoneState<T, SolveError>>, ApiError<'s>> {
+        component: &'a str,
+        variable: &'a str,
+    ) -> Result<impl Future<Output = ActivationResult<T, SolveError>>, ApiError<'a>> {
         let component = self.component(component)?;
         let variable = component.variable(variable)?;
         Ok(variable)
