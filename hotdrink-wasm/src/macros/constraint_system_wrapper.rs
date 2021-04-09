@@ -191,6 +191,28 @@ macro_rules! constraint_system_wrapper {
                     log::error!("Redo failed: {}", e);
                 })
             }
+
+            /// Enables the specified constraint.
+            pub fn enable_constraint(&self, component: &str, constraint: &str) {
+                self.inner
+                    .lock()
+                    .unwrap()
+                    .enable_constraint(component, constraint)
+                    .unwrap_or_else(|e| {
+                        log::error!("Could not enable constraint: {}", e);
+                    });
+            }
+
+            /// Disables the specified constraint.
+            pub fn disable_constraint(&self, component: &str, constraint: &str) {
+                self.inner
+                    .lock()
+                    .unwrap()
+                    .disable_constraint(component, constraint)
+                    .unwrap_or_else(|e| {
+                        log::error!("Could not disable constraint: {}", e);
+                    });
+            }
         }
     };
 }
