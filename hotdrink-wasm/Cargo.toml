@@ -14,7 +14,8 @@ path = "src/lib.rs"
 
 # Enable console_error_panic_hook (and wee_alloc if I can make it work again)
 [features]
-default = ["console_error_panic_hook" ]
+default = [ "console_error_panic_hook" ]
+thread = []
 
 [dependencies]
 
@@ -28,7 +29,7 @@ wasm-logger = "0.2.0"
 itertools = "0.10.0"
 
 # Wasm
-wasm-bindgen = { version = "0.2.68" }
+wasm-bindgen = "0.2.73"
 wasm-bindgen-futures = "0.4.18"
 
 # The `console_error_panic_hook` crate provides better debugging of panics by

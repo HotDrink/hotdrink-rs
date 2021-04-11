@@ -107,8 +107,9 @@ impl<T: Debug> ConstraintSystem<T> {
         Ok(variable)
     }
 
-    /// Solves each component in the constraint system,
-    /// and increments the generation counter.
+    /// Attempts to enforces all constraints in every component that is modified.
+    /// If no plan could be found, it will return a [`PlanError`].
+    /// This variant lets you specify a thread pool to run methods on.
     pub fn update(&mut self) -> Result<(), PlanError>
     where
         T: Send + Sync + 'static + Debug,
@@ -116,9 +117,23 @@ impl<T: Debug> ConstraintSystem<T> {
         self.par_update(&mut DummyPool)
     }
 
-    /// Solve each component as usual, but pass along a thread pool to run computations on.
-    /// The callbacks will be called as usual upon completion.
+    /// Attempts to enforces all constraints in every component that is modified.
+    /// If no plan could be found, it will return a [`PlanError`].
+    /// This variant lets you specify a thread pool to run methods on.
     pub fn par_update(&mut self, spawn: &mut impl ThreadPool) -> Result<(), PlanError>
+    where
+        T: Send + Sync + 'static + Debug,
+    {
+        for component in &mut self.components {
+            component.par_update(spawn)?;
+        }
+
+        Ok(())
+    }
+
+    /// Attempts to enforces all constraints in every component that is modified.
+    /// If no plan could be found, it will return a [`PlanError`].
+    pub fn par_update_if_modified(&mut self, spawn: &mut impl ThreadPool) -> Result<(), PlanError>
     where
         T: Send + Sync + 'static + Debug,
     {
@@ -126,19 +141,6 @@ impl<T: Debug> ConstraintSystem<T> {
             if component.is_modified() {
                 component.par_update(spawn)?;
             }
-        }
-
-        Ok(())
-    }
-
-    /// Attempts to enforces all constraints in every component.
-    /// If no plan could be found, it will return a [`PlanError`].
-    pub fn par_update_always(&mut self, spawn: &mut impl ThreadPool) -> Result<(), PlanError>
-    where
-        T: Send + Sync + 'static + Debug,
-    {
-        for component in &mut self.components {
-            component.par_update(spawn)?;
         }
 
         Ok(())

@@ -1,8 +1,10 @@
 [workspace]
 members = [
     "hotdrink-rs",
-    "hotdrink-rs-example",
     "hotdrink-wasm",
+]
+exclude = [
+    "examples"
 ]
 
 [profile.release.package.hotdrink-rs]

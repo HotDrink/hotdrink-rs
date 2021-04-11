@@ -6,8 +6,8 @@
 /// a thread pool implementation, the number of threads to use, and a termination strategy, it will automatically generate
 /// a wrapper that can be returned to and used from JavaScript.
 #[macro_export]
-macro_rules! constraint_system_wrapper {
-    ($cs_name:ident, $wrapper_type:ty, $inner_type:ty) => {
+macro_rules! constraint_system_wrapper_threaded {
+    ($cs_name:ident, $wrapper_type:ty, $inner_type:ty, $thread_pool_type:ty, $num_threads:expr, $termination_strategy:expr) => {
         /// A wrapper around the internal constraint system.
         /// A macro is used to construct the type that the library user wants,
         /// since `wasm_bindgen` requires a concrete type.
@@ -15,15 +15,9 @@ macro_rules! constraint_system_wrapper {
         #[allow(missing_debug_implementations)]
         pub struct $cs_name {
             inner: std::sync::Mutex<hotdrink_rs::model::ConstraintSystem<$inner_type>>,
-            event_queue: std::sync::Arc<
-                std::sync::Mutex<
-                    std::collections::VecDeque<
-                        $crate::event::js_event::JsEvent<
-                            $inner_type,
-                            hotdrink_rs::solver::SolveError,
-                        >,
-                    >,
-                >,
+            event_listener: $crate::event::event_listener::EventListener<
+                $inner_type,
+                hotdrink_rs::solver::SolveError,
             >,
             event_handler: std::sync::Mutex<
                 $crate::event::event_handler::EventHandler<
@@ -31,7 +25,7 @@ macro_rules! constraint_system_wrapper {
                     hotdrink_rs::solver::SolveError,
                 >,
             >,
-            pool: std::sync::Mutex<hotdrink_rs::thread::DummyPool>,
+            pool: std::sync::Mutex<$thread_pool_type>,
         }
 
         impl $cs_name {
@@ -40,17 +34,22 @@ macro_rules! constraint_system_wrapper {
             pub fn wrap(
                 inner: hotdrink_rs::model::ConstraintSystem<$inner_type>,
             ) -> Result<$cs_name, wasm_bindgen::JsValue> {
+                // Create the worker script blob
+                let worker_script_url = $crate::thread::worker::worker_script::create();
+
                 // Create the event listener
+                let event_listener =
+                    $crate::event::event_listener::EventListener::from_url(&worker_script_url)?;
                 // Create the worker pool for executing methods
-                use hotdrink_rs::thread::ThreadPool;
-                let pool = hotdrink_rs::thread::DummyPool::new(
-                    1,
-                    hotdrink_rs::thread::TerminationStrategy::Never,
+                let pool = $crate::thread::WorkerPool::from_url(
+                    $num_threads,
+                    $termination_strategy,
+                    &worker_script_url,
                 )?;
                 // Combine it all
                 Ok(Self {
                     inner: std::sync::Mutex::new(inner),
-                    event_queue: Default::default(),
+                    event_listener,
                     event_handler: std::sync::Mutex::new(
                         $crate::event::event_handler::EventHandler::new(),
                     ),
@@ -59,19 +58,20 @@ macro_rules! constraint_system_wrapper {
             }
         }
 
+        impl Drop for $cs_name {
+            fn drop(&mut self) {
+                self.event_listener.terminate();
+            }
+        }
+
         #[wasm_bindgen::prelude::wasm_bindgen]
         impl $cs_name {
-            fn handle_events(&self) {
-                // Call callbacks with initial events
-                let mut event_handler = self.event_handler.lock().unwrap();
-                let mut event_queue = self.event_queue.lock().unwrap();
-                for event in event_queue.drain(..) {
-                    if let Err(e) = event_handler.handle_event(event) {
-                        log::error!("Failed to handle event: {:?}", e);
-                    };
-                }
-                event_queue.clear();
+            /// Decide what to do with all the events from the constraint system,
+            /// and perform the initial solve once that is done.
+            pub fn listen(&mut self, cb: js_sys::Function) {
+                self.event_listener.listen(&cb);
             }
+
             /// Sets the callbacks to call when the specified variable changes state.
             /// `on_pending` should not have any parameters, `on_ready` will receive the new value,
             /// and `on_error` will receive information about the error.
@@ -99,17 +99,15 @@ macro_rules! constraint_system_wrapper {
                     let component = component.to_owned();
                     let variable = variable.to_owned();
                     let mut inner = self.inner.lock().unwrap();
-                    let event_queue = std::sync::Arc::clone(&self.event_queue);
+                    let sender = self.event_listener.sender().clone();
                     inner.subscribe(&component.clone(), &variable.clone(), move |e| {
                         let js_event = $crate::event::js_event::JsEvent::new(
                             component.clone(),
                             variable.clone(),
                             e.into(),
                         );
-                        event_queue.lock().unwrap().push_back(js_event);
+                        sender.send(js_event).unwrap()
                     });
-
-                    self.handle_events();
                 }
             }
 
@@ -125,15 +123,24 @@ macro_rules! constraint_system_wrapper {
                 }
             }
 
+            /// Notifies the constraint system of an event, such as a thread having updated a value.
+            pub fn notify(&self, event_ptr: u32) {
+                use hotdrink_rs::solver::SolveError;
+                use $crate::event::js_event::JsEvent;
+                let event =
+                    unsafe { Box::from_raw(event_ptr as *mut JsEvent<$inner_type, SolveError>) };
+                let mut event_handler = self.event_handler.lock().unwrap();
+                if let Err(e) = event_handler.handle_event(*event) {
+                    log::error!("Failed to handle event: {:?}", e);
+                };
+            }
+
             /// Runs the planner and solver to re-enforce all constraints.
             pub fn update(&self) {
                 let mut inner = self.inner.lock().unwrap();
                 let mut pool = self.pool.lock().unwrap();
-                match inner.par_update(&mut *pool) {
-                    Ok(()) => self.handle_events(),
-                    Err(e) => {
-                        log::error!("Update failed: {:?}", e);
-                    }
+                if let Err(e) = inner.par_update(&mut *pool) {
+                    log::error!("Update failed: {:?}", e);
                 }
             }
 
@@ -213,7 +220,10 @@ macro_rules! constraint_system_wrapper {
 
 #[cfg(test)]
 mod tests {
-    use hotdrink_rs::model::Component;
+    use hotdrink_rs::{
+        model::Component,
+        thread::{DummyPool, TerminationStrategy},
+    };
     use wasm_bindgen::JsValue;
 
     #[ignore = "Simply for verification that it compiles"]
@@ -233,7 +243,14 @@ mod tests {
         };
 
         // Generate a JS wrapper for the constraint system
-        crate::constraint_system_wrapper!(System, Wrapper, Inner);
+        crate::constraint_system_wrapper!(
+            System,
+            Wrapper,
+            Inner,
+            DummyPool,
+            4,
+            TerminationStrategy::UnusedResultAndNotDone
+        );
 
         let mut cs: ConstraintSystem<Inner> = ConstraintSystem::new();
         let comp: Component<Inner> = hotdrink_rs::component! {

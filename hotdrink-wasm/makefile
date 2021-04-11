@@ -4,7 +4,12 @@
 MODE=release
 
 build:
-	wasm-pack build --out-dir www/pkg --target no-modules --$(MODE)
+	wasm-pack build --$(MODE)
+
+build-threaded: RUSTFLAGS='-C target-feature=+atomics,+bulk-memory'
+build-threaded:
+	@echo RUSTFLAGS=$(RUSTFLAGS)
+	wasm-pack build --$(MODE) --target no-modules -- -Z build-std=panic_abort,std --features thread
 
 watch:
 	cargo watch -w src -s make -d 5

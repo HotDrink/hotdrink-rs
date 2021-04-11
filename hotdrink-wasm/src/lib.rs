@@ -34,13 +34,10 @@
 #![feature(concat_idents)]
 
 pub mod event;
-pub mod examples;
 pub mod macros;
 pub mod thread;
 pub mod util;
 
-use js_sys::Date;
-use thread::worker::generic_worker::GenericWorker;
 use wasm_bindgen::prelude::wasm_bindgen;
 
 /// Perform setup such as setting the panic hook for better error messages,
@@ -60,8 +57,11 @@ pub fn start() {
 }
 
 /// Check how long it takes for a web worker running Wasm to start.
+#[cfg(feature = "thread")]
 #[wasm_bindgen]
 pub fn bench_web_worker_init() {
+    use js_sys::Date;
+    use thread::worker::generic_worker::GenericWorker;
     let start = Date::now();
     let worker = GenericWorker::new("TestWorker").unwrap();
     worker

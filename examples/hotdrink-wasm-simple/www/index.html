@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <title>Image resize</title>
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/css/bootstrap.min.css" rel="stylesheet"
+    integrity="sha384-eOJMYsd53ii+scO/bJGFsiCZc+5NDVN2yr8+0RDqr0Ql0h+rP48ckxlpbzKgwra6" crossorigin="anonymous">
+  <style>
+    html {
+      padding: 1%;
+    }
+  </style>
+  <script src="./bootstrap.js"></script>
+</head>
+
+<body>
+  <noscript>This page contains webassembly and javascript content, please enable javascript in your browser.</noscript>
+  <!-- JavaScript Bundle with Popper -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/js/bootstrap.bundle.min.js"
+    integrity="sha384-JEW9xMcG8R+pH31jmWH6WWP0WintQrMb4s7ZOdauHnUtxwoG2vI5DkLtS3qm9Ekf"
+    crossorigin="anonymous"></script>
+
+  <h1>Image resize</h1>
+
+  <div class="form-inline">
+    <div class="row">
+      <div class="col col-md-2">
+        <label for="initial_height">Initial height</label>
+        <input class="form-control" id="initial_height" readonly>
+      </div>
+      <div class="col col-md-2">
+        <label for="initial_width">Initial width</label>
+        <input class="form-control" id="initial_width" readonly>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col col-md-2">
+        <label for="absolute_height">Absolute height</label>
+        <input class="form-control" id="absolute_height">
+        <input type="range" class="form-range" id="absolute_height_range" max="1000">
+      </div>
+      <div class="col col-md-2">
+        <label for="absolute_width">Absolute width</label>
+        <input class="form-control" id="absolute_width">
+        <input type="range" class="form-range" id="absolute_width_range" max="2000">
+      </div>
+    </div>
+    <div class="row">
+      <div class="col col-md-2">
+        <label for="relative_height">Relative height (%)</label>
+        <input class="form-control" id="relative_height">
+      </div>
+      <div class="col col-md-2">
+        <label for="relative_width">Relative width (%)</label>
+        <input class="form-control" id="relative_width">
+      </div>
+    </div>
+    <div class="row">
+      <div class="col col-md-2">
+        <label for="aspect_ratio_checkbox">Preserve ratio</label>
+        <input class="form-check-input" type="checkbox" id="aspect_ratio_checkbox">
+      </div>
+    </div>
+    <div class="row">
+    </div>
+  </div>
+  <img src="stanford_bunny.png" id="image">
+</body>
+
+</html>

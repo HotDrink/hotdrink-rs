@@ -2,6 +2,9 @@
 
 An implementation of HotDrink in Rust, with a wrapper library for compilation to WebAssembly.
 
+Warning: This library is still highly experimental, and the API is likely to change.
+While I would not recommend that this library is used in production, any feedback would be great.
+
 ## hotdrink-rs
 
 The main part of the library, and can be used as-is as a normal Rust dependency.
