@@ -125,22 +125,22 @@ impl<T: Debug> ConstraintSystem<T> {
         T: Send + Sync + 'static + Debug,
     {
         for component in &mut self.components {
-            component.par_update(spawn)?;
+            if component.is_modified() {
+                component.par_update(spawn)?;
+            }
         }
 
         Ok(())
     }
 
-    /// Attempts to enforces all constraints in every component that is modified.
+    /// Attempts to enforces all constraints in every component, even if they have not been modified.
     /// If no plan could be found, it will return a [`PlanError`].
-    pub fn par_update_if_modified(&mut self, spawn: &mut impl ThreadPool) -> Result<(), PlanError>
+    pub fn par_update_always(&mut self, spawn: &mut impl ThreadPool) -> Result<(), PlanError>
     where
         T: Send + Sync + 'static + Debug,
     {
         for component in &mut self.components {
-            if component.is_modified() {
-                component.par_update(spawn)?;
-            }
+            component.par_update(spawn)?;
         }
 
         Ok(())
