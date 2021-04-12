@@ -227,7 +227,7 @@ impl<T: Debug> ConstraintSystem<T> {
         let component = self
             .component_mut(&last_undone)
             .expect("Component was removed");
-        log::info!("Undoing last change in {}", component.name());
+        log::trace!("Undoing last change in {}", component.name());
         let _ = component.undo()?;
         self.redo_stack.push(last_undone);
         Ok(())
@@ -239,7 +239,7 @@ impl<T: Debug> ConstraintSystem<T> {
         let component = self
             .component_mut(&last_redone)
             .expect("Component was removed");
-        log::info!("Redoing last change in {}", component.name());
+        log::trace!("Redoing last change in {}", component.name());
         let _ = component.redo()?;
         self.undo_stack.push(last_redone);
         Ok(())
