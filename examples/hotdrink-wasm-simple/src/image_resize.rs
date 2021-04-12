@@ -7,12 +7,12 @@ use hotdrink_rs::{
 };
 use wasm_bindgen::{prelude::wasm_bindgen, JsValue};
 
-/// Generate a type for values in the constraint system.
-/// The constraint system can only hold values of a single type,
-/// so we must create an enum [`Number`] that has the variants we need.
-/// We can not expose non-C-style enums with `wasm-bindgen`, so we must use [`NumberWrapper`]
-/// to construct the variants instead, using the generated functions `NumberWrapper::i32`
-/// and `NumberWrapper::f64` from JavaScript.
+// Generate a type for values in the constraint system.
+// The constraint system can only hold values of a single type,
+// so we must create an enum [`Number`] that has the variants we need.
+// We can not expose non-C-style enums with `wasm-bindgen`, so we must use [`NumberWrapper`]
+// to construct the variants instead, using the generated functions `NumberWrapper::i32`
+// and `NumberWrapper::f64` from JavaScript.
 hotdrink_wasm::component_type_wrapper! {
     pub struct NumberWrapper {
         #[derive(Debug, Clone)]
@@ -23,12 +23,13 @@ hotdrink_wasm::component_type_wrapper! {
     }
 }
 
-/// Generate a wrapper around the constraint system.
-/// We must specify the generic argument of the constraint system at compile time
-/// to be able to expose the type with `wasm-bindgen`.
+// Generate a wrapper around the constraint system.
+// We must specify the generic argument of the constraint system at compile time
+// to be able to expose the type with `wasm-bindgen`.
 hotdrink_wasm::constraint_system_wrapper!(NumberJsCs, NumberWrapper, Number);
 
-/// Generate the component itself.
+/// Generate a component that describes the constraints
+/// required between properties of the image.
 fn image_resize_component() -> Component<Number> {
     component! {
         component ImageScaling {

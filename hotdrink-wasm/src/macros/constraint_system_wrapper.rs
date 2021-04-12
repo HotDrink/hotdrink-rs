@@ -176,14 +176,16 @@ macro_rules! constraint_system_wrapper {
             pub fn undo(&self) {
                 self.inner.lock().unwrap().undo().unwrap_or_else(|e| {
                     log::error!("Undo failed: {}", e);
-                })
+                });
+                self.handle_events();
             }
 
             /// Undo the last change.
             pub fn redo(&self) {
                 self.inner.lock().unwrap().redo().unwrap_or_else(|e| {
                     log::error!("Redo failed: {}", e);
-                })
+                });
+                self.handle_events();
             }
 
             /// Enables the specified constraint.

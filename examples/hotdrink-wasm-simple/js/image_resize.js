@@ -5,6 +5,18 @@ import("../pkg").then(hd => {
     let cs = hd.image_resize();
     let component = "ImageScaling";
 
+    // Capture undo events
+    document.addEventListener('keydown', (event) => {
+        if (event.ctrlKey && event.key === 'z') {
+            event.preventDefault();
+            cs.undo();
+        }
+        if (event.ctrlKey && event.key === 'Z') {
+            event.preventDefault();
+            cs.redo();
+        }
+    });
+
     // Set initial width and height to image size
     let image = document.getElementById("image");
     cs.set_variable(component, "initial_width", wrapper.i32(image.width));
