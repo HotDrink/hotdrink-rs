@@ -114,6 +114,7 @@ impl<T: Debug> ConstraintSystem<T> {
     where
         T: Send + Sync + 'static + Debug,
     {
+        log::trace!("update");
         self.par_update(&mut DummyPool)
     }
 
@@ -124,6 +125,7 @@ impl<T: Debug> ConstraintSystem<T> {
     where
         T: Send + Sync + 'static + Debug,
     {
+        log::trace!("par_update");
         for component in &mut self.components {
             if component.is_modified() {
                 component.par_update(spawn)?;
@@ -181,6 +183,7 @@ impl<T: Debug> ConstraintSystem<T> {
     ) where
         T: 'static,
     {
+        log::trace!("Subscribing to {}.{}", component, variable);
         let index = self.component_map[component];
         self.components[index]
             .subscribe(variable, callback)
@@ -189,6 +192,7 @@ impl<T: Debug> ConstraintSystem<T> {
 
     /// Unsubscribe from a variable in the specified component to avoid receiving further events.
     pub fn unsubscribe(&mut self, component: &str, variable: &str) {
+        log::trace!("Unsubscribing from {}.{}", component, variable);
         let index = self.component_map[component];
         self.components[index]
             .unsubscribe(variable)

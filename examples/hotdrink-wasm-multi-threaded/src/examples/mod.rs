@@ -9,4 +9,5 @@ pub mod flight_booker;
 pub mod jscs_number;
 pub mod jscs_string;
 pub mod priority_adjust;
+pub mod sum;
 pub mod temperature_converter;
