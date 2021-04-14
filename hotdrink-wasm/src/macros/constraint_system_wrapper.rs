@@ -100,7 +100,8 @@ macro_rules! constraint_system_wrapper {
                     let variable = variable.to_owned();
                     let mut inner = self.inner.lock().unwrap();
                     let event_queue = std::sync::Arc::clone(&self.event_queue);
-                    inner.subscribe(&component.clone(), &variable.clone(), move |e| {
+                    let (component_clone, variable_clone) = (component.clone(), variable.clone());
+                    let result = inner.subscribe(&component_clone, &variable_clone, move |e| {
                         let js_event = $crate::event::js_event::JsEvent::new(
                             component.clone(),
                             variable.clone(),
@@ -108,6 +109,10 @@ macro_rules! constraint_system_wrapper {
                         );
                         event_queue.lock().unwrap().push_back(js_event);
                     });
+
+                    if let Err(e) = result {
+                        log::error!("Subscribe failed: {}", e);
+                    }
 
                     self.handle_events();
                 }
@@ -121,7 +126,9 @@ macro_rules! constraint_system_wrapper {
                 }
                 {
                     let mut inner = self.inner.lock().unwrap();
-                    inner.unsubscribe(component, variable);
+                    if let Err(e) = inner.unsubscribe(component, variable) {
+                        log::error!("Unsubscribe failed: {}", e);
+                    }
                 }
             }
 
@@ -132,7 +139,7 @@ macro_rules! constraint_system_wrapper {
                 match inner.par_update(&mut *pool) {
                     Ok(()) => self.handle_events(),
                     Err(e) => {
-                        log::error!("Update failed: {:?}", e);
+                        log::error!("Update failed: {}", e);
                     }
                 }
             }

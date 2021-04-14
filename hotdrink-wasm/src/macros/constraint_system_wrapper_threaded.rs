@@ -100,7 +100,7 @@ macro_rules! constraint_system_wrapper_threaded {
                     let variable = variable.to_owned();
                     let mut inner = self.inner.lock().unwrap();
                     let sender = self.event_listener.sender().clone();
-                    inner.subscribe(&component.clone(), &variable.clone(), move |e| {
+                    let result = inner.subscribe(&component.clone(), &variable.clone(), move |e| {
                         let js_event = $crate::event::js_event::JsEvent::new(
                             component.clone(),
                             variable.clone(),
@@ -108,6 +108,10 @@ macro_rules! constraint_system_wrapper_threaded {
                         );
                         sender.send(js_event).unwrap()
                     });
+
+                    if let Err(e) = result {
+                        log::error!("{}", e);
+                    }
                 }
             }
 
@@ -119,7 +123,9 @@ macro_rules! constraint_system_wrapper_threaded {
                 }
                 {
                     let mut inner = self.inner.lock().unwrap();
-                    inner.unsubscribe(component, variable);
+                    if let Err(e) = inner.unsubscribe(component, variable) {
+                        log::error!("Unsubscribe failed: {}", e);
+                    }
                 }
             }
 

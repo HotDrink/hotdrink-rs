@@ -119,7 +119,7 @@ impl<T> Component<T> {
         self.variables.get(idx).ok_or(NoSuchVariable(variable))
     }
 
-    /// Returns the current value of `variable`, if one exists.
+    /// Returns the current activation of `variable`, if one exists.
     pub fn value<'a>(&self, variable: &'a str) -> Result<Activation<T>, NoSuchVariable<'a>> {
         let idx = self.variable_index(variable)?;
         self.variables

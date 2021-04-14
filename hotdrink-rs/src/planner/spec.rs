@@ -2,7 +2,7 @@
 
 use crate::{builders::method_builder::MutabilityMismatch, planner::Vertex};
 use std::{
-    fmt::Debug,
+    fmt::{Debug, Display},
     ops::{Index, IndexMut},
     sync::Arc,
 };
@@ -73,6 +73,15 @@ pub trait ConstraintSpec {
 pub enum PlanError {
     /// The system was overconstrained, and no plan was found.
     Overconstrained,
+}
+
+impl Display for PlanError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "No valid plan was found since the system is overconstrained"
+        )
+    }
 }
 
 /// A trait for objects which have the properties of

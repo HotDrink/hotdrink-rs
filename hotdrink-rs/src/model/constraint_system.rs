@@ -5,7 +5,7 @@
 use super::{
     activation::Activation,
     component::Component,
-    errors::{ApiError, NoSuchComponent},
+    errors::{NoSuchComponent, NoSuchItem},
     undo::{NoMoreRedo, NoMoreUndo, UndoLimit},
     variable::Variable,
 };
@@ -76,7 +76,7 @@ impl<T: Debug> ConstraintSystem<T> {
         component: &'s str,
         variable: &'s str,
         value: T,
-    ) -> Result<(), ApiError<'s>> {
+    ) -> Result<(), NoSuchItem<'s>> {
         self.undo_stack.push(component.to_string());
         self.redo_stack.clear();
         log::trace!("Variable {}.{} updated to {:?}", component, variable, value);
@@ -90,18 +90,18 @@ impl<T: Debug> ConstraintSystem<T> {
         &self,
         component: &'a str,
         variable: &'a str,
-    ) -> Result<&Variable<Activation<T>>, ApiError<'a>> {
+    ) -> Result<&Variable<Activation<T>>, NoSuchItem<'a>> {
         let component = self.component(component)?;
         let variable = component.variable(variable)?;
         Ok(variable)
     }
 
-    /// Returns the current value of the variable with name `variable` in `component`, if one exists.
+    /// Returns the current activation of the variable with name `variable` in `component`, if one exists.
     pub fn value<'a>(
         &self,
         component: &'a str,
         variable: &'a str,
-    ) -> Result<Activation<T>, ApiError<'a>> {
+    ) -> Result<Activation<T>, NoSuchItem<'a>> {
         let component = self.component(component)?;
         let variable = component.value(variable)?;
         Ok(variable)
@@ -175,28 +175,33 @@ impl<T: Debug> ConstraintSystem<T> {
     ///     Event::Error(errors) => panic!("{:?}", errors),
     /// });
     /// ```
-    pub fn subscribe(
+    pub fn subscribe<'a>(
         &mut self,
-        component: &str,
-        variable: &str,
-        callback: impl for<'a> Fn(Event<'a, T, SolveError>) + Send + 'static,
-    ) where
+        component: &'a str,
+        variable: &'a str,
+        callback: impl for<'e> Fn(Event<'e, T, SolveError>) + Send + 'static,
+    ) -> Result<(), NoSuchItem<'a>>
+    where
         T: 'static,
     {
         log::trace!("Subscribing to {}.{}", component, variable);
-        let index = self.component_map[component];
-        self.components[index]
+        let component = self.component_mut(component)?;
+        component
             .subscribe(variable, callback)
-            .expect("Could not subscribe");
+            .map_err(NoSuchItem::NoSuchVariable)
     }
 
     /// Unsubscribe from a variable in the specified component to avoid receiving further events.
-    pub fn unsubscribe(&mut self, component: &str, variable: &str) {
+    pub fn unsubscribe<'a>(
+        &mut self,
+        component: &'a str,
+        variable: &'a str,
+    ) -> Result<(), NoSuchItem<'a>> {
         log::trace!("Unsubscribing from {}.{}", component, variable);
-        let index = self.component_map[component];
-        self.components[index]
+        let component = self.component_mut(component)?;
+        component
             .unsubscribe(variable)
-            .expect("Could not unsubscribe");
+            .map_err(NoSuchItem::NoSuchVariable)
     }
 
     /// Pins a variable.
@@ -204,7 +209,7 @@ impl<T: Debug> ConstraintSystem<T> {
     /// This adds a stay constraint to the specified variable,
     /// meaning that planning will attempt to avoid modifying it.
     /// The stay constraint can be remove with [`unpin`](#method.unpin).
-    pub fn pin<'s>(&mut self, component: &'s str, variable: &'s str) -> Result<(), ApiError<'s>>
+    pub fn pin<'s>(&mut self, component: &'s str, variable: &'s str) -> Result<(), NoSuchItem<'s>>
     where
         T: 'static,
     {
@@ -216,7 +221,7 @@ impl<T: Debug> ConstraintSystem<T> {
     /// Unpins a variable.
     ///
     /// This removes the stay constraint added by [`pin`](#method.pin).
-    pub fn unpin<'s>(&mut self, component: &'s str, variable: &'s str) -> Result<(), ApiError<'s>>
+    pub fn unpin<'s>(&mut self, component: &'s str, variable: &'s str) -> Result<(), NoSuchItem<'s>>
     where
         T: 'static,
     {
@@ -261,7 +266,7 @@ impl<T: Debug> ConstraintSystem<T> {
         &mut self,
         component: &'a str,
         variable: &'a str,
-    ) -> Result<(), ApiError<'a>> {
+    ) -> Result<(), NoSuchItem<'a>> {
         let component = self.component_mut(component)?;
         component.enable_constraint(variable)?;
         Ok(())
@@ -272,7 +277,7 @@ impl<T: Debug> ConstraintSystem<T> {
         &mut self,
         component: &'a str,
         variable: &'a str,
-    ) -> Result<(), ApiError<'a>> {
+    ) -> Result<(), NoSuchItem<'a>> {
         let component = self.component_mut(component)?;
         component.disable_constraint(variable)?;
         Ok(())
