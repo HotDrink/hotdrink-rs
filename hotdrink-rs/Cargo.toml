@@ -1,12 +1,12 @@
 [package]
 name = "hotdrink-rs"
-version = "0.1.0"
+version = "0.1.1"
 authors = ["Rudi B. Svartveit <rudsvar@gmail.com>"]
 edition = "2018"
 description = "An implementation of HotDrink in Rust."
 license = "MIT OR Apache-2.0"
 keywords = [ "algorithms", "data-structures", "constraint-systems" ]
-repository = "https://github.com/HotDrink/hotdrink-rs/hotdrink-rs"
+repository = "https://github.com/HotDrink/hotdrink-rs"
 
 [dependencies]
 
