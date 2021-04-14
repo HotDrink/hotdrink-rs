@@ -1,6 +1,6 @@
 use wasm_bindgen::prelude::*;
 
-mod examples;
+pub mod examples;
 
 /// Perform setup such as setting the panic hook for better error messages,
 /// and initialize the Wasm logging library.
