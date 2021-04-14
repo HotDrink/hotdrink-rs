@@ -6,7 +6,7 @@ edition = "2018"
 description = "WebAssembly wrappers for hotdrink-rs"
 license = "MIT OR Apache-2.0"
 keywords = [ "wasm", "web-programming", "gui", "algorithms", "data-structures" ]
-repository = "https://github.com/HotDrink/hotdrink-rs/hotdrink-wasm"
+repository = "https://github.com/HotDrink/hotdrink-rs"
 
 [lib]
 crate-type = ["cdylib", "rlib"]
