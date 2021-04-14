@@ -100,7 +100,8 @@ macro_rules! constraint_system_wrapper_threaded {
                     let variable = variable.to_owned();
                     let mut inner = self.inner.lock().unwrap();
                     let sender = self.event_listener.sender().clone();
-                    let result = inner.subscribe(&component.clone(), &variable.clone(), move |e| {
+                    let (component_clone, variable_clone) = (component.clone(), variable.clone());
+                    let result = inner.subscribe(&component_clone, &variable_clone, move |e| {
                         let js_event = $crate::event::js_event::JsEvent::new(
                             component.clone(),
                             variable.clone(),
@@ -110,7 +111,7 @@ macro_rules! constraint_system_wrapper_threaded {
                     });
 
                     if let Err(e) = result {
-                        log::error!("{}", e);
+                        log::error!("Subscribe failed: {}", e);
                     }
                 }
             }
@@ -235,8 +236,6 @@ mod tests {
     #[ignore = "Simply for verification that it compiles"]
     #[test]
     fn it_compiles() {
-        use hotdrink_rs::model::ConstraintSystem;
-
         // Generate constraint system value and a JS wrapper for it
         crate::component_type_wrapper! {
             pub struct Wrapper {
@@ -257,14 +256,5 @@ mod tests {
             4,
             TerminationStrategy::UnusedResultAndNotDone
         );
-
-        let mut cs: ConstraintSystem<Inner> = ConstraintSystem::new();
-        let comp: Component<Inner> = hotdrink_rs::component! {
-            component empty_comp {
-                let x: i32 = 0;
-            }
-        };
-        cs.add_component(comp);
-        let _jscs: Result<System, JsValue> = System::wrap(cs);
     }
 }

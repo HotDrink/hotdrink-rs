@@ -222,14 +222,9 @@ macro_rules! constraint_system_wrapper {
 
 #[cfg(test)]
 mod tests {
-    use hotdrink_rs::model::Component;
-    use wasm_bindgen::JsValue;
-
     #[ignore = "Simply for verification that it compiles"]
     #[test]
     fn it_compiles() {
-        use hotdrink_rs::model::ConstraintSystem;
-
         // Generate constraint system value and a JS wrapper for it
         crate::component_type_wrapper! {
             pub struct Wrapper {
@@ -243,14 +238,5 @@ mod tests {
 
         // Generate a JS wrapper for the constraint system
         crate::constraint_system_wrapper!(System, Wrapper, Inner);
-
-        let mut cs: ConstraintSystem<Inner> = ConstraintSystem::new();
-        let comp: Component<Inner> = hotdrink_rs::component! {
-            component empty_comp {
-                let x: i32 = 0;
-            }
-        };
-        cs.add_component(comp);
-        let _jscs: Result<System, JsValue> = System::wrap(cs);
     }
 }
