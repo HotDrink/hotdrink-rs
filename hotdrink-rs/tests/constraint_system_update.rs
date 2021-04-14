@@ -16,7 +16,8 @@ pub fn basic_constraint_system() {
         Event::Pending => {}
         Event::Ready(v) => assert_eq!(*v, 0),
         Event::Error(errors) => panic!("Got errors: {:?}", errors),
-    });
+    })
+    .unwrap();
 
     let update_result = cs.update();
     assert_eq!(update_result, Ok(()));
