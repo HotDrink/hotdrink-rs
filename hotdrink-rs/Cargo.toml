@@ -1,6 +1,6 @@
 [package]
 name = "hotdrink-rs"
-version = "0.4.0"
+version = "0.1.0"
 authors = ["Rudi B. Svartveit <rudsvar@gmail.com>"]
 edition = "2018"
 description = "An implementation of HotDrink in Rust."

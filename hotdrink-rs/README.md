@@ -5,6 +5,8 @@ HotDrink implemented in Rust.
 HotDrink lets you declaratively describe relations between values and how to enforce them,
 and can then automatically do so when the value of a variable changes.
 
+This library is still very experimental, and the API may change.
+
 ## Introduction
 
 Before getting started, here is a quick introduction to the terminology and how it works.

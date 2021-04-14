@@ -2,6 +2,8 @@
 
 A wrapper library around `hotdrink-rs` for compilation to WebAssembly.
 
+This library is still very experimental, and the API may change.
+
 ## Prerequisites
 
 The project uses multiple nightly features, and must be built using nightly Rust.

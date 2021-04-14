@@ -1,6 +1,6 @@
 [package]
 name = "hotdrink-wasm"
-version = "0.3.0"
+version = "0.1.0"
 authors = ["Rudi B. Svartveit <rudsvar@gmail.com>"]
 edition = "2018"
 description = "WebAssembly wrappers for hotdrink-rs"
