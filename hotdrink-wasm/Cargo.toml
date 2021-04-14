@@ -19,7 +19,7 @@ thread = []
 
 [dependencies]
 
-hotdrink-rs = { path = "../hotdrink-rs" }
+hotdrink-rs = "0.1.1"
 
 # Logging
 log = "0.4.11"
