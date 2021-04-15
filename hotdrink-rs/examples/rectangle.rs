@@ -18,11 +18,11 @@ pub fn main() {
             }
 
             // Define a constraint representing `2 * height + 2 * width = perimeter`.
-            constraint TwoHeightPlusTwoAreaEqualsPerimeter {
+            constraint TwoHeightPlusTwoWidthEqualsPerimeter {
                 // Define three ways to enforce it.
-                hwp(height: &i32, width: &i32) -> [perimeter] = ret![*height * *width];
-                hpw(height: &i32, perimeter: &i32) -> [width] = ret![*perimeter / *height];
-                wph(width: &i32, perimeter: &i32) -> [height] = ret![*perimeter / *width];
+                hwp(height: &i32, width: &i32) -> [perimeter] = ret![2 * *height + 2 * *width];
+                hpw(height: &i32, perimeter: &i32) -> [width] = ret![*perimeter - 2 * *height];
+                wph(width: &i32, perimeter: &i32) -> [height] = ret![*perimeter - 2 * *width];
             }
         }
     };
