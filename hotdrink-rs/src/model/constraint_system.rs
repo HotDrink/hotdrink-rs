@@ -20,8 +20,7 @@ use std::{collections::HashMap, fmt::Debug};
 /// A container for `Component`s.
 #[derive(Clone, Debug, PartialEq)]
 pub struct ConstraintSystem<T> {
-    component_map: HashMap<String, usize>,
-    components: Vec<Component<T>>,
+    components: HashMap<String, Component<T>>,
     undo_stack: Vec<String>,
     redo_stack: Vec<String>,
 }
@@ -29,8 +28,7 @@ pub struct ConstraintSystem<T> {
 impl<T> Default for ConstraintSystem<T> {
     fn default() -> Self {
         Self {
-            component_map: HashMap::new(),
-            components: Vec::new(),
+            components: HashMap::new(),
             undo_stack: Vec::new(),
             redo_stack: Vec::new(),
         }
@@ -45,18 +43,18 @@ impl<T: Debug> ConstraintSystem<T> {
 
     /// Adds a component to the constraint system.
     pub fn add_component(&mut self, component: Component<T>) {
-        let index = self.components.len();
-        self.component_map
-            .insert(component.name().to_owned(), index);
-        self.components.push(component);
+        self.components
+            .insert(component.name().to_owned(), component);
+    }
+
+    /// Removes a component from the constraint system.
+    pub fn remove_component(&mut self, name: &str) -> Option<Component<T>> {
+        self.components.remove(name)
     }
 
     /// Get a reference to the selected component.
     pub fn component<'s>(&self, name: &'s str) -> Result<&Component<T>, NoSuchComponent<'s>> {
-        match self.component_map.get(name) {
-            Some(&index) => Ok(&self.components[index]),
-            None => Err(NoSuchComponent(&name)),
-        }
+        self.components.get(name).ok_or(NoSuchComponent(name))
     }
 
     /// Get a mutable reference to the selected component.
@@ -64,10 +62,7 @@ impl<T: Debug> ConstraintSystem<T> {
         &mut self,
         name: &'s str,
     ) -> Result<&mut Component<T>, NoSuchComponent<'s>> {
-        match self.component_map.get(name) {
-            Some(&index) => Ok(&mut self.components[index]),
-            None => Err(NoSuchComponent(&name)),
-        }
+        self.components.get_mut(name).ok_or(NoSuchComponent(name))
     }
 
     /// Updates the specified variable to the provided value.
@@ -126,7 +121,7 @@ impl<T: Debug> ConstraintSystem<T> {
         T: Send + Sync + 'static + Debug,
     {
         log::trace!("par_update");
-        for component in &mut self.components {
+        for component in self.components.values_mut() {
             if component.is_modified() {
                 component.par_update(spawn)?;
             }
@@ -141,7 +136,7 @@ impl<T: Debug> ConstraintSystem<T> {
     where
         T: Send + Sync + 'static + Debug,
     {
-        for component in &mut self.components {
+        for component in self.components.values_mut() {
             component.par_update(spawn)?;
         }
 
@@ -256,7 +251,7 @@ impl<T: Debug> ConstraintSystem<T> {
 
     /// Sets the undo-limit per component in the system.
     pub fn set_undo_limit(&mut self, limit: UndoLimit) {
-        for component in &mut self.components {
+        for component in self.components.values_mut() {
             component.set_undo_limit(limit);
         }
     }
