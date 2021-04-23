@@ -75,16 +75,12 @@
 //! cs.update();
 //! ```
 //!
-//! # Building
+//! # Examples
 //!
 //! The project uses multiple nightly features, and must be built using nightly Rust.
 //! I recommend using `rustup`, which can be downloaded [here](https://rustup.rs/).
 //!
-//! If an appropriate version of Rust is installed, it should be as simple as running the following:
-//!
-//! ```bash
-//! cargo build --release
-//! ```
+//! The examples in `./examples` can then be run with `cargo run --example <name>`.
 
 #![warn(
     missing_copy_implementations,
