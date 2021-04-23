@@ -2,8 +2,8 @@
 //!
 //! 1. [`ConstraintSystem`](self::ConstraintSystem)
 //! 2. [`Component`](self::Component)
-//! 3. [`Constraint`](self::Component)
-//! 4. [`Method`](self::Component)
+//! 3. [`Constraint`](self::Constraint)
+//! 4. [`Method`](self::Method)
 //!
 //! As well as other types used in the API.
 
