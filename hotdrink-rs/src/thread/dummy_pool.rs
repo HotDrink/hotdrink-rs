@@ -2,7 +2,7 @@
 //! It will execute the work on the main thread.
 //! Commonly used for testing and benchmarking.
 
-use super::thread_pool::{TerminationHandle, TerminationStrategy, ThreadPool};
+use super::thread_pool::{TerminationHandle, ThreadPool};
 
 /// A thread pool with no actual additional threads.
 /// It will execute the work on the main thread.
@@ -13,7 +13,7 @@ pub struct DummyPool;
 impl ThreadPool for DummyPool {
     type NewError = bool;
     type ExecError = bool;
-    fn new(_: usize, _: TerminationStrategy) -> Result<Self, Self::NewError> {
+    fn new(_: usize) -> Result<Self, Self::NewError> {
         Ok(DummyPool)
     }
 

@@ -1,24 +1,10 @@
-//! Traits and types for thread pools with cancellation-capabilities.
+//! A trait for threadpool-like types.
 
 use std::fmt::Debug;
 use std::sync::{
     atomic::{AtomicBool, Ordering},
     Arc,
 };
-
-/// Strategies for when to terminate workers.
-#[derive(Copy, Clone, Debug, PartialEq, Eq)]
-pub enum TerminationStrategy {
-    /// Never terminate any threads.
-    Never,
-    /// Terminate workers that compute a result that is no longer required,
-    /// and are still not done with their current computation.
-    UnusedResultAndNotDone,
-    /// Terminate workers that compute a result that is no longer required,
-    /// are still not done with their current computation,
-    /// and have been working for the specified number of milliseconds.
-    UnusedResultAndNotDoneInMs(usize),
-}
 
 /// A trait for thread pool implementations.
 pub trait ThreadPool {
@@ -28,10 +14,7 @@ pub trait ThreadPool {
     type ExecError: Debug;
 
     /// Creates a new thread pool with the specified number of initial workers.
-    fn new(
-        initial: usize,
-        termination_strategy: TerminationStrategy,
-    ) -> Result<Self, Self::NewError>
+    fn new(initial: usize) -> Result<Self, Self::NewError>
     where
         Self: Sized;
 

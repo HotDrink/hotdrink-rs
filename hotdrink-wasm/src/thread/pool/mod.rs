@@ -16,4 +16,4 @@ pub use pool_worker::PoolWorker;
 #[cfg(feature = "thread")]
 pub use static_pool::StaticPool;
 
-pub use worker_pool::WorkerPool;
+pub use worker_pool::{TerminationStrategy, WorkerPool};
