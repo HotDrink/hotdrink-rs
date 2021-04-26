@@ -97,7 +97,7 @@ impl<T> MethodSpec for Method<T> {
     }
 }
 
-/// A [`VariableActivationInner`] wrapped in an [`Arc`] and a [`Mutex`] so that it can be shared.
+/// A [`ActivationInner`] wrapped in an [`Arc`] and a [`Mutex`] so that it can be shared.
 pub type SharedVariableActivationInner<T> = Arc<Mutex<ActivationInner<T>>>;
 
 fn handle_error<T>(

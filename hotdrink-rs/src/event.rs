@@ -14,7 +14,7 @@ pub enum Event<'a, T, E> {
     Error(&'a Vec<E>),
 }
 
-/// An event from [`ConstraintSystem::update`](crate::ConstraintSystem::update) with information about
+/// An event from [`ConstraintSystem::update`](crate::model::ConstraintSystem::update) with information about
 /// which variable it is, and which generation the computation is from.
 #[derive(Debug)]
 pub(crate) struct EventWithLocation<'a, T, E> {
@@ -24,7 +24,7 @@ pub(crate) struct EventWithLocation<'a, T, E> {
 }
 
 impl<'a, T, E> EventWithLocation<'a, T, E> {
-    /// Constructs a new [`GeneralEvent`] for the specified variable.
+    /// Constructs a new [`EventWithLocation`] for the specified variable.
     ///
     /// This includes the generation the computation is from, and what the event is.
     pub fn new(variable: usize, generation: GenerationId, event: Event<'a, T, E>) -> Self {

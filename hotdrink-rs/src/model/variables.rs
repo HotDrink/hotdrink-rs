@@ -34,7 +34,7 @@ impl<T> Default for Variables<T> {
 }
 
 impl<T> Variables<T> {
-    /// Constructs a new [`UndoVec`] with the specified default values.
+    /// Constructs a new [`Variables`] with the specified default values.
     pub fn new(start_values: Vec<T>) -> Self {
         Self {
             variables: start_values.into_iter().map(Variable::from).collect(),
@@ -42,7 +42,7 @@ impl<T> Variables<T> {
         }
     }
 
-    /// Constructs a new [`UndoVec`] with the specified default values and history limit.
+    /// Constructs a new [`Variables`] with the specified default values and history limit.
     pub fn new_with_limit(start_values: Vec<T>, undo_limit: usize) -> Self {
         let mut without_cap = Self::new(start_values);
         without_cap.undo_limit = UndoLimit::Limited(undo_limit);

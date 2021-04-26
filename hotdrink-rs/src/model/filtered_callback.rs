@@ -1,6 +1,6 @@
 //! Extra information about a variable, such as its status, generation, and callbacks.
 
-use super::{generation_id::GenerationId, activation::EventCallback};
+use super::{activation::EventCallback, generation_id::GenerationId};
 use crate::event::{Event, EventWithLocation};
 use std::fmt::Debug;
 use std::sync::{Arc, Mutex};
@@ -32,7 +32,7 @@ impl<T, E> Default for FilteredCallback<T, E> {
 }
 
 impl<T, E: Clone> FilteredCallback<T, E> {
-    /// Constructs a new [`VariableInfo`] with the specified status.
+    /// Constructs a new [`FilteredCallback`] with the specified status.
     pub fn new() -> Self {
         Self::default()
     }

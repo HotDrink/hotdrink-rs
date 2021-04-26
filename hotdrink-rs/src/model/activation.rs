@@ -27,7 +27,7 @@ pub enum State<T> {
     Error(Vec<SolveError>),
 }
 
-/// A callback to an [`Event`] sent from a call to [`ConstraintSystem::update`](crate::ConstraintSystem::update).
+/// A callback to an [`Event`] sent from a call to [`ConstraintSystem::update`](crate::model::ConstraintSystem::update).
 pub type EventCallback<T, E> = Arc<Mutex<dyn Fn(Event<'_, T, E>) + Send>>;
 
 /// Contains a slot for a value to be produced,
