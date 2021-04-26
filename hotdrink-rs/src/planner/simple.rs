@@ -372,20 +372,6 @@ mod tests {
         );
     }
 
-    #[test]
-    pub fn selected_free_method_must_write_to_variable() {
-        let comp: Component<i32> = crate::component! {
-            component Comp {
-                let _a: i32 = 0;
-                constraint A {
-                    a1(_a: &i32) -> [] = ret![];
-                }
-            }
-        };
-        let plan = simple_planner(&comp);
-        assert_eq!(plan, None,);
-    }
-
     extern crate test;
     use test::Bencher;
 
