@@ -45,9 +45,9 @@ macro_rules! component {
                         // Match a method, its inputs, outputs and body.
                         $method_name:ident
                             ($($inp:ident: $inp_ty:ty),*)
-                            $(-> [$($out:ident),*])?
+                            $(-> [$($out:ident),+])?
                             = $m_expr:expr;
-                    )*
+                    )+
                 }
             )*
         }
