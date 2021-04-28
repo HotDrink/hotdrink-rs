@@ -2,7 +2,8 @@
 //! or if their results are no longer required.
 
 use super::{pool_worker::Work, PoolWorker, WorkerPool};
-use hotdrink_rs::thread::{TerminationHandle, TerminationStrategy, ThreadPool};
+use crate::thread::TerminationStrategy;
+use hotdrink_rs::thread::{TerminationHandle, ThreadPool};
 use std::sync::{
     mpsc::{self, Sender},
     Arc, Mutex,
@@ -24,10 +25,10 @@ impl ThreadPool for StaticPool {
     type ExecError = JsValue;
 
     /// Tries to create a new `StaticPool` with the specified number of workers.
-    fn new(initial: usize, termination_strategy: TerminationStrategy) -> Result<Self, JsValue> {
+    fn new(initial: usize) -> Result<Self, JsValue> {
         Self::from_url(
             initial,
-            termination_strategy,
+            TerminationStrategy::UnusedResultAndNotDone,
             &crate::thread::worker::worker_script::create(),
         )
     }

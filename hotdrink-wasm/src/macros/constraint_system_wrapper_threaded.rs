@@ -226,7 +226,8 @@ macro_rules! constraint_system_wrapper_threaded {
 
 #[cfg(test)]
 mod tests {
-    use hotdrink_rs::thread::{DummyPool, TerminationStrategy};
+    use crate::thread::TerminationStrategy;
+    use hotdrink_rs::thread::DummyPool;
 
     #[ignore = "Simply for verification that it compiles"]
     #[test]

@@ -24,8 +24,7 @@ pub trait WorkerPool: ThreadPool {
     /// This is useful to avoid creating many instances of the blob.
     fn from_url(
         initial: usize,
-        // TODO: Migrate to crate::TerminationStrategy
-        termination_strategy: hotdrink_rs::thread::TerminationStrategy,
+        termination_strategy: TerminationStrategy,
         wasm_bindgen_shim_url: &str,
     ) -> Result<Self, Self::NewError>
     where
@@ -33,15 +32,10 @@ pub trait WorkerPool: ThreadPool {
 }
 
 impl WorkerPool for DummyPool {
-    fn from_url(
-        initial: usize,
-        // TODO: Migrate to crate::TerminationStrategy
-        termination_strategy: hotdrink_rs::thread::TerminationStrategy,
-        _: &str,
-    ) -> Result<Self, Self::NewError>
+    fn from_url(initial: usize, _: TerminationStrategy, _: &str) -> Result<Self, Self::NewError>
     where
         Self: Sized,
     {
-        Self::new(initial, termination_strategy)
+        Self::new(initial)
     }
 }

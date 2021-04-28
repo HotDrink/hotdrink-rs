@@ -1,7 +1,6 @@
 //! A wrapper around [`GenericWorker`] to make it more convenient to use in a thread pool.
 
-use crate::thread::worker::generic_worker::GenericWorker;
-use hotdrink_rs::thread::TerminationStrategy;
+use crate::thread::{worker::generic_worker::GenericWorker, TerminationStrategy};
 use js_sys::Date;
 use std::sync::{
     atomic::{AtomicBool, Ordering},

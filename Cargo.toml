@@ -2,10 +2,9 @@
 members = [
     "hotdrink-rs",
     "hotdrink-wasm",
-    "examples/hotdrink-rs-iced",
-    "examples/hotdrink-wasm-simple",
-    "examples/hotdrink-wasm-multi-threaded",
-    "examples/hotdrink-wasm-node",
+]
+exclude = [
+    "examples"
 ]
 
 [profile.release.package.hotdrink-rs]
