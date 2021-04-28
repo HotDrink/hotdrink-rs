@@ -2,6 +2,11 @@
 
 A wrapper library around `hotdrink-rs` for compilation to WebAssembly.
 
+[![Crates.io][crates-badge]][crates-url]
+
+[crates-badge]: https://img.shields.io/crates/v/hotdrink-rs.svg
+[crates-url]: https://crates.io/crates/hotdrink-rs
+
 ## Prerequisites
 
 The project uses multiple nightly features, and must be built using nightly Rust.
@@ -82,10 +87,9 @@ hotdrink-wasm = { version = "0.1.1", features = ["thread"] }
 To use a multithreaded constraint system, you would create it like this instead:
 
 ```rust
-use hotdrink_rs::thread::TerminationStrategy;
 use hotdrink_wasm::{component_type_wrapper};
 #[cfg(feature = "thread")]
-use hotdrink_wasm::{constraint_system_wrapper_threaded, thread::StaticPool};
+use hotdrink_wasm::{constraint_system_wrapper_threaded, thread::{StaticPool, TerminationStrategy}};
 
 component_type_wrapper! {
     pub struct ValueWrapper {

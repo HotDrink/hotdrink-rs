@@ -3,6 +3,11 @@
 //! HotDrink lets you describe relations between values declaratively and how to enforce them,
 //! and can then automatically do so when the value of a variable changes.
 //!
+//! [![Crates.io][crates-badge]][crates-url]
+//!
+//! [crates-badge]: https://img.shields.io/crates/v/hotdrink-rs.svg
+//! [crates-url]: https://crates.io/crates/hotdrink-rs
+//!
 //! # Introduction
 //!
 //! Before getting started, here is a quick introduction to the terminology and how it works.
