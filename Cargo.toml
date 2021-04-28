@@ -2,6 +2,7 @@
 members = [
     "hotdrink-rs",
     "hotdrink-wasm",
+    "hotdrink-c",
 ]
 exclude = [
     "examples"
