@@ -6,13 +6,14 @@ pub struct IntComponent {
     inner: Component<i32>,
 }
 
+/// Creates a new sum-component.
 #[no_mangle]
 pub extern "C" fn component_new() -> *mut IntComponent {
     let sum: Component<i32> = sum();
     Box::into_raw(Box::new(IntComponent { inner: sum }))
 }
 
-/// Update the specified component.
+/// Updates the specified component.
 ///
 /// # Safety
 ///
@@ -22,19 +23,25 @@ pub unsafe extern "C" fn component_free(component: *mut IntComponent) {
     Box::from_raw(component);
 }
 
+/// The different kinds of events.
 #[repr(C)]
 pub enum CEventType {
+    /// A pending value.
     Pending,
+    /// A completed value.
     Ready,
+    /// A failed value.
     Error,
 }
 
+/// Data contained in an [`CEvent`].
 #[repr(C)]
 pub union CEventData {
     value: i32,
     error: *const c_char,
 }
 
+/// An event from a constraint system.
 #[repr(C)]
 pub struct CEvent {
     variable: *const c_char,
@@ -42,7 +49,7 @@ pub struct CEvent {
     event_data: CEventData,
 }
 
-/// Subscribe to the specified component.
+/// Subscribes to the specified component.
 ///
 /// # Safety
 ///
@@ -83,7 +90,7 @@ pub unsafe extern "C" fn component_subscribe(
         .is_ok()
 }
 
-/// Set a variable's value in the specified component.
+/// Sets a variable's value in the specified component.
 ///
 /// # Safety
 ///
@@ -98,7 +105,7 @@ pub unsafe extern "C" fn component_set_variable(
     (*component).inner.set_variable(variable, value).unwrap();
 }
 
-/// Update the specified component.
+/// Updates the specified component.
 ///
 /// # Safety
 ///
