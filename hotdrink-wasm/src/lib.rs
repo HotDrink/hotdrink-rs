@@ -80,10 +80,9 @@
 //! To use a multithreaded constraint system, you would create it like this instead:
 //!
 //! ```rust
-//! use hotdrink_rs::thread::TerminationStrategy;
 //! use hotdrink_wasm::{component_type_wrapper};
 //! #[cfg(feature = "thread")]
-//! use hotdrink_wasm::{constraint_system_wrapper_threaded, thread::StaticPool};
+//! use hotdrink_wasm::{constraint_system_wrapper_threaded, thread::{StaticPool, TerminationStrategy}};
 //!
 //! component_type_wrapper! {
 //!     pub struct ValueWrapper {

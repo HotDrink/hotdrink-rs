@@ -9,5 +9,5 @@ repository = "https://github.com/HotDrink/hotdrink-rs"
 
 [dependencies]
 iced = "0.2"
-hotdrink-rs = "0.1.1"
+hotdrink-rs = { path = "../../hotdrink-rs" }
 futures = "0.3.13"

@@ -43,10 +43,7 @@ macro_rules! constraint_system_wrapper {
                 // Create the event listener
                 // Create the worker pool for executing methods
                 use hotdrink_rs::thread::ThreadPool;
-                let pool = hotdrink_rs::thread::DummyPool::new(
-                    1,
-                    hotdrink_rs::thread::TerminationStrategy::Never,
-                )?;
+                let pool = hotdrink_rs::thread::DummyPool::new(1)?;
                 // Combine it all
                 Ok(Self {
                     inner: std::sync::Mutex::new(inner),
