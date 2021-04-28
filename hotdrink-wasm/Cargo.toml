@@ -1,9 +1,9 @@
 [package]
 name = "hotdrink-wasm"
-version = "0.1.1"
+version = "0.1.2"
 authors = ["Rudi B. Svartveit <rudsvar@gmail.com>"]
 edition = "2018"
-description = "WebAssembly wrappers for hotdrink-rs"
+description = "WebAssembly bindings for hotdrink-rs."
 license = "MIT OR Apache-2.0"
 keywords = [ "wasm", "web-programming", "gui", "algorithms", "data-structures" ]
 repository = "https://github.com/HotDrink/hotdrink-rs"
@@ -23,7 +23,6 @@ hotdrink-rs = "0.1.1"
 
 # Logging
 log = "0.4.11"
-wasm-logger = "0.2.0"
 
 # Misc
 itertools = "0.10.0"

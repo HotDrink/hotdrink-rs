@@ -2,28 +2,120 @@
 
 A wrapper library around `hotdrink-rs` for compilation to WebAssembly.
 
-This library is still very experimental, and the API may change.
-
 ## Prerequisites
 
 The project uses multiple nightly features, and must be built using nightly Rust.
 I recommend using `rustup`, which can be downloaded [here](https://rustup.rs/),
 
-You also need `wasm-pack`, which can be downloaded [here](https://rustwasm.github.io/wasm-pack/installer/).
+You also need `wasm-pack` to compile your project to WebAssembly, which can be downloaded [here](https://rustwasm.github.io/wasm-pack/installer/).
 
-The standard library must be recompiled, which means that we need the standard library source code.
+The standard library must be recompiled with atomics enabled to use Web Workers as threads,
+which means that we need the standard library source code.
 This can be downloaded with `rustup component add rust-src`.
 
-## Build
+## Usage
+
+Add the following to your `Cargo.toml`:
+
+```toml
+hotdrink-wasm = "0.1.1"
+```
+
+### Single threaded
+
+```rust
+use hotdrink_rs::{component, model::ConstraintSystem};
+use hotdrink_wasm::{component_type_wrapper, constraint_system_wrapper};
+use wasm_bindgen::{JsValue, prelude::wasm_bindgen};
+
+component_type_wrapper! {
+    pub struct ValueWrapper {
+        #[derive(Clone, Debug)]
+        pub enum Value {
+            i32,
+            String
+        }
+    }
+}
+
+constraint_system_wrapper!(MyCs, ValueWrapper, Value);
+
+#[wasm_bindgen]
+pub fn make_cs() -> Result<MyCs, JsValue> {
+    let mut cs = ConstraintSystem::new();
+    cs.add_component(component! {
+        component MyComponent {
+            let a: i32 = 0, b: String = "";
+            // <contraints>
+        }
+    });
+    MyCs::wrap(cs)
+}
+```
+
+After producing a JavaScript module in www/pkg with
+```bash
+wasm-pack build --out-dir www/pkg --release
+```
+you can use the wrapper like this:
+
+```javascript
+let cs = wasm.make_cs();
+cs.subscribe("MyComponent", "a",
+    new_value => console.log("a =", new_value),
+    () => console.log("a is pending"),
+    err => console.log("a failed:", err)
+);
+cs.set_variable("MyComponent", "a", wasm.ValueWrapper.i32(5));
+cs.set_variable("MyComponent", "b", wasm.ValueWrapper.String("Hello"));
+cs.update();
+```
+
+### Multithreaded
+
+Remember to add the `thread` feature flag in your `Cargo.toml`.
+
+```toml
+hotdrink-wasm = { version = "0.1.1", features = ["thread"] }
+```
+
+To use a multithreaded constraint system, you would create it like this instead:
+
+```rust
+use hotdrink_rs::thread::TerminationStrategy;
+use hotdrink_wasm::{component_type_wrapper};
+#[cfg(feature = "thread")]
+use hotdrink_wasm::{constraint_system_wrapper_threaded, thread::StaticPool};
+
+component_type_wrapper! {
+    pub struct ValueWrapper {
+        #[derive(Clone, Debug)]
+        pub enum Value {
+            i32,
+            String
+        }
+    }
+}
+
+#[cfg(feature = "thread")]
+constraint_system_wrapper_threaded!(
+    MyCs,
+    ValueWrapper,
+    Value,
+    StaticPool, // Or DynamicPool
+    4,          // Number of threads
+    TerminationStrategy::UnusedResultAndNotDone
+);
+```
 
 To use Web Workers from Rust, the we must compile with `--target no-modules`.
-This should be as simple as running the following:
 
 ```bash
 wasm-pack build --out-dir www/pkg --target no-modules --release
 ```
 
 This will produce WebAssembly code and JS wrappers in www/pkg, which can then be imported there.
+See wasm-pack's documentation for more information.
 
 ## License
 

@@ -2,9 +2,8 @@
 
 /// A macro for generating a [`ConstraintSystem`](hotdrink_rs::model::ConstraintSystem) that can be compiled to WebAssembly.
 ///
-/// By providing an identifier, wrapper type, inner type (the two last generated with [`component_type_wrapper!`]($crate::component_type_wrapper!)),
-/// a thread pool implementation, the number of threads to use, and a termination strategy, it will automatically generate
-/// a wrapper that can be returned to and used from JavaScript.
+/// By providing an identifier, wrapper type, and inner type (the two last generated with [`component_type_wrapper!`]($crate::component_type_wrapper!)),
+/// it will automatically generate a wrapper that can be returned to and used from JavaScript.
 #[macro_export]
 macro_rules! constraint_system_wrapper_threaded {
     ($cs_name:ident, $wrapper_type:ty, $inner_type:ty, $thread_pool_type:ty, $num_threads:expr, $termination_strategy:expr) => {
@@ -227,11 +226,7 @@ macro_rules! constraint_system_wrapper_threaded {
 
 #[cfg(test)]
 mod tests {
-    use hotdrink_rs::{
-        model::Component,
-        thread::{DummyPool, TerminationStrategy},
-    };
-    use wasm_bindgen::JsValue;
+    use hotdrink_rs::thread::{DummyPool, TerminationStrategy};
 
     #[ignore = "Simply for verification that it compiles"]
     #[test]
@@ -248,7 +243,7 @@ mod tests {
         };
 
         // Generate a JS wrapper for the constraint system
-        crate::constraint_system_wrapper!(
+        crate::constraint_system_wrapper_threaded!(
             System,
             Wrapper,
             Inner,

@@ -29,9 +29,17 @@
 //! A *constraint satisfaction method* describes one way to enforce a constraint.
 //! It reads the values of some variables, and write to others.
 //!
-//! # Examples
+//! ## Usage
 //!
+//! Add the following to your `Cargo.toml`:
+//!
+//! ```text
+//! hotdrink-rs = "0.1.1"
 //! ```
+//!
+//! Then you are ready to begin!
+//!
+//! ```rust
 //! use hotdrink_rs::{component, model::ConstraintSystem, ret, Event};
 //!
 //! // Define a set of variables and relations between them
