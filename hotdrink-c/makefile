@@ -1,5 +1,5 @@
 CC=gcc -g -Wall -Wextra -Werror
-BINDINGS=bindings.h
+HEADER=src/hotdrink.h
 
 ifeq ($(OS),Windows_NT)
 LIB=target/hotdrink_c.dll
@@ -11,17 +11,21 @@ endif
 
 all: $(EXE)
 
-$(EXE): main.c $(BINDINGS)
+# Run the example
+run: $(EXE)
+	./$<
+
+# Compile the c-program and link to the Rust library
+$(EXE): src/main.c $(HEADER)
 	$(CC) $< $(LIB)
 
-$(BINDINGS): $(LIB)
+# Generate bindings with cbindgen
+$(HEADER): $(LIB)
 	cbindgen --lang c > $@
 
-$(LIB): $(wildcard src/lib.rs)
+# Compile hotdrink-c
+$(LIB): src/lib.rs
 	cargo build -Z unstable-options --out-dir target
-
-run: c
-	$(EXE)
 
 clean:
 	rm $(EXE) $(BINDINGS)
