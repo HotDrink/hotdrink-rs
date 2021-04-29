@@ -3,9 +3,10 @@
 A wrapper library around `hotdrink-rs` for compilation to WebAssembly.
 
 [![Crates.io][crates-badge]][crates-url]
+[![docs.rs](https://docs.rs/hotdrink-wasm/badge.svg)](https://docs.rs/hotdrink-wasm)
 
-[crates-badge]: https://img.shields.io/crates/v/hotdrink-rs.svg
-[crates-url]: https://crates.io/crates/hotdrink-rs
+[crates-badge]: https://img.shields.io/crates/v/hotdrink-wasm.svg
+[crates-url]: https://crates.io/crates/hotdrink-wasm
 
 ## Prerequisites
 

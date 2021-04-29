@@ -6,6 +6,7 @@ HotDrink lets you describe relations between values declaratively and how to enf
 and can then automatically do so when the value of a variable changes.
 
 [![Crates.io][crates-badge]][crates-url]
+[![docs.rs](https://docs.rs/hotdrink-rs/badge.svg)](https://docs.rs/hotdrink-rs)
 
 [crates-badge]: https://img.shields.io/crates/v/hotdrink-rs.svg
 [crates-url]: https://crates.io/crates/hotdrink-rs
