@@ -24,7 +24,7 @@ void handle_event(CEvent e)
 
 int main(void)
 {
-  IntComponent *comp = component_new();
+  Component_i32 *comp = component_new();
   component_subscribe(comp, "a", handle_event);
   component_subscribe(comp, "b", handle_event);
   component_subscribe(comp, "c", handle_event);
