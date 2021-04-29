@@ -24,7 +24,7 @@ $(HEADER): $(LIB)
 	cbindgen --lang c > $@
 
 # Compile hotdrink-c
-$(LIB): src/lib.rs
+$(LIB): $(wildcard src/*.rs)
 	cargo build -Z unstable-options --out-dir target
 
 clean:

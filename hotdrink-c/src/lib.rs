@@ -1,7 +1,20 @@
+//! A library that shows how C/C++ bindings can be created for `hotdrink-rs`.
+
+#![warn(
+    missing_copy_implementations,
+    missing_debug_implementations,
+    rust_2018_idioms,
+    missing_docs
+)]
+
 use hotdrink_rs::{examples::components::numbers::sum, model::Component, Event};
 use std::ffi::{CStr, CString};
 use std::os::raw::c_char;
 
+/// An opaque struct that holds a Component<i32>.
+/// Component<i32> can not be exported on its own,
+/// so we must wrap it.
+#[derive(Debug)]
 pub struct IntComponent {
     inner: Component<i32>,
 }
@@ -13,7 +26,7 @@ pub extern "C" fn component_new() -> *mut IntComponent {
     Box::into_raw(Box::new(IntComponent { inner: sum }))
 }
 
-/// Updates the specified component.
+/// Calls update on the specified component.
 ///
 /// # Safety
 ///
@@ -25,6 +38,7 @@ pub unsafe extern "C" fn component_free(component: *mut IntComponent) {
 
 /// The different kinds of events.
 #[repr(C)]
+#[derive(Copy, Clone, Debug)]
 pub enum CEventType {
     /// A pending value.
     Pending,
@@ -36,13 +50,21 @@ pub enum CEventType {
 
 /// Data contained in an [`CEvent`].
 #[repr(C)]
+#[derive(Copy, Clone)]
 pub union CEventData {
     value: i32,
     error: *const c_char,
 }
 
-/// An event from a constraint system.
+impl std::fmt::Debug for CEventData {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "CEventData")
+    }
+}
+
+/// An event from a constraint system with the variable name included.
 #[repr(C)]
+#[derive(Copy, Clone, Debug)]
 pub struct CEvent {
     variable: *const c_char,
     event_type: CEventType,
@@ -53,7 +75,8 @@ pub struct CEvent {
 ///
 /// # Safety
 ///
-/// The arguments must be valid pointers.
+/// The component argument must be valid pointer,
+/// and the variable must be a valid nul-terminated string.
 #[no_mangle]
 pub unsafe extern "C" fn component_subscribe(
     component: *mut IntComponent,
@@ -94,7 +117,8 @@ pub unsafe extern "C" fn component_subscribe(
 ///
 /// # Safety
 ///
-/// The arguments must be valid pointers.
+/// The component component must be valid pointer,
+/// and the variable must be a valid nul-terminated string.
 #[no_mangle]
 pub unsafe extern "C" fn component_set_variable(
     component: *mut IntComponent,
