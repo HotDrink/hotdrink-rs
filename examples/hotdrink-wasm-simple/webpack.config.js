@@ -8,7 +8,8 @@ module.exports = {
   mode: "production",
   entry: {
     index: "./js/index.js",
-    image_resize: "./js/image_resize.js"
+    image_resize: "./js/image_resize.js",
+    turbines: "./js/turbines.js"
   },
   output: {
     path: dist,

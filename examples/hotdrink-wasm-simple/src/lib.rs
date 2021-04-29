@@ -1,6 +1,7 @@
 use wasm_bindgen::prelude::wasm_bindgen;
 
 pub mod image_resize;
+pub mod turbines;
 
 /// Perform setup such as setting the panic hook for better error messages,
 /// and initialize the Wasm logging library.
