@@ -12,7 +12,7 @@ import("../pkg").then(hd => {
     setInterval(() => {
         avg = weight * avg + (1 - weight) * (Math.random() * 100);
         console.log("Setting speed to", avg);
-        document.getElementById("wind_speed").value = avg;
+        document.getElementById("wind_speed").value = avg.toFixed(0);
         cs.set_variable(component, "wind_speed", wrapper.f64(avg));
         cs.update();
     }, 100);
@@ -28,7 +28,7 @@ import("../pkg").then(hd => {
         })
         // Receive events from the constraint system
         cs.subscribe(component, variable,
-            v => box.value = v,
+            v => box.value = v.toFixed(0),
             _ => { }, // Handle pending-events
             console.error // Handle error-events
         );
