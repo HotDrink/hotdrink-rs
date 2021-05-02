@@ -41,7 +41,7 @@ pub unsafe extern "C" fn component_free(component: *mut Component_i32) {
 #[no_mangle]
 pub unsafe extern "C" fn component_subscribe(
     component: *mut Component_i32,
-    variable: *mut c_char,
+    variable: *const c_char,
     callback: extern "C" fn(CEvent),
 ) -> bool {
     let variable = CStr::from_ptr(variable).to_str().unwrap();
@@ -61,6 +61,29 @@ pub unsafe extern "C" fn component_subscribe(
         .is_ok()
 }
 
+/// Subscribes to the specified component.
+///
+/// # Safety
+///
+/// The component argument must be valid pointer,
+/// and the variable must be a valid nul-terminated string.
+#[no_mangle]
+pub unsafe extern "C" fn component_subscribe_simple(
+    component: *mut Component_i32,
+    variable: *const c_char,
+    on_ready: extern "C" fn(i32),
+) -> bool {
+    let variable = CStr::from_ptr(variable).to_str().unwrap();
+    (*component)
+        .inner
+        .subscribe(variable, move |e| {
+            if let Event::Ready(value) = e {
+                on_ready(*value)
+            }
+        })
+        .is_ok()
+}
+
 /// Sets a variable's value in the specified component.
 ///
 /// # Safety
@@ -70,7 +93,7 @@ pub unsafe extern "C" fn component_subscribe(
 #[no_mangle]
 pub unsafe extern "C" fn component_set_variable(
     component: *mut Component_i32,
-    variable: *mut c_char,
+    variable: *const c_char,
     value: i32,
 ) {
     let variable = CStr::from_ptr(variable).to_str().unwrap();
