@@ -35,7 +35,7 @@ impl<T> Default for ConstraintSystem<T> {
     }
 }
 
-impl<T: Debug> ConstraintSystem<T> {
+impl<T> ConstraintSystem<T> {
     /// Creates a new constraint system with no components.
     pub fn new() -> Self {
         Self::default()
@@ -70,11 +70,10 @@ impl<T: Debug> ConstraintSystem<T> {
         &mut self,
         component: &'s str,
         variable: &'s str,
-        value: T,
+        value: impl Into<T>,
     ) -> Result<(), NoSuchItem<'s>> {
         self.undo_stack.push(component.to_string());
         self.redo_stack.clear();
-        log::trace!("Variable {}.{} updated to {:?}", component, variable, value);
         let component = self.component_mut(component)?;
         component.set_variable(variable, value)?;
         Ok(())
@@ -287,7 +286,7 @@ mod tests {
     #[test]
     pub fn constraint_system_test() {
         // Construct the constraint system
-        let mut cs = ConstraintSystem::new();
+        let mut cs: ConstraintSystem<i32> = ConstraintSystem::new();
         cs.add_component(component! {
             component comp {
                 let a: i32 = 0, b: i32 = 0, c: i32 = 0;

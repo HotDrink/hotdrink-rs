@@ -46,7 +46,7 @@ pub fn main() {
             ("c", vec!["e", "f", "g"]),
         ]
         .into_iter()
-        .collect(),
+        .collect::<Graph>(),
     )
     .unwrap();
     comp.update().unwrap();

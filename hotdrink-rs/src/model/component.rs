@@ -99,14 +99,14 @@ impl<T> Component<T> {
     pub fn set_variable<'s>(
         &mut self,
         variable: &'s str,
-        value: T,
+        value: impl Into<T>,
     ) -> Result<(), NoSuchVariable<'s>> {
         let idx = self.variable_index(variable)?;
         self.updated_since_last_solve.insert(idx);
         self.ranker.touch(idx);
 
         // Create a new activation
-        self.variables.set(idx, Activation::from(value));
+        self.variables.set(idx, Activation::from(value.into()));
         Ok(())
     }
 
