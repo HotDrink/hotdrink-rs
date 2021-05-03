@@ -51,11 +51,13 @@ pub fn image_resize_component() -> Component<Number> {
                 b(initial_width: &i32, relative_width: &i32) -> [absolute_width] = ret![initial_width * relative_width / 100];
             }
 
+            // absolute_height_range = absolute_height
             constraint AbsoluteHeightRange {
                 a(absolute_height: &i32) -> [absolute_height_range] = ret![*absolute_height];
                 b(absolute_height_range: &i32) -> [absolute_height] = ret![*absolute_height_range];
             }
 
+            // absolute_width_range = absolute_width
             constraint AbsoluteWidthRange {
                 a(absolute_width: &i32) -> [absolute_width_range] = ret![*absolute_width];
                 b(absolute_width_range: &i32) -> [absolute_width] = ret![*absolute_width_range];
