@@ -95,7 +95,7 @@ impl<T> Component<T> {
         }
     }
 
-    /// Give a variable a new value.
+    /// Give a variable a new value, and call its callback.
     pub fn set_variable<'s>(
         &mut self,
         variable: &'s str,
@@ -104,9 +104,17 @@ impl<T> Component<T> {
         let idx = self.variable_index(variable)?;
         self.updated_since_last_solve.insert(idx);
         self.ranker.touch(idx);
+        let value = value.into();
+
+        // Call callback
+        self.callbacks.lock().unwrap()[idx].call(EventWithLocation::new(
+            idx,
+            GenerationId::new(self.current_generation, self.total_generation),
+            Event::Ready(&value),
+        ));
 
         // Create a new activation
-        self.variables.set(idx, Activation::from(value.into()));
+        self.variables.set(idx, Activation::from(value));
         Ok(())
     }
 
