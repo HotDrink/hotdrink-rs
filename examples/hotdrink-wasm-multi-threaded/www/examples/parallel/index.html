@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <title>Hello wasm-pack!</title>
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/css/bootstrap.min.css" rel="stylesheet"
+    integrity="sha384-eOJMYsd53ii+scO/bJGFsiCZc+5NDVN2yr8+0RDqr0Ql0h+rP48ckxlpbzKgwra6" crossorigin="anonymous">
+  <style>
+    html {
+      padding: 1%;
+    }
+  </style>
+
+  <script src="../../pkg/hotdrink_wasm_multi_threaded.js"></script>
+  <script>
+    // Import asynchronously
+    import("./index.js").catch(e => console.error(e));
+  </script>
+</head>
+
+<body>
+  <noscript>This page contains webassembly and javascript content, please enable javascript in your browser.</noscript>
+  <!-- JavaScript Bundle with Popper -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/js/bootstrap.bundle.min.js"
+    integrity="sha384-JEW9xMcG8R+pH31jmWH6WWP0WintQrMb4s7ZOdauHnUtxwoG2vI5DkLtS3qm9Ekf"
+    crossorigin="anonymous"></script>
+
+  <h1>Parallel</h1>
+  <div class="col-sm-9">
+
+    <div class="row">
+      <div class="col-sm-3">
+        <label for="a">
+          String <span id="a_state"></span>
+        </label>
+        <input class="form-control" id="a"></input>
+      </div>
+      <div class="col-sm-3">
+        <label for="a_length">
+          5 * length <span id="a_length_state"></span>
+        </label>
+        <input class="form-control" id="a_length" type="number"></input>
+      </div>
+      <div class="col-sm-3">
+        <label for="a_fib">
+          Fib <span id="a_fib_state"></span>
+        </label>
+        <input class="form-control" id="a_fib" type="number"></input>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col-sm-3">
+        <label class="control-label" for="b">
+          Name <span id="b_state"></span>
+        </label>
+        <input class="form-control" id="b"></input>
+      </div>
+      <div class="col-sm-3">
+        <label for="b_age">
+          Age <span id="b_age_state"></span>
+        </label>
+        <input class="form-control" id="b_age" type="number"></input>
+      </div>
+      <div class="col-sm-3">
+        <label for="b_fib">
+          Fib <span id="b_fib_state"></span>
+        </label>
+        <input class="form-control" id="b_fib" type="number"></input>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col-sm-3">
+        <label for="c">
+          C <span id="c_state"></span>
+        </label>
+        <input class="form-control" id="c"></input>
+      </div>
+      <div class="col-sm-3">
+        <label for="c_out">
+          2 * C <span id="c_out_state"></span>
+        </label>
+        <input class="form-control" id="c_out" type="number"></input>
+      </div>
+    </div>
+
+  </div>
+</body>
+
+</html>
