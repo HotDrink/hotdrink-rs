@@ -249,10 +249,6 @@ impl<T> Method<T> {
                             let mut shared_state = st.lock().unwrap();
                             // Set the new value
                             shared_state.set_value_arc(res);
-                            // Notify the async runtime that the value is ready
-                            if let Some(waker) = shared_state.waker_mut().take() {
-                                waker.wake();
-                            }
                         }
                     }
                     // The method call failed

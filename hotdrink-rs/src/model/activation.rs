@@ -68,11 +68,13 @@ impl<T> ActivationInner<T> {
     /// Sets the state to a successful value.
     pub fn set_value(&mut self, value: T) {
         self.state = State::Ready(Arc::new(value));
+        self.wake();
     }
 
     /// Sets the state to a successful value.
     pub fn set_value_arc(&mut self, value: Arc<T>) {
         self.state = State::Ready(value);
+        self.wake();
     }
 
     /// Set the state to a failed value.
@@ -82,11 +84,14 @@ impl<T> ActivationInner<T> {
         } else {
             self.state = State::Error(errors)
         }
+        self.wake();
     }
 
     /// Returns a mutable reference to the [`Waker`].
-    pub fn waker_mut(&mut self) -> &mut Option<Waker> {
-        &mut self.waker
+    fn wake(&mut self) {
+        if let Some(waker) = self.waker.take() {
+            waker.wake();
+        }
     }
 }
 
