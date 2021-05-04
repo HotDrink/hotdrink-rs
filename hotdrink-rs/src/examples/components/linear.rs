@@ -84,8 +84,8 @@ impl ComponentFactory for LinearTwoway {
             let constraint: RawConstraint<T> = RawConstraint::new(
                 &cname(constraint_id),
                 vec![
-                    RawMethod::new("left", vec![prev], vec![current], apply.clone()),
-                    RawMethod::new("right", vec![current], vec![prev], apply.clone()),
+                    RawMethod::new("right", vec![prev], vec![current], apply.clone()),
+                    RawMethod::new("left", vec![current], vec![prev], apply.clone()),
                 ],
             );
             constraints.push(constraint);

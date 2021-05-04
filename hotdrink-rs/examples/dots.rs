@@ -1,5 +1,5 @@
 use hotdrink_rs::examples::components::{
-    ComponentFactory, Ladder, LinearOneway, LinearTwoway, Random,
+    ComponentFactory, Ladder, LinearOneway, LinearTwoway, Random, Unprunable,
 };
 use std::io::{self, Write};
 
@@ -21,13 +21,14 @@ fn write_component_simple<CF: ComponentFactory>(name: &str, size: usize) -> io::
 
 fn main() -> io::Result<()> {
     let mut args = std::env::args();
-    let size: usize = args.nth(1).map(|s| s.parse().ok()).flatten().unwrap_or(10);
+    let size: usize = args.nth(1).map(|s| s.parse().ok()).flatten().unwrap_or(8);
 
     write_component::<Ladder>("ladder", size)?;
     write_component::<LinearOneway>("linear-oneway", size)?;
     write_component::<LinearTwoway>("linear-twoway", size)?;
     write_component::<Ladder>("ladder", size)?;
     write_component::<Random>("random", size)?;
+    write_component::<Unprunable>("unprunable", size)?;
     write_component_simple::<Random>("random_simple", size)?;
 
     Ok(())

@@ -36,13 +36,13 @@ where
                     &constraint_names[current],
                     vec![
                         RawMethod::new(
-                            "down_left",
+                            "down_right",
                             vec![current_name.as_str(), right_name.as_str()],
                             vec![left_name.as_str()],
                             apply.clone(),
                         ),
                         RawMethod::new(
-                            "down_right",
+                            "up_right",
                             vec![current_name.as_str(), left_name.as_str()],
                             vec![right_name.as_str()],
                             apply.clone(),

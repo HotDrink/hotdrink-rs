@@ -329,7 +329,7 @@ impl<T> Component<T> {
 
         // Start writing dot formatted text
         let mut buffer = String::new();
-        writeln!(buffer, "strict digraph {} {{", self.name())?;
+        writeln!(buffer, "strict digraph \"{}\" {{", self.name())?;
         writeln!(buffer, "  rankdir=LR;")?;
 
         // Set variable shapes to box
