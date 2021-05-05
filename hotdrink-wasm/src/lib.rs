@@ -19,36 +19,30 @@
 //!
 //! # Usage
 //!
-//! Add the following to your `Cargo.toml`:
-//!
-//! ```toml
-//! hotdrink-wasm = "0.1.1"
-//! ```
-//!
 //! ## Single threaded
 //!
 //! ```rust
 //! use hotdrink_rs::{component, model::ConstraintSystem};
-//! use hotdrink_wasm::{component_type_wrapper, constraint_system_wrapper};
+//! use hotdrink_wasm::constraint_system_wrapper;
 //! use wasm_bindgen::{JsValue, prelude::wasm_bindgen};
 //!
-//! component_type_wrapper! {
-//!     pub struct ValueWrapper {
-//!         #[derive(Clone, Debug)]
-//!         pub enum Value {
-//!             i32,
-//!             String
-//!         }
-//!     }
-//! }
-//!
 //! constraint_system_wrapper!(
+//!     // A wrapper around `ConstraintSystem`.
 //!     pub struct MyCs {
-//!         wrapper_type: ValueWrapper,
-//!         inner_type: Value
+//!         // A wrapper that generates functions
+//!         // for each variant of the inner value.
+//!         pub struct ValueWrapper {
+//!             // The actual value type inside the `ConstraintSystem`.
+//!             #[derive(Clone, Debug)]
+//!             pub enum Value {
+//!                 i32,
+//!                 String
+//!             }
+//!         }
 //!     }
 //! );
 //!
+//! // Use the wrapper.
 //! #[wasm_bindgen]
 //! pub fn make_cs() -> Result<MyCs, JsValue> {
 //!     let mut cs = ConstraintSystem::new();
@@ -60,6 +54,11 @@
 //!     });
 //!     MyCs::wrap(cs)
 //! }
+//!
+//! // Usage of `ValueWrapper`.
+//! let cs = make_cs().unwrap();
+//! cs.set_variable("MyComponent", "a", ValueWrapper::i32(5));
+//! cs.set_variable("MyComponent", "b", ValueWrapper::String("Hello".to_string()));
 //! ```
 //!
 //! After producing a JavaScript module in www/pkg with
@@ -91,25 +90,23 @@
 //! To use a multithreaded constraint system, you would create it like this instead:
 //!
 //! ```rust
-//! use hotdrink_wasm::{component_type_wrapper};
 //! #[cfg(feature = "thread")]
 //! use hotdrink_wasm::{constraint_system_wrapper_threaded, thread::{StaticPool, TerminationStrategy}};
 //!
-//! component_type_wrapper! {
-//!     pub struct ValueWrapper {
-//!         #[derive(Clone, Debug)]
-//!         pub enum Value {
-//!             i32,
-//!             String
-//!         }
-//!     }
-//! }
-//!
 //! #[cfg(feature = "thread")]
 //! constraint_system_wrapper_threaded!(
+//!     // A wrapper around `ConstraintSystem`.
 //!     pub struct MyCs {
-//!         wrapper_type: ValueWrapper,
-//!         inner_type: Value,
+//!         // A wrapper that generates functions
+//!         // for each variant of the inner value.
+//!         pub struct ValueWrapper {
+//!             // The actual value type inside the `ConstraintSystem`.
+//!             #[derive(Clone, Debug)]
+//!             pub enum Value {
+//!                 i32,
+//!                 String
+//!             }
+//!         }
 //!         thread_pool: StaticPool, // Or DynamicPool
 //!         num_threads: 4,          // Number of threads
 //!         termination_strategy: TerminationStrategy::UnusedResultAndNotDone

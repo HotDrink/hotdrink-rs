@@ -1,10 +1,29 @@
-//! Generate a WebAssembly wrapper around an inner type to use in a constraint system.
+//! Generate a struct wrapper around an enum, since enums can not be exposed to WebAssembly.
 
-/// Generate a WebAssembly wrapper around an inner type to use in a constraint system.
-/// [`component_type_wrapper!`] is to a constraint system made with [`constraint_system_wrapper!`](crate::constraint_system_wrapper!), as
-/// [`component_type!`](hotdrink_rs::component_type) is to [`ConstraintSystem`](hotdrink_rs::model::ConstraintSystem).
+/// Generate a struct wrapper around an enum, since enums can not be exposed to WebAssembly.
+/// You will likely not have to use this macro directly, as it is called by the constraint system wrappers.
+///
+/// # Examples
+///
+/// In this example, we generate a sum type `MyEnum` with two variants.
+/// We can not expose the enum directly to WebAssembly, and thus need a wrapper.
+/// The wrapper will be generated with two functions: `MyWrapper::i32` and `MyWrapper::String`
+/// that will call the constructors `MyEnum::i32` and `MyEnum::String` internally.
+///
+/// ```rust
+/// hotdrink_wasm::wrap_enum! {
+///     pub struct MyWrapper {
+///         pub enum MyEnum {
+///             i32,
+///             String
+///         }
+///     }
+/// }
+/// let _: MyWrapper = MyWrapper::i32(5);
+/// let _: MyWrapper = MyWrapper::String("Hello".to_string());
+/// ```
 #[macro_export]
-macro_rules! component_type_wrapper {
+macro_rules! wrap_enum {
     (
         $(#[$outer_meta:meta])*
         $wrapper_vis:vis struct $wrapper_type:ident {
@@ -80,7 +99,7 @@ pub mod tests {
             r: usize,
         }
 
-        component_type_wrapper! {
+        wrap_enum! {
             pub struct MyWrapper {
                 #[derive(Debug, PartialEq, Clone)]
                 pub enum MyType { i32, MyCircle }

@@ -1,18 +1,53 @@
-//! A macro for generating a [`ConstraintSystem`](hotdrink_rs::model::ConstraintSystem) that can be compiled to WebAssembly.
+//! A macro that generates a wrapper for [`ConstraintSystem`](hotdrink_rs::model::ConstraintSystem) that can be compiled to WebAssembly.
 
-/// A macro for generating a [`ConstraintSystem`](hotdrink_rs::model::ConstraintSystem) that can be compiled to WebAssembly.
+/// A macro that generates a wrapper for [`ConstraintSystem`](hotdrink_rs::model::ConstraintSystem) that can be compiled to WebAssembly.
 ///
 /// By providing an identifier, wrapper type, inner type (the two last generated with [`component_type_wrapper!`]($crate::component_type_wrapper!)),
 /// a thread pool implementation, the number of threads to use, and a termination strategy, it will automatically generate
 /// a wrapper that can be returned to and used from JavaScript.
+///
+/// # Examples
+///
+/// ```rust
+/// use hotdrink_rs::model::ConstraintSystem;
+///
+/// hotdrink_wasm::constraint_system_wrapper!(
+///     pub struct ConstraintSystemWrapper {
+///         pub struct InnerTypeWrapper {
+///             #[derive(Clone, Debug)]
+///             pub enum InnerType {
+///                 i32,
+///                 String
+///             }
+///         }
+///     }
+/// );
+/// let mut cs = ConstraintSystem::new();
+/// cs.add_component(hotdrink_rs::component! {
+///     component MyComponent {
+///         let a: i32 = 0, b: String = "";
+///     }
+/// });
+/// let csw = ConstraintSystemWrapper::wrap(cs).unwrap();
+/// ```
 #[macro_export]
 macro_rules! constraint_system_wrapper {
     (
         $vis:vis struct $cs_name:ident {
-            wrapper_type: $wrapper_type:ty,
-            inner_type: $inner_type:ty $(,)?
+            $(#[$outer_meta:meta])*
+            $wrapper_vis:vis struct $wrapper_type:ident {
+                $(#[$inner_meta:meta])*
+                $inner_vis:vis enum $inner_type:ident { $( $constr:ident ),* }
+            }
         }
     ) => {
+        $crate::wrap_enum! {
+            $(#[$outer_meta])*
+            $wrapper_vis struct $wrapper_type {
+                $(#[$inner_meta])*
+                $inner_vis enum $inner_type { $( $constr ),* }
+            }
+        }
         /// A wrapper around the internal constraint system.
         /// A macro is used to construct the type that the library user wants,
         /// since `wasm_bindgen` requires a concrete type.
@@ -227,22 +262,15 @@ mod tests {
     #[ignore = "Simply for verification that it compiles"]
     #[test]
     fn it_compiles() {
-        // Generate constraint system value and a JS wrapper for it
-        crate::component_type_wrapper! {
-            pub struct Wrapper {
-                #[derive(Clone, Debug)]
-                pub enum Inner {
-                    i32,
-                    f64
-                }
-            }
-        };
-
-        // Generate a JS wrapper for the constraint system
         crate::constraint_system_wrapper!(
-            pub struct System {
-                wrapper_type: Wrapper,
-                inner_type: Inner,
+            pub struct ConstraintSystemWrapper {
+                pub struct InnerTypeWrapper {
+                    #[derive(Clone, Debug)]
+                    pub enum InnerType {
+                        i32,
+                        f64
+                    }
+                }
             }
         );
     }
