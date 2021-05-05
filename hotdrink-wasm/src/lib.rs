@@ -42,7 +42,12 @@
 //!     }
 //! }
 //!
-//! constraint_system_wrapper!(MyCs, ValueWrapper, Value);
+//! constraint_system_wrapper!(
+//!     pub struct MyCs {
+//!         wrapper_type: ValueWrapper,
+//!         inner_type: Value
+//!     }
+//! );
 //!
 //! #[wasm_bindgen]
 //! pub fn make_cs() -> Result<MyCs, JsValue> {

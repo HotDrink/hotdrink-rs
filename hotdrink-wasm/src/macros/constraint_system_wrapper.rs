@@ -7,13 +7,18 @@
 /// a wrapper that can be returned to and used from JavaScript.
 #[macro_export]
 macro_rules! constraint_system_wrapper {
-    ($cs_name:ident, $wrapper_type:ty, $inner_type:ty) => {
+    (
+        $vis:vis struct $cs_name:ident {
+            wrapper_type: $wrapper_type:ty,
+            inner_type: $inner_type:ty $(,)?
+        }
+    ) => {
         /// A wrapper around the internal constraint system.
         /// A macro is used to construct the type that the library user wants,
         /// since `wasm_bindgen` requires a concrete type.
         #[wasm_bindgen::prelude::wasm_bindgen]
         #[allow(missing_debug_implementations)]
-        pub struct $cs_name {
+        $vis struct $cs_name {
             inner: std::sync::Mutex<hotdrink_rs::model::ConstraintSystem<$inner_type>>,
             event_queue: std::sync::Arc<
                 std::sync::Mutex<
@@ -234,6 +239,11 @@ mod tests {
         };
 
         // Generate a JS wrapper for the constraint system
-        crate::constraint_system_wrapper!(System, Wrapper, Inner);
+        crate::constraint_system_wrapper!(
+            pub struct System {
+                wrapper_type: Wrapper,
+                inner_type: Inner,
+            }
+        );
     }
 }
