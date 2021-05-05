@@ -27,49 +27,66 @@
     integrity="sha384-JEW9xMcG8R+pH31jmWH6WWP0WintQrMb4s7ZOdauHnUtxwoG2vI5DkLtS3qm9Ekf"
     crossorigin="anonymous"></script>
 
-  <h1>Parallel</h1>
+  <h1>Responsive</h1>
   <div class="col-sm-9">
 
     <div class="row">
       <div class="col-sm-3">
-        <label for="a">Input</label>
-        <input id="a" class="form-control" type="number"></input>
+        <label for="a">
+          String <span id="a_state"></span>
+        </label>
+        <input class="form-control" id="a"></input>
+      </div>
+      <div class="col-sm-3">
+        <label for="a_length">
+          5 * length <span id="a_length_state"></span>
+        </label>
+        <input class="form-control" id="a_length" type="number"></input>
+      </div>
+      <div class="col-sm-3">
+        <label for="a_fib">
+          Fib <span id="a_fib_state"></span>
+        </label>
+        <input class="form-control" id="a_fib" type="number"></input>
       </div>
     </div>
+
     <div class="row">
       <div class="col-sm-3">
-        <label for="b">Output</label>
-        <input id="b" class="form-control" type="number"></input>
+        <label class="control-label" for="b">
+          Name <span id="b_state"></span>
+        </label>
+        <input class="form-control" id="b"></input>
       </div>
       <div class="col-sm-3">
-        <label for="c">Output</label>
-        <input id="c" class="form-control" type="number"></input>
+        <label for="b_age">
+          Age <span id="b_age_state"></span>
+        </label>
+        <input class="form-control" id="b_age" type="number"></input>
       </div>
       <div class="col-sm-3">
-        <label for="d">Output</label>
-        <input id="d" class="form-control" type="number"></input>
-      </div>
-      <div class="col-sm-3">
-        <label for="e">Output</label>
-        <input id="e" class="form-control" type="number"></input>
-      </div>
-      <div class="col-sm-3">
-        <label for="f">Output</label>
-        <input id="f" class="form-control" type="number"></input>
-      </div>
-      <div class="col-sm-3">
-        <label for="g">Output</label>
-        <input id="g" class="form-control" type="number"></input>
-      </div>
-      <div class="col-sm-3">
-        <label for="h">Output</label>
-        <input id="h" class="form-control" type="number"></input>
-      </div>
-      <div class="col-sm-3">
-        <label for="i">Output</label>
-        <input id="i" class="form-control" type="number"></input>
+        <label for="b_fib">
+          Fib <span id="b_fib_state"></span>
+        </label>
+        <input class="form-control" id="b_fib" type="number"></input>
       </div>
     </div>
+
+    <div class="row">
+      <div class="col-sm-3">
+        <label for="c">
+          C <span id="c_state"></span>
+        </label>
+        <input class="form-control" id="c"></input>
+      </div>
+      <div class="col-sm-3">
+        <label for="c_out">
+          2 * C <span id="c_out_state"></span>
+        </label>
+        <input class="form-control" id="c_out" type="number"></input>
+      </div>
+    </div>
+
   </div>
 </body>
 

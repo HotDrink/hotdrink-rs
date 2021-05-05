@@ -53,7 +53,7 @@ hotdrink_wasm::constraint_system_wrapper_threaded!(
     NumberJsCs,
     NumberWrapper,
     Number,
-    DummyPool,
-    4,
+    StaticPool,
+    1,
     TerminationStrategy::Never
 );

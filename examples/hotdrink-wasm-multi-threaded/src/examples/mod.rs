@@ -10,5 +10,6 @@ pub mod jscs_number;
 pub mod jscs_string;
 pub mod parallel;
 pub mod priority_adjust;
+pub mod responsive;
 pub mod sum;
 pub mod temperature_converter;

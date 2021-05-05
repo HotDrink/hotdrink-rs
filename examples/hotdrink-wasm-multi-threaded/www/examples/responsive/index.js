@@ -5,9 +5,9 @@ wasm_bindgen('../../pkg/hotdrink_wasm_multi_threaded_bg.wasm')
 
 function main() {
   const wasm = wasm_bindgen;
-  const wrapper = wasm.NumberWrapper;
+  const wrapper = wasm.I32OrStringWrapper;
 
-  let cs = wasm.parallel();
+  let cs = wasm.responsive();
   cs.listen(e => cs.notify(e.data));
 
   // Capture undo events
@@ -76,15 +76,16 @@ function main() {
   }
 
   let a = "A";
-  bindNumber(a, "a");
-  bindNumber(a, "b");
-  bindNumber(a, "c");
-  bindNumber(a, "d");
-  bindNumber(a, "e");
-  bindNumber(a, "f");
-  bindNumber(a, "g");
-  bindNumber(a, "h");
-  bindNumber(a, "i");
+  bindText(a, "a");
+  bindNumber(a, "a_length");
+  bindNumber(a, "a_fib");
+  let b = "B";
+  bindText(b, "b");
+  bindNumber(b, "b_age");
+  bindNumber(b, "b_fib");
+  let c = "C";
+  bindNumber(c, "c");
+  bindNumber(c, "c_out");
 
   cs.update();
 }
