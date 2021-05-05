@@ -9,6 +9,11 @@
 //! [crates-badge]: https://img.shields.io/crates/v/hotdrink-rs.svg
 //! [crates-url]: https://crates.io/crates/hotdrink-rs
 //!
+//! # Prerequisites
+//!
+//! The project uses multiple nightly features, and must be built using nightly Rust.
+//! I recommend using `rustup`, which can be downloaded [here](https://rustup.rs/).
+//!
 //! # Introduction
 //!
 //! Before getting started, here is a quick introduction to the terminology and how it works.
@@ -35,15 +40,7 @@
 //! A *constraint satisfaction method* describes one way to enforce a constraint.
 //! It reads the values of some variables, and write to others.
 //!
-//! ## Usage
-//!
-//! Add the following to your `Cargo.toml`:
-//!
-//! ```text
-//! hotdrink-rs = "0.1.1"
-//! ```
-//!
-//! Then you are ready to begin!
+//! ## Examples
 //!
 //! ```rust
 //! use hotdrink_rs::{component, model::ConstraintSystem, ret, Event};
@@ -89,12 +86,7 @@
 //! cs.update();
 //! ```
 //!
-//! # Examples
-//!
-//! The project uses multiple nightly features, and must be built using nightly Rust.
-//! I recommend using `rustup`, which can be downloaded [here](https://rustup.rs/).
-//!
-//! The examples in `./examples` can then be run with `cargo run --example <name>`.
+//! More examples can be found in `./examples`, and can be run with `cargo run --example <name>`.
 
 #![warn(
     missing_copy_implementations,

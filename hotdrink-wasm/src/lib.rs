@@ -17,7 +17,9 @@
 //! which means that we need the standard library source code.
 //! This can be downloaded with `rustup component add rust-src`.
 //!
-//! # Usage
+//! See the included makefile (the `build` and `build-threaded` targets) for an example of how to compile to WebAssembly.
+//!
+//! # Examples
 //!
 //! ## Single threaded
 //!
