@@ -107,12 +107,13 @@
 //!
 //! #[cfg(feature = "thread")]
 //! constraint_system_wrapper_threaded!(
-//!     MyCs,
-//!     ValueWrapper,
-//!     Value,
-//!     StaticPool, // Or DynamicPool
-//!     4,          // Number of threads
-//!     TerminationStrategy::UnusedResultAndNotDone
+//!     pub struct MyCs {
+//!         wrapper_type: ValueWrapper,
+//!         inner_type: Value,
+//!         thread_pool: StaticPool, // Or DynamicPool
+//!         num_threads: 4,          // Number of threads
+//!         termination_strategy: TerminationStrategy::UnusedResultAndNotDone
+//!     }
 //! );
 //! ```
 //!

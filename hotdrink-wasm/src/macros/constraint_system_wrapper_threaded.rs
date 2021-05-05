@@ -6,7 +6,15 @@
 /// it will automatically generate a wrapper that can be returned to and used from JavaScript.
 #[macro_export]
 macro_rules! constraint_system_wrapper_threaded {
-    ($cs_name:ident, $wrapper_type:ty, $inner_type:ty, $thread_pool_type:ty, $num_threads:expr, $termination_strategy:expr) => {
+    (
+        $vis:vis struct $cs_name:ident {
+            wrapper_type: $wrapper_type:ty,
+            inner_type: $inner_type:ty,
+            thread_pool: $thread_pool_type:ty,
+            num_threads: $num_threads:expr,
+            termination_strategy: $termination_strategy:expr $(,)?
+        }
+    ) => {
         /// A wrapper around the internal constraint system.
         /// A macro is used to construct the type that the library user wants,
         /// since `wasm_bindgen` requires a concrete type.
@@ -245,12 +253,13 @@ mod tests {
 
         // Generate a JS wrapper for the constraint system
         crate::constraint_system_wrapper_threaded!(
-            System,
-            Wrapper,
-            Inner,
-            DummyPool,
-            4,
-            TerminationStrategy::UnusedResultAndNotDone
+            pub struct System {
+                wrapper_type: Wrapper,
+                inner_type: Inner,
+                thread_pool: DummyPool,
+                num_threads: 4,
+                termination_strategy: TerminationStrategy::UnusedResultAndNotDone
+            }
         );
     }
 }
