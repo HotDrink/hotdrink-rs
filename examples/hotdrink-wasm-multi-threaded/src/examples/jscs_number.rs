@@ -54,6 +54,6 @@ hotdrink_wasm::constraint_system_wrapper_threaded!(
     NumberWrapper,
     Number,
     StaticPool,
-    1,
-    TerminationStrategy::Never
+    4,
+    TerminationStrategy::UnusedResultAndNotDone
 );
