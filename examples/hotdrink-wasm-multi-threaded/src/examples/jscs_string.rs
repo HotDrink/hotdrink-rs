@@ -1,6 +1,7 @@
 //! A constraint system that only contains strings.
 
-use hotdrink_rs::thread::{DummyPool, TerminationStrategy};
+use hotdrink_rs::thread::DummyPool;
+use hotdrink_wasm::thread::TerminationStrategy;
 
 hotdrink_wasm::component_type_wrapper! {
     pub struct StringWrapper {

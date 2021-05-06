@@ -1,9 +1,7 @@
 //! A simple constraint system to use in benchmarks.
 
-use hotdrink_rs::{
-    examples::constraint_systems::make_empty_cs,
-    thread::{DummyPool, TerminationStrategy},
-};
+use hotdrink_rs::{examples::constraint_systems::make_empty_cs, thread::DummyPool};
+use hotdrink_wasm::thread::TerminationStrategy;
 use wasm_bindgen::prelude::wasm_bindgen;
 
 /// A type with a single value.

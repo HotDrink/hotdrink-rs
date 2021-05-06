@@ -14,8 +14,8 @@ default = ["console_error_panic_hook"]
 
 log = "0.4.14"
 wasm-logger = "0.2.0"
-hotdrink-rs = "=0.1.1"
-hotdrink-wasm = { version = "=0.1.1", features = [ "thread" ] }
+hotdrink-rs = "=0.1.3"
+hotdrink-wasm = { version = "=0.1.3", features = [ "thread" ] }
 js-sys = "0.3.50"
 
 wasm-bindgen = "0.2.63"

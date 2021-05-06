@@ -1,11 +1,7 @@
 //! A constraint system for linking a temperature with different scales.
 
-use hotdrink_rs::{
-    component,
-    model::ConstraintSystem,
-    ret,
-    thread::{DummyPool, TerminationStrategy},
-};
+use hotdrink_rs::{component, model::ConstraintSystem, ret, thread::DummyPool};
+use hotdrink_wasm::thread::TerminationStrategy;
 use wasm_bindgen::prelude::wasm_bindgen;
 
 // Generate the value type.

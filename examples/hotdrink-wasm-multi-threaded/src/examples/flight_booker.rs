@@ -1,11 +1,7 @@
 //! The flight booker example from 7GUIs.
 
-use hotdrink_rs::{
-    component,
-    model::ConstraintSystem,
-    ret,
-    thread::{DummyPool, TerminationStrategy},
-};
+use hotdrink_rs::{component, model::ConstraintSystem, ret, thread::DummyPool};
+use hotdrink_wasm::thread::TerminationStrategy;
 use wasm_bindgen::{prelude::wasm_bindgen, JsValue};
 
 /// The flight type.

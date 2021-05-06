@@ -1,11 +1,7 @@
 //! A constraint system example that increments a value each update of the system.
 
-use hotdrink_rs::{
-    component,
-    model::ConstraintSystem,
-    ret,
-    thread::{DummyPool, TerminationStrategy},
-};
+use hotdrink_rs::{component, model::ConstraintSystem, ret, thread::DummyPool};
+use hotdrink_wasm::thread::TerminationStrategy;
 use wasm_bindgen::prelude::wasm_bindgen;
 
 // Generate the value type.

@@ -1,7 +1,7 @@
 //! A constraint system that only contains numbers.
 
-use hotdrink_rs::thread::{DummyPool, TerminationStrategy};
-use hotdrink_wasm::thread::StaticPool;
+use hotdrink_rs::thread::DummyPool;
+use hotdrink_wasm::thread::{StaticPool, TerminationStrategy};
 
 hotdrink_wasm::component_type_wrapper! {
     pub struct I32Wrapper {

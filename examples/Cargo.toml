@@ -1,7 +1,0 @@
-[workspace]
-members = [
-    "hotdrink-rs-iced",
-    "hotdrink-wasm-multi-threaded",
-    "hotdrink-wasm-node",
-    "hotdrink-wasm-simple",
-]

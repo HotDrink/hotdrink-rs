@@ -1,10 +1,8 @@
 //! A constraint system example that shows off multiple features.
 
 use super::circle::Circle;
-use hotdrink_rs::{
-    component, fail, model::ConstraintSystem, ret, thread::TerminationStrategy, util::fib::slow_fib,
-};
-use hotdrink_wasm::thread::StaticPool;
+use hotdrink_rs::{component, fail, model::ConstraintSystem, ret, util::fib::slow_fib};
+use hotdrink_wasm::thread::{StaticPool, TerminationStrategy};
 use wasm_bindgen::prelude::wasm_bindgen;
 
 type DbResult = Option<i32>;
