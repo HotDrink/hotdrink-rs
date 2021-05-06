@@ -4,12 +4,13 @@
 MODE=release
 
 build:
-	wasm-pack build --$(MODE)
+	wasm-pack build --$(MODE) --out-dir www/pkg
 
-build-threaded: RUSTFLAGS='-C target-feature=+atomics,+bulk-memory'
 build-threaded:
-	@echo RUSTFLAGS=$(RUSTFLAGS)
-	wasm-pack build --$(MODE) --target no-modules -- -Z build-std=panic_abort,std --features thread
+	wasm-pack build --$(MODE) --out-dir www/pkg --target no-modules -- --features thread
+
+demo:
+	wasm-pack build --$(MODE) --out-dir www/pkg --target no-modules -- --features demo
 
 watch:
 	cargo watch -w src -s make -d 5
@@ -27,4 +28,4 @@ bench: $(BENCHES)
 clean:
 	cargo clean
 
-.PHONY: wasm doc clean bench
+.PHONY: wasm doc clean bench demo

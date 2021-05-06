@@ -16,6 +16,7 @@ path = "src/lib.rs"
 [features]
 default = [ "console_error_panic_hook" ]
 thread = []
+demo = [ "thread" ]
 
 [dependencies]
 

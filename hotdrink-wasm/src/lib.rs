@@ -17,7 +17,7 @@
 //! which means that we need the standard library source code.
 //! This can be downloaded with `rustup component add rust-src`.
 //!
-//! See the included makefile (the `build` and `build-threaded` targets) for an example of how to compile to WebAssembly.
+//! See the parallel raytracing documentation <https://rustwasm.github.io/docs/wasm-bindgen/examples/raytrace.html> for more information.
 //!
 //! # Examples
 //!
@@ -137,14 +137,21 @@
 #![feature(drain_filter)]
 #![feature(concat_idents)]
 
+#[cfg(feature = "demo")]
+use crate::thread::{StaticPool, TerminationStrategy};
+#[cfg(feature = "demo")]
+use hotdrink_rs::{component, model::ConstraintSystem, ret, util::fib::slow_fib};
+#[cfg(feature = "demo")]
+use wasm_bindgen::{prelude::wasm_bindgen, JsValue};
+
 pub mod event;
 pub mod macros;
 pub mod thread;
 pub mod util;
 
 /// Check how long it takes for a web worker running Wasm to start.
-#[cfg(feature = "thread")]
-#[wasm_bindgen::prelude::wasm_bindgen]
+#[cfg(feature = "demo")]
+#[wasm_bindgen]
 pub fn bench_web_worker_init() {
     use js_sys::Date;
     use thread::worker::generic_worker::GenericWorker;
@@ -156,4 +163,41 @@ pub fn bench_web_worker_init() {
             log::info!("Spawning web worker took {}ms", end - start);
         }))
         .unwrap();
+}
+
+#[cfg(feature = "demo")]
+crate::constraint_system_wrapper_threaded! {
+    pub struct CsWrapper {
+        pub struct ValueWrapper {
+            #[derive(Clone, Debug)]
+            pub enum Value {
+                i32
+            }
+        }
+        thread_pool: StaticPool,
+        num_threads: 4,
+        termination_strategy: TerminationStrategy::UnusedResultAndNotDone
+    }
+}
+
+/// An example of how to return a constraint system to JavaScript.
+#[cfg(feature = "demo")]
+#[wasm_bindgen]
+pub fn example_cs() -> Result<CsWrapper, JsValue> {
+    let mut cs = ConstraintSystem::new();
+    cs.add_component(component! {
+        component A {
+            let a: i32 = 0, b: i32 = 0, c: i32 = 0, d: i32 = 0,
+                e: i32 = 0, f: i32 = 0, g: i32 = 0, h: i32 = 0, i: i32 = 0;
+            constraint AB { a(a: &i32) -> [b] = { ret![slow_fib(*a)] }; }
+            constraint AC { a(a: &i32) -> [c] = { ret![slow_fib(*a)] }; }
+            constraint AD { a(a: &i32) -> [d] = { ret![slow_fib(*a)] }; }
+            constraint AE { a(a: &i32) -> [e] = { ret![slow_fib(*a)] }; }
+            constraint AF { a(a: &i32) -> [f] = { ret![slow_fib(*a)] }; }
+            constraint AG { a(a: &i32) -> [g] = { ret![slow_fib(*a)] }; }
+            constraint AH { a(a: &i32) -> [h] = { ret![slow_fib(*a)] }; }
+            constraint AI { a(a: &i32) -> [i] = { ret![slow_fib(*a)] }; }
+        }
+    });
+    CsWrapper::wrap(cs)
 }
