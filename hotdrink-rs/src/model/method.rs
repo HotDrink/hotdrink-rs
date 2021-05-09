@@ -107,7 +107,6 @@ fn handle_error<T>(
     generation: GenerationId,
     errors: Vec<SolveError>,
 ) {
-    log::error!("{:?}", errors);
     for &o in output_indices {
         general_callback(EventWithLocation::new(o, generation, Event::Error(&errors)));
     }
@@ -211,7 +210,7 @@ impl<T> Method<T> {
 
                 // Compute the result
                 let result = f(inputs);
-                log::trace!("{}({}) = {:?}", m_name, formatted_inputs, result);
+                log::info!("{}({}) = {:?}", m_name, formatted_inputs, result);
 
                 // Inspect it
                 match result {

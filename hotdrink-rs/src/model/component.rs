@@ -71,7 +71,7 @@ impl<T> Component<T> {
             let activation = &self.variables[index];
             let inner = activation.inner().lock().unwrap();
             match inner.state() {
-                State::Pending => callback(Event::Pending),
+                State::Pending(_) => callback(Event::Pending),
                 State::Ready(value) => callback(Event::Ready(value)),
                 State::Error(errors) => callback(Event::Error(errors)),
             }
@@ -426,9 +426,9 @@ impl<T> Component<T> {
             let va = &self.variables[vi];
             let inner = va.inner().lock().unwrap();
             let event = match inner.state() {
+                State::Pending(_) => Event::Pending,
                 State::Ready(value) => Event::Ready(value.as_ref()),
                 State::Error(errors) => Event::Error(errors),
-                State::Pending => Event::Pending,
             };
             v.call(EventWithLocation::new(
                 vi,

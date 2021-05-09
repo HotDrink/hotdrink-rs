@@ -25,17 +25,20 @@ function main() {
     // Bind a single HTML element to the constraint system.
     // Get the field named `name`, and upon edits send it to the constraint system and solve.
     // Add a callback to the constraint system to set the field value when a new value arrives.
-    function bindElement(comp, name, parse) {
+    function bindElement(comp, name, parse, csname) {
+        if (csname === undefined) {
+            csname = name;
+        }
         let box = document.getElementById(name);
         let state = document.getElementById(name + "_state");
         // Pass input events to the constraint system
         box.addEventListener("input", () => {
             let parsed = parse(box.value);
-            cs.set_variable(comp, name, parsed);
+            cs.set_variable(comp, csname, parsed);
             cs.update();
         });
         // Subscribe to a variable in the given component
-        cs.subscribe(comp, name,
+        cs.subscribe(comp, csname,
             // On ready
             v => {
                 box.classList.add("is-valid");
@@ -67,8 +70,8 @@ function main() {
         );
     }
 
-    function bindNumber(comp, name) {
-        return bindElement(comp, name, s => wrapper.i32(parseInt(s)));
+    function bindNumber(comp, name, csname) {
+        return bindElement(comp, name, s => wrapper.i32(parseInt(s)), csname);
     }
 
     function bindText(comp, name) {
@@ -85,6 +88,13 @@ function main() {
     bindNumber(a, "g");
     bindNumber(a, "h");
     bindNumber(a, "i");
+
+    let transitive = "Transitive";
+    bindNumber(transitive, "a2", "a");
+    bindNumber(transitive, "b2", "b");
+    bindNumber(transitive, "c2", "c");
+    bindNumber(transitive, "d2", "d");
+    bindNumber(transitive, "e2", "e");
 
     cs.update();
 }

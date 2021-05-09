@@ -3,6 +3,7 @@
 //! and act as futures or promises that eventually get the new value.
 
 use crate::{event::Event, solver::SolveError, thread::TerminationHandle};
+use derivative::Derivative;
 use futures::Future;
 use std::{
     fmt::Debug,
@@ -20,7 +21,7 @@ use std::{
 pub enum State<T> {
     /// The value is still being computed.
     #[derivative(Default)]
-    Pending,
+    Pending(Vec<Activation<T>>),
     /// The value was computed successfully.
     Ready(Arc<T>),
     /// The computation of the value failed.
@@ -32,7 +33,7 @@ pub type EventCallback<T, E> = Arc<Mutex<dyn Fn(Event<'_, T, E>) + Send>>;
 
 /// Contains a slot for a value to be produced,
 /// and one for a waker to be called when this happens.
-#[derive(derivative::Derivative)]
+#[derive(Derivative)]
 #[derivative(Debug = "transparent", Default(bound = ""), PartialEq, Eq)]
 pub struct ActivationInner<T> {
     state: State<T>,
@@ -50,19 +51,16 @@ impl<T> From<T> for ActivationInner<T> {
 }
 
 impl<T> ActivationInner<T> {
-    /// Constructs a new [`ActivationInner`] with no value.
-    pub fn new() -> Self {
-        Self::default()
+    pub fn new(dependencies: Vec<Activation<T>>) -> Self {
+        Self {
+            state: State::Pending(dependencies),
+            ..Self::default()
+        }
     }
 
     /// Returns a reference to the current state.
     pub fn state(&self) -> &State<T> {
         &self.state
-    }
-
-    /// Set the state to [`State::Pending`].
-    pub fn set_pending(&mut self) {
-        self.state = State::Pending;
     }
 
     /// Sets the state to a successful value.
@@ -98,22 +96,15 @@ impl<T> ActivationInner<T> {
 /// Represents a value that may not be done being computed.
 /// Once the value has been computed, it will be stored in its shared state.
 /// Should be used as a `Future`, and can be `await`ed in async code.
+#[derive(Derivative)]
+#[derivative(Clone(bound = ""))]
 pub struct Activation<T> {
     /// A slot for the data once it arrives, as well as
     /// the waker to call once a result has been produced.
     pub inner: Arc<Mutex<ActivationInner<T>>>,
-    /// A reference to the thread that is producing the result.
-    /// Dropping this tells the worker that this value no longer requires the outputs of the computation.
+    /// A handle that when there are no more references to it,
+    /// a flag is set so that the computing thread can be cancelled.
     pub producer: Option<TerminationHandle>,
-}
-
-impl<T> Clone for Activation<T> {
-    fn clone(&self) -> Self {
-        Self {
-            inner: Arc::clone(&self.inner),
-            producer: self.producer.clone(),
-        }
-    }
 }
 
 impl<T> Activation<T> {
@@ -122,14 +113,23 @@ impl<T> Activation<T> {
         &self.inner
     }
 
-    /// Marks this activation for cancellation.
+    /// Notes disinterest in the result, halting its computation
+    /// if nobody else is interested.
     pub fn cancel(&mut self, e: SolveError) {
         let mut inner = self.inner.lock().unwrap();
-        // Only set to cancelled if no value was computed in time
-        if let State::Pending = inner.state {
-            inner.state = State::Error(vec![e]);
+        // Only set to error if still pending.
+        // Otherwise the result would be overwritten.
+        if let State::Pending(_) = &inner.state {
+            inner.set_error(vec![e]);
         }
         self.producer = None;
+    }
+
+    /// Returns an activation that will not contribute to keeping the computing thread alive.
+    pub fn weak_clone(&self) -> Self {
+        let mut clone = self.clone();
+        clone.producer = None;
+        clone
     }
 }
 
@@ -159,7 +159,7 @@ impl<T> Future for Activation<T> {
         let mut inner = self.inner.lock().unwrap();
         match &inner.state {
             // Still waiting for a value
-            State::Pending => {
+            State::Pending(_) => {
                 inner.waker = Some(cx.waker().clone());
                 Poll::Pending
             }

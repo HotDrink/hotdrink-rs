@@ -1,10 +1,10 @@
 //! A trait for threadpool-like types.
 
-use std::fmt::Debug;
 use std::sync::{
     atomic::{AtomicBool, Ordering},
     Arc,
 };
+use std::{fmt::Debug, sync::atomic::AtomicUsize};
 
 /// A trait for thread pool implementations.
 pub trait ThreadPool {
@@ -27,9 +27,26 @@ pub trait ThreadPool {
 
 /// As long as at least one clone of this handle exists,
 /// the termination flag for a worker is set to false.
-#[derive(Clone, Debug, Default)]
+#[derive(Debug, Default)]
 pub struct TerminationHandle {
     inner: Arc<InnerHandle>,
+    num_references: Arc<AtomicUsize>,
+}
+
+impl Clone for TerminationHandle {
+    fn clone(&self) -> Self {
+        self.num_references.fetch_add(1, Ordering::SeqCst);
+        Self {
+            inner: self.inner.clone(),
+            num_references: self.num_references.clone(),
+        }
+    }
+}
+
+impl Drop for TerminationHandle {
+    fn drop(&mut self) {
+        self.num_references.fetch_sub(1, Ordering::SeqCst);
+    }
 }
 
 impl TerminationHandle {
@@ -40,8 +57,14 @@ impl TerminationHandle {
             inner: Arc::new(InnerHandle {
                 result_needed: result_needed.clone(),
             }),
+            num_references: Arc::new(AtomicUsize::new(1)),
         };
         (inner_handle, result_needed)
+    }
+
+    /// Returns the number of references to this [`TerminationHandle`].
+    pub fn num_references(&self) -> usize {
+        self.num_references.load(Ordering::SeqCst)
     }
 }
 
@@ -50,7 +73,7 @@ impl TerminationHandle {
 /// The flag will be set when all references to this handle are dropped, or
 /// it is cancelled manually.
 #[derive(Clone, Debug, Default)]
-pub struct InnerHandle {
+struct InnerHandle {
     result_needed: Arc<AtomicBool>,
 }
 

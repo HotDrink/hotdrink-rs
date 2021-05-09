@@ -173,7 +173,6 @@ impl PoolWorker {
                 shared_data.start_task(result_needed);
 
                 // Task result is already dropped, just skip to next task.
-                // TODO: This means that intermediate results may be skipped, do we want that?
                 if !shared_data.result_needed() {
                     continue;
                 }
@@ -221,7 +220,7 @@ impl PoolWorker {
             };
             // Check if the task is dropped, and that the worker is still working on the task
             if should_be_terminated {
-                log::trace!("Worker was terminated");
+                log::info!("Terminating PoolWorker {}", self.id);
                 // Terminate the worker
                 shared_data.is_terminated.store(true, Ordering::SeqCst);
                 self.worker.terminate();

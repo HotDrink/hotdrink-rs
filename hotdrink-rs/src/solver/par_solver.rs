@@ -43,15 +43,16 @@ pub(crate) fn par_solve<T>(
     T: Send + Sync + 'static + Debug,
 {
     if !plan.is_empty() {
-        log::trace!("Solving {} with plan {:?}", component_name, plan);
+        log::info!("Solving {}", component_name);
     }
 
     for osc in plan {
         let constraint_name = osc.name();
         let m = osc.method();
+        log::info!("Activating {:?}", m);
 
         // Pick inputs from current values
-        let inputs = m
+        let inputs: Vec<Activation<_>> = m
             .inputs()
             .iter()
             .map(|&i| current_values[i].clone())
@@ -67,13 +68,14 @@ pub(crate) fn par_solve<T>(
                 Reason::Cancelled,
             ));
             // Keep the old value from the previous state, but set to pending
-            let shared_state = ActivationInner::new();
+            let shared_state = ActivationInner::new(inputs.clone());
             shared_states.push(Arc::new(Mutex::new(shared_state)));
         }
 
         // Compute outputs
+        let weak_clone_inputs = inputs.iter().map(|a| a.weak_clone()).collect();
         let outputs = m.activate(
-            inputs,
+            weak_clone_inputs,
             shared_states,
             (component_name.to_owned(), constraint_name.to_owned()),
             generation,

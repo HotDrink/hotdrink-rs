@@ -1,13 +1,9 @@
 //! A module for testing new features for `hotdrink-rs`.
 
-#[cfg(feature = "demo")]
 use crate::thread::{StaticPool, TerminationStrategy};
-#[cfg(feature = "demo")]
 use hotdrink_rs::{component, model::ConstraintSystem, ret, util::fib::slow_fib};
-#[cfg(feature = "demo")]
 use wasm_bindgen::{prelude::wasm_bindgen, JsValue};
 
-#[cfg(feature = "demo")]
 crate::constraint_system_wrapper_threaded! {
     pub struct CsWrapper {
         pub struct ValueWrapper {
@@ -23,7 +19,6 @@ crate::constraint_system_wrapper_threaded! {
 }
 
 /// An example of how to return a constraint system to JavaScript.
-#[cfg(feature = "demo")]
 #[wasm_bindgen]
 pub fn example_cs() -> Result<CsWrapper, JsValue> {
     let mut cs = ConstraintSystem::new();
@@ -41,5 +36,16 @@ pub fn example_cs() -> Result<CsWrapper, JsValue> {
             constraint AI { a(a: &i32) -> [i] = { ret![slow_fib(*a)] }; }
         }
     });
+
+    cs.add_component(component! {
+        component Transitive {
+            let a: i32 = 0, b: i32 = 0, c: i32 = 0, d: i32 = 0, e: i32 = 0;
+            constraint Ab  { m(a: &i32) -> [b] = { slow_fib(*a); ret![*a] }; }
+            constraint Bc  { m(b: &i32) -> [c] = { slow_fib(*b); ret![*b] }; }
+            constraint Cd  { m(c: &i32) -> [d] = { slow_fib(*c); ret![*c] }; }
+            constraint De  { m(d: &i32) -> [e] = { slow_fib(*d); ret![*d] }; }
+        }
+    });
+
     CsWrapper::wrap(cs)
 }
