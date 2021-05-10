@@ -44,29 +44,23 @@ function main() {
                 box.classList.add("is-valid");
                 box.classList.remove("is-invalid");
                 box.value = v;
-                if (state) {
-                    state.textContent = "";
-                    state.title = "";
-                }
             },
             // On pending
             () => {
                 box.classList.remove("is-valid");
                 box.classList.remove("is-invalid");
-                if (state) {
-                    state.textContent = "⌛";
-                    state.title = "";
-                }
             },
             // On error
             e => {
                 box.classList.remove("is-valid");
                 box.classList.add("is-invalid");
-                if (state) {
-                    state.textContent = "⛔";
-                    state.title = e;
-                }
-            }
+                box.title = e;
+            },
+            // On ok
+            () => {
+                box.classList.remove("is-invalid");
+                box.classList.add("is-valid");
+            },
         );
     }
 
@@ -95,6 +89,11 @@ function main() {
     bindNumber(transitive, "c2", "c");
     bindNumber(transitive, "d2", "d");
     bindNumber(transitive, "e2", "e");
+
+    let error_propagation = "ErrorPropagation";
+    bindNumber(error_propagation, "a3", "a");
+    bindNumber(error_propagation, "b3", "b");
+    bindNumber(error_propagation, "c3", "c");
 
     cs.update();
 }

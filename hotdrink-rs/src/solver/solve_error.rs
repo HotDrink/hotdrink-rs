@@ -5,7 +5,7 @@ use crate::planner::MethodFailure;
 use std::fmt::Display;
 
 /// Information about an error that occured during solving.
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct SolveError {
     component: String,
     constraint: String,
@@ -63,7 +63,7 @@ impl Display for SolveError {
 }
 
 /// A description of what went wrong during solving.
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Reason {
     /// A precondition did not hold before enforcing a constraint.
     PreConditionFailure(String),

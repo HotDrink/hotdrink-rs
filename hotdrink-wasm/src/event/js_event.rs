@@ -11,6 +11,8 @@ pub enum JsEventInner<T, E> {
     Ready(T),
     /// The computation failed.
     Error(Vec<E>),
+    /// The value is no longer erroneous.
+    Ok,
 }
 
 impl<'a, T, E> From<Event<'a, T, E>> for JsEventInner<T, E>
@@ -23,6 +25,7 @@ where
             Event::Pending => JsEventInner::Pending,
             Event::Ready(value) => JsEventInner::Ready(value.clone()),
             Event::Error(errors) => JsEventInner::Error(errors.clone()),
+            Event::Ok => JsEventInner::Ok,
         }
     }
 }

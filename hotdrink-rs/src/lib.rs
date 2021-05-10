@@ -68,6 +68,7 @@
 //!     Event::Pending => println!("A new value for `a` is being computed"),
 //!     Event::Ready(value) => println!("New value for `a`: {}", value),
 //!     Event::Error(errors) => println!("Computation for `a` failed: {:?}", errors),
+//!     Event::Ok => {},
 //! });
 //!
 //! // Change the value of `a`

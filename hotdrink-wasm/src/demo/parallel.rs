@@ -1,7 +1,7 @@
 //! A module for testing new features for `hotdrink-rs`.
 
 use crate::thread::{StaticPool, TerminationStrategy};
-use hotdrink_rs::{component, model::ConstraintSystem, ret, util::fib::slow_fib};
+use hotdrink_rs::{component, fail, model::ConstraintSystem, ret, util::fib::slow_fib};
 use wasm_bindgen::{prelude::wasm_bindgen, JsValue};
 
 crate::constraint_system_wrapper_threaded! {
@@ -40,10 +40,22 @@ pub fn example_cs() -> Result<CsWrapper, JsValue> {
     cs.add_component(component! {
         component Transitive {
             let a: i32 = 0, b: i32 = 0, c: i32 = 0, d: i32 = 0, e: i32 = 0;
-            constraint Ab  { m(a: &i32) -> [b] = { slow_fib(*a); ret![*a] }; }
-            constraint Bc  { m(b: &i32) -> [c] = { slow_fib(*b); ret![*b] }; }
-            constraint Cd  { m(c: &i32) -> [d] = { slow_fib(*c); ret![*c] }; }
-            constraint De  { m(d: &i32) -> [e] = { slow_fib(*d); ret![*d] }; }
+            constraint Ab { m(a: &i32) -> [b] = { slow_fib(*a); ret![*a] }; }
+            constraint Bc { m(b: &i32) -> [c] = { slow_fib(*b); ret![*b] }; }
+            constraint Cd { m(c: &i32) -> [d] = { slow_fib(*c); ret![*c] }; }
+            constraint De { m(d: &i32) -> [e] = { slow_fib(*d); ret![*d] }; }
+        }
+    });
+
+    cs.add_component(component! {
+        component ErrorPropagation {
+            let a: i32 = 0, b: i32 = 0, c: i32 = 0;
+            constraint Abc {
+                a_bc(a: &i32) -> [b, c] = {
+                    fail!("Failed on purpose")
+                };
+                bc_a(b: &i32, c: &i32) -> [a] = ret![b + c];
+            }
         }
     });
 

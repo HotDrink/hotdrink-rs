@@ -12,20 +12,55 @@ use std::{
     task::{Poll, Waker},
 };
 
+/// Data to store while the computation is pending.
+#[derive(Derivative)]
+#[derivative(Clone(bound = ""), Debug, PartialEq, Eq)]
+pub struct PendingData<T> {
+    previous: Activation<T>,
+    dependencies: Vec<Activation<T>>,
+}
+
+impl<T> PendingData<T> {
+    /// Constructs a new [`PendingData<T>`].
+    pub fn new(previous: Activation<T>, dependencies: Vec<Activation<T>>) -> Self {
+        Self {
+            previous,
+            dependencies,
+        }
+    }
+}
+
+#[derive(Derivative)]
+#[derivative(Clone(bound = ""), Debug, PartialEq, Eq)]
+pub struct ErrorData<T> {
+    previous: Activation<T>,
+    errors: Vec<SolveError>,
+}
+
+impl<T> ErrorData<T> {
+    pub fn new(previous: Activation<T>, errors: Vec<SolveError>) -> Self {
+        Self { previous, errors }
+    }
+    pub fn previous(&self) -> &Activation<T> {
+        &self.previous
+    }
+    pub fn errors(&self) -> &Vec<SolveError> {
+        &self.errors
+    }
+}
+
 /// The possible states of a variable's value.
 /// It starts off with being pending, and can
 /// transition to [`State::Ready`] when its computation succeeds,
 /// or [`State::Error`] if the computation fails.
-#[derive(derivative::Derivative)]
-#[derivative(Clone, Debug, Default(bound = ""), PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub enum State<T> {
     /// The value is still being computed.
-    #[derivative(Default)]
-    Pending(Vec<Activation<T>>),
+    Pending(PendingData<T>),
     /// The value was computed successfully.
     Ready(Arc<T>),
     /// The computation of the value failed.
-    Error(Vec<SolveError>),
+    Error(ErrorData<T>),
 }
 
 /// A callback to an [`Event`] sent from a call to [`ConstraintSystem::update`](crate::model::ConstraintSystem::update).
@@ -34,10 +69,10 @@ pub type EventCallback<T, E> = Arc<Mutex<dyn Fn(Event<'_, T, E>) + Send>>;
 /// Contains a slot for a value to be produced,
 /// and one for a waker to be called when this happens.
 #[derive(Derivative)]
-#[derivative(Debug = "transparent", Default(bound = ""), PartialEq, Eq)]
+#[derivative(Debug = "transparent", PartialEq, Eq)]
 pub struct ActivationInner<T> {
     state: State<T>,
-    #[derivative(Debug = "ignore", Default(value = "None"), PartialEq = "ignore")]
+    #[derivative(Debug = "ignore", PartialEq = "ignore")]
     waker: Option<Waker>,
 }
 
@@ -51,10 +86,10 @@ impl<T> From<T> for ActivationInner<T> {
 }
 
 impl<T> ActivationInner<T> {
-    pub fn new(dependencies: Vec<Activation<T>>) -> Self {
+    pub fn new(previous: Activation<T>, dependencies: Vec<Activation<T>>) -> Self {
         Self {
-            state: State::Pending(dependencies),
-            ..Self::default()
+            state: State::Pending(PendingData::new(previous, dependencies)),
+            waker: None,
         }
     }
 
@@ -77,10 +112,14 @@ impl<T> ActivationInner<T> {
 
     /// Set the state to a failed value.
     pub fn set_error(&mut self, errors: Vec<SolveError>) {
-        if let State::Error(previous_errors) = &mut self.state {
-            previous_errors.extend(errors);
-        } else {
-            self.state = State::Error(errors)
+        match &mut self.state {
+            State::Error(previous_errors) => {
+                previous_errors.errors.extend(errors);
+            }
+            State::Pending(pd) => {
+                self.state = State::Error(ErrorData::new(pd.previous.clone(), errors));
+            }
+            _ => panic!("State set to error twice"),
         }
         self.wake();
     }
@@ -131,6 +170,22 @@ impl<T> Activation<T> {
         clone.producer = None;
         clone
     }
+
+    /// Clear the error of the activation,
+    /// and set the value to the previous successful one.
+    pub fn revert(&mut self) {
+        let opt_old: Option<Activation<T>> = {
+            let mut inner = self.inner.lock().unwrap();
+            if let State::Error(ed) = &mut inner.state {
+                Some(ed.previous().clone())
+            } else {
+                None
+            }
+        };
+        if let Some(old) = opt_old {
+            *self = old;
+        }
+    }
 }
 
 impl<T: Debug> Debug for Activation<T> {
@@ -150,7 +205,7 @@ impl<T> From<T> for Activation<T> {
 }
 
 /// The resulting value of a [`Activation`].
-pub type Value<T> = Result<Arc<T>, Vec<SolveError>>;
+pub type Value<T> = Result<Arc<T>, (Arc<T>, ErrorData<T>)>;
 
 impl<T> Future for Activation<T> {
     type Output = Value<T>;
@@ -165,7 +220,11 @@ impl<T> Future for Activation<T> {
             }
             // It is complete, either Ready or Error.
             State::Ready(value) => Poll::Ready(Ok(Arc::clone(value))),
-            State::Error(errors) => Poll::Ready(Err(errors.clone())),
+            State::Error(error_data) => {
+                let clone: Activation<T> = error_data.previous().clone();
+                let mut pinned = Box::pin(clone);
+                std::future::Future::poll(pinned.as_mut(), cx)
+            }
         }
     }
 }
@@ -173,8 +232,10 @@ impl<T> Future for Activation<T> {
 impl<T: PartialEq> PartialEq for Activation<T> {
     /// TODO: Avoid deadlocks here?
     fn eq(&self, other: &Self) -> bool {
-        let v1 = self.inner.lock().expect("Coult not lock st1");
-        let v2 = other.inner.lock().expect("Coult not lock st2");
+        let v1 = self.inner.lock().expect("Could not lock st1");
+        let v2 = other.inner.lock().expect("Could not lock st2");
         *v1 == *v2
     }
 }
+
+impl<T: Eq> Eq for Activation<T> {}

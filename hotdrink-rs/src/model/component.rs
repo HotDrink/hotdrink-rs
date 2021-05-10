@@ -73,7 +73,7 @@ impl<T> Component<T> {
             match inner.state() {
                 State::Pending(_) => callback(Event::Pending),
                 State::Ready(value) => callback(Event::Ready(value)),
-                State::Error(errors) => callback(Event::Error(errors)),
+                State::Error(data) => callback(Event::Error(data.errors())),
             }
 
             // Update the stored callback
@@ -428,7 +428,7 @@ impl<T> Component<T> {
             let event = match inner.state() {
                 State::Pending(_) => Event::Pending,
                 State::Ready(value) => Event::Ready(value.as_ref()),
-                State::Error(errors) => Event::Error(errors),
+                State::Error(errors) => Event::Error(errors.errors()),
             };
             v.call(EventWithLocation::new(
                 vi,

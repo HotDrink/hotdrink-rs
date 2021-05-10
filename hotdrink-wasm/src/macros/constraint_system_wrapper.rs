@@ -119,6 +119,7 @@ macro_rules! constraint_system_wrapper {
                 on_ready: Option<js_sys::Function>,
                 on_pending: Option<js_sys::Function>,
                 on_error: Option<js_sys::Function>,
+                on_ok: Option<js_sys::Function>,
             ) {
                 {
                     let mut event_handler = self.event_handler.lock().unwrap();
@@ -130,6 +131,9 @@ macro_rules! constraint_system_wrapper {
                     }
                     if let Some(on_error) = on_error {
                         event_handler.set_on_error(component, variable, on_error);
+                    }
+                    if let Some(on_ok) = on_ok {
+                        event_handler.set_on_ok(component, variable, on_ok);
                     }
                 }
                 {

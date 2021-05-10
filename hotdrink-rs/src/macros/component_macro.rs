@@ -97,8 +97,9 @@ macro_rules! component {
                                     )*
 
                                     use std::sync::Arc;
+                                    let e: $crate::planner::MethodResult<_> = $m_expr;
                                     // Evaluate user code and wrap in [`Arc`]s
-                                    $m_expr.map(|v| v.into_iter().map(Arc::new).collect())
+                                    e.map(|v| v.into_iter().map(Arc::new).collect())
                                 })
                             }
                         )
@@ -189,6 +190,8 @@ macro_rules! ret {
 #[macro_export]
 macro_rules! fail {
     ($($arg:tt)*) => {{
+        // let err: $crate::planner::MethodResult<_> = Err($crate::planner::MethodFailure::Custom(format!($($arg)*)));
+        // err
         Err($crate::planner::MethodFailure::Custom(format!($($arg)*)))
     }};
 }

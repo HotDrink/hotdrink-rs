@@ -63,11 +63,7 @@ impl<T, E: Clone> FilteredCallback<T, E> {
 
         // Call callback
         if let Some(callback) = &self.callback {
-            match ge.event() {
-                Event::Pending => callback.lock().unwrap()(Event::Pending),
-                Event::Ready(value) => callback.lock().unwrap()(Event::Ready(value)),
-                Event::Error(errors) => callback.lock().unwrap()(Event::Error(errors)),
-            };
+            callback.lock().unwrap()(ge.event());
         }
     }
 }

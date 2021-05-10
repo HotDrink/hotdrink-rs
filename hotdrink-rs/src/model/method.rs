@@ -146,11 +146,6 @@ impl<T> Method<T> {
         let shared_states = Arc::new(shared_states);
         let shared_states_clone = shared_states.clone();
 
-        // Set pending
-        for &o in &output_indices {
-            general_callback(EventWithLocation::new(o, generation, Event::Pending));
-        }
-
         // We need a clone of the computation to move into the thread
         let f = self.apply.clone();
 
@@ -171,7 +166,10 @@ impl<T> Method<T> {
                 for state in input_results {
                     match state {
                         Ok(value) => inputs.push(value),
-                        Err(es) => errors.extend(es),
+                        Err((value, error_data)) => {
+                            inputs.push(value);
+                            errors.extend(error_data.errors().clone());
+                        }
                     }
                 }
 
@@ -184,7 +182,6 @@ impl<T> Method<T> {
                         generation,
                         errors,
                     );
-                    return;
                 }
 
                 // Check that all inputs are provided

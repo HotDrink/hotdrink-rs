@@ -45,6 +45,7 @@ pub struct JsCallback {
     on_pending: Option<Function>,
     on_ready: Option<Function>,
     on_error: Option<Function>,
+    on_ok: Option<Function>,
 }
 
 /// The main event handler containing the callbacks for variables.
@@ -110,6 +111,14 @@ impl<T: Into<JsValue> + Clone + Debug, E: Display + Debug> EventHandler<T, E> {
         Some(())
     }
 
+    /// Sets the callback to call when the specified variable is set to ok.
+    pub fn set_on_ok(&mut self, component: &str, variable: &str, on_ok: Function) -> Option<()> {
+        let id = VariableId::new(component, variable);
+        let callbacks = self.callbacks.entry(id).or_insert_with(JsCallback::default);
+        callbacks.on_ok = Some(on_ok);
+        Some(())
+    }
+
     /// Removes the callback for a specific variable from the event handler.
     pub fn unsubscribe(&mut self, component: &str, variable: &str) {
         let id = VariableId::new(component, variable);
@@ -142,6 +151,11 @@ impl<T: Into<JsValue> + Clone + Debug, E: Display + Debug> EventHandler<T, E> {
                     if let Some(on_error) = &cb.on_error {
                         let err_msg = error.iter().map(|e| format!("{}", e)).join("\r\n");
                         on_error.call1(&JsValue::null(), &JsValue::from(err_msg))?;
+                    }
+                }
+                JsEventInner::Ok => {
+                    if let Some(on_ok) = &cb.on_ok {
+                        on_ok.call0(&JsValue::null())?;
                     }
                 }
             }

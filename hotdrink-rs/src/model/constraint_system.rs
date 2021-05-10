@@ -167,6 +167,7 @@ impl<T> ConstraintSystem<T> {
     ///     Event::Pending => {}
     ///     Event::Ready(v) => assert_eq!(*v, 0),
     ///     Event::Error(errors) => panic!("{:?}", errors),
+    ///     Event::Ok => {},
     /// });
     /// ```
     pub fn subscribe<'a>(

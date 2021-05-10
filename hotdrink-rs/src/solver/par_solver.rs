@@ -5,12 +5,13 @@
 use crate::{
     event::EventWithLocation,
     model::{
-        activation::{Activation, ActivationInner},
+        activation::{Activation, ActivationInner, State},
         generation_id::GenerationId,
         variables::Variables,
     },
     planner::MethodSpec,
     thread::ThreadPool,
+    Event,
 };
 use crate::{
     model::Method,
@@ -51,12 +52,32 @@ pub(crate) fn par_solve<T>(
         let m = osc.method();
         log::info!("Activating {:?}", m);
 
+        // Clear previous errors of inputs
+        for &o in m.inputs() {
+            log::info!("Setting {} to ok", o);
+            let activation = &current_values[o];
+            let inner = activation.inner().lock().unwrap();
+            if let State::Error(_) = inner.state() {
+                general_callback(EventWithLocation::new(o, generation, Event::Ok));
+            }
+        }
+
+        // Set outputs to pending
+        for &o in m.outputs() {
+            log::info!("Setting {} to pending", o);
+            general_callback(EventWithLocation::new(o, generation, Event::Pending));
+        }
+
         // Pick inputs from current values
-        let inputs: Vec<Activation<_>> = m
+        let mut inputs: Vec<Activation<_>> = m
             .inputs()
             .iter()
             .map(|&i| current_values[i].clone())
             .collect();
+
+        for a in &mut inputs {
+            a.revert();
+        }
 
         let mut shared_states = Vec::with_capacity(m.outputs().len());
         for &o in m.outputs() {
@@ -68,7 +89,8 @@ pub(crate) fn par_solve<T>(
                 Reason::Cancelled,
             ));
             // Keep the old value from the previous state, but set to pending
-            let shared_state = ActivationInner::new(inputs.clone());
+            let previous = current_values[o].clone();
+            let shared_state = ActivationInner::new(previous, inputs.clone());
             shared_states.push(Arc::new(Mutex::new(shared_state)));
         }
 
