@@ -68,8 +68,8 @@ function main() {
         return bindElement(comp, name, s => wrapper.i32(parseInt(s)), csname);
     }
 
-    function bindText(comp, name) {
-        return bindElement(comp, name, s => wrapper.String(s));
+    function bindText(comp, name, csname) {
+        return bindElement(comp, name, s => wrapper.String(s), csname);
     }
 
     let a = "A";
@@ -94,6 +94,10 @@ function main() {
     bindNumber(error_propagation, "a3", "a");
     bindNumber(error_propagation, "b3", "b");
     bindNumber(error_propagation, "c3", "c");
+
+    let verification = "Validation";
+    bindNumber(verification, "a4", "a");
+    bindText(verification, "b4", "b");
 
     cs.update();
 }

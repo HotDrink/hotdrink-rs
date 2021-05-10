@@ -9,7 +9,8 @@ crate::constraint_system_wrapper_threaded! {
         pub struct ValueWrapper {
             #[derive(Clone, Debug)]
             pub enum Value {
-                i32
+                i32,
+                String
             }
         }
         thread_pool: StaticPool,
@@ -55,6 +56,36 @@ pub fn example_cs() -> Result<CsWrapper, JsValue> {
                     fail!("Failed on purpose")
                 };
                 bc_a(b: &i32, c: &i32) -> [a] = ret![b + c];
+            }
+        }
+    });
+
+    cs.add_component(component! {
+        component Validation {
+            let a: i32 = 0, b: String = "";
+            constraint A {
+                a_is_prime(a: &i32) -> [a] = {
+                    for i in 2..((*a as f64).sqrt() + 1.0) as i32 {
+                        if a % i == 0 {
+                            return fail!("a must be greater than 0");
+                        }
+                    }
+                    ret![*a]
+                };
+            }
+            constraint B {
+                b_is_palindrome(b: &String) -> [b] = {
+                    let x: String = b.clone();
+                    let y: String = b.clone();
+                    let x: Vec<char> = x.chars().collect();
+                    let y: Vec<char> = y.chars().rev().collect();
+                    log::info!("Pali?");
+                    if x == y {
+                        ret![b.clone()]
+                    } else {
+                        fail!("String must be a palindrome")
+                    }
+                };
             }
         }
     });
