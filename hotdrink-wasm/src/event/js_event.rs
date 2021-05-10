@@ -1,6 +1,6 @@
 //! A wrapper around events that contains information about which variable was updated.
 
-use hotdrink_rs::Event;
+use hotdrink_rs::event::{Event, Ready};
 
 /// An event from the constraint system.
 #[derive(Debug)]
@@ -23,9 +23,11 @@ where
     fn from(e: Event<'a, T, E>) -> Self {
         match e {
             Event::Pending => JsEventInner::Pending,
-            Event::Ready(value) => JsEventInner::Ready(value.clone()),
+            Event::Ready(value) => match value {
+                Ready::Changed(v) => JsEventInner::Ready(v.clone()),
+                Ready::Unchanged => JsEventInner::Ok,
+            },
             Event::Error(errors) => JsEventInner::Error(errors.clone()),
-            Event::Ok => JsEventInner::Ok,
         }
     }
 }

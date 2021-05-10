@@ -4,7 +4,7 @@
 
 use super::generation_id::GenerationId;
 use crate::{
-    event::{Event, EventWithLocation},
+    event::{Event, EventWithLocation, Ready},
     model::activation::{Activation, ActivationInner},
     planner::{MethodFailure, MethodFunction, MethodResult, MethodSpec, Vertex},
     solver::{Reason, SolveError},
@@ -240,7 +240,7 @@ impl<T> Method<T> {
                             general_callback(EventWithLocation::new(
                                 o,
                                 generation,
-                                Event::Ready(&res),
+                                Event::Ready(Ready::Changed(&res)),
                             ));
                             let mut shared_state = st.lock().unwrap();
                             // Set the new value

@@ -1,4 +1,9 @@
-use hotdrink_rs::{component, model::ConstraintSystem, ret, Event};
+use hotdrink_rs::{
+    component,
+    event::{Event, Ready},
+    model::ConstraintSystem,
+    ret,
+};
 
 #[test]
 pub fn basic_constraint_system() {
@@ -14,9 +19,8 @@ pub fn basic_constraint_system() {
 
     cs.subscribe("Comp", "a", |e| match e {
         Event::Pending => {}
-        Event::Ready(v) => assert_eq!(*v, 0),
+        Event::Ready(v) => assert_eq!(v, Ready::Changed(&0)),
         Event::Error(errors) => panic!("Got errors: {:?}", errors),
-        Event::Ok => {}
     })
     .unwrap();
 

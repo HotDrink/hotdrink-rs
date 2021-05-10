@@ -3,17 +3,26 @@
 use crate::model::generation_id::GenerationId;
 use std::fmt::Debug;
 
+/// The value inside a [`Ready`](Event::Ready) event.
+///
+/// It may either be a new value, or a notification that the value is unchanged.
+#[derive(Copy, Clone, Debug, PartialEq, Eq)]
+pub enum Ready<'a, T> {
+    /// A new value has been produced.
+    Changed(&'a T),
+    /// No new value has been produced, but previous errors no longer apply and can be cleared.
+    Unchanged,
+}
+
 /// An event from the constraint system.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Event<'a, T, E> {
     /// The value is being computed.
     Pending,
     /// The computation succeeded.
-    Ready(&'a T),
+    Ready(Ready<'a, T>),
     /// The computation failed.
     Error(&'a Vec<E>),
-    /// The previous value is ok.
-    Ok,
 }
 
 /// An event from [`ConstraintSystem::update`](crate::model::ConstraintSystem::update) with information about

@@ -12,7 +12,7 @@ use super::{
     variables::Variables,
 };
 use crate::{
-    event::{Event, EventWithLocation},
+    event::{Event, EventWithLocation, Ready},
     model::activation::Activation,
     planner::{
         hierarchical_planner, priority_adjuster::adjust_priorities, ComponentSpec, ConstraintSpec,
@@ -72,7 +72,7 @@ impl<T> Component<T> {
             let inner = activation.inner().lock().unwrap();
             match inner.state() {
                 State::Pending(_) => callback(Event::Pending),
-                State::Ready(value) => callback(Event::Ready(value)),
+                State::Ready(value) => callback(Event::Ready(Ready::Changed(value))),
                 State::Error(data) => callback(Event::Error(data.errors())),
             }
 
@@ -110,7 +110,7 @@ impl<T> Component<T> {
         self.callbacks.lock().unwrap()[idx].call(EventWithLocation::new(
             idx,
             GenerationId::new(self.current_generation, self.total_generation),
-            Event::Ready(&value),
+            Event::Ready(Ready::Changed(&value)),
         ));
 
         // Create a new activation
@@ -427,7 +427,7 @@ impl<T> Component<T> {
             let inner = va.inner().lock().unwrap();
             let event = match inner.state() {
                 State::Pending(_) => Event::Pending,
-                State::Ready(value) => Event::Ready(value.as_ref()),
+                State::Ready(value) => Event::Ready(Ready::Changed(value.as_ref())),
                 State::Error(errors) => Event::Error(errors.errors()),
             };
             v.call(EventWithLocation::new(

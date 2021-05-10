@@ -43,7 +43,7 @@
 //! ## Examples
 //!
 //! ```rust
-//! use hotdrink_rs::{component, model::ConstraintSystem, ret, Event};
+//! use hotdrink_rs::{component, model::ConstraintSystem, ret, event::Event};
 //!
 //! // Define a set of variables and relations between them
 //! let mut component = component! {
@@ -66,9 +66,8 @@
 //! // Describe what should happen when `a` changes.
 //! component.subscribe("a", |event| match event {
 //!     Event::Pending => println!("A new value for `a` is being computed"),
-//!     Event::Ready(value) => println!("New value for `a`: {}", value),
+//!     Event::Ready(value) => println!("New value for `a`: {:?}", value),
 //!     Event::Error(errors) => println!("Computation for `a` failed: {:?}", errors),
-//!     Event::Ok => {},
 //! });
 //!
 //! // Change the value of `a`
@@ -105,7 +104,7 @@
 #[macro_use]
 pub mod macros;
 pub mod builders;
-pub(crate) mod event;
+pub mod event;
 pub mod examples;
 pub mod model;
 pub mod planner;
@@ -113,5 +112,3 @@ pub mod solver;
 pub mod thread;
 pub mod util;
 pub(crate) mod variable_ranking;
-
-pub use event::Event;

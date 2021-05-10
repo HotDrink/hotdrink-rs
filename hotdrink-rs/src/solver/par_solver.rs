@@ -3,7 +3,8 @@
 //! ensure that the all constraints are enforced.
 
 use crate::{
-    event::EventWithLocation,
+    event::Event,
+    event::{EventWithLocation, Ready},
     model::{
         activation::{Activation, ActivationInner, State},
         generation_id::GenerationId,
@@ -11,7 +12,6 @@ use crate::{
     },
     planner::MethodSpec,
     thread::ThreadPool,
-    Event,
 };
 use crate::{
     model::Method,
@@ -52,13 +52,17 @@ pub(crate) fn par_solve<T>(
         let m = osc.method();
         log::info!("Activating {:?}", m);
 
-        // Clear previous errors of inputs
+        // Clear previous errors of inputs since the errors no longer apply
         for &o in m.inputs() {
             log::info!("Setting {} to ok", o);
             let activation = &current_values[o];
             let inner = activation.inner().lock().unwrap();
             if let State::Error(_) = inner.state() {
-                general_callback(EventWithLocation::new(o, generation, Event::Ok));
+                general_callback(EventWithLocation::new(
+                    o,
+                    generation,
+                    Event::Ready(Ready::Unchanged),
+                ));
             }
         }
 

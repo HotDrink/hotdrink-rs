@@ -1,4 +1,4 @@
-use hotdrink_rs::{examples::components::numbers::sum, model::Component, Event};
+use hotdrink_rs::{event::Event, examples::components::numbers::sum, model::Component};
 
 fn main() {
     let mut comp: Component<i32> = sum();
@@ -6,21 +6,21 @@ fn main() {
     println!("Subscribing");
     comp.subscribe("a", |e| {
         if let Event::Ready(v) = e {
-            println!("a = {}", v);
+            println!("a = {:?}", v);
         }
     })
     .unwrap();
 
     comp.subscribe("b", |e| {
         if let Event::Ready(v) = e {
-            println!("b = {}", v);
+            println!("b = {:?}", v);
         }
     })
     .unwrap();
 
     comp.subscribe("c", |e| {
         if let Event::Ready(v) = e {
-            println!("c = {}", v);
+            println!("c = {:?}", v);
         }
     })
     .unwrap();

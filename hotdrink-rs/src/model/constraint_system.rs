@@ -151,7 +151,7 @@ impl<T> ConstraintSystem<T> {
     ///
     /// # Examples
     /// ```rust
-    /// use hotdrink_rs::{model::ConstraintSystem, component, ret, Event};
+    /// use hotdrink_rs::{model::ConstraintSystem, component, ret, event::{Event, Ready}};
     /// let component = component! {
     ///     component Comp {
     ///         let x: i32 = 0, y: i32 = 0;
@@ -165,9 +165,8 @@ impl<T> ConstraintSystem<T> {
     /// cs.add_component(component);
     /// cs.subscribe("Comp", "x", |e| match e {
     ///     Event::Pending => {}
-    ///     Event::Ready(v) => assert_eq!(*v, 0),
+    ///     Event::Ready(v) => assert_eq!(v, Ready::Changed(&0)),
     ///     Event::Error(errors) => panic!("{:?}", errors),
-    ///     Event::Ok => {},
     /// });
     /// ```
     pub fn subscribe<'a>(
@@ -282,7 +281,11 @@ impl<T> ConstraintSystem<T> {
 #[cfg(test)]
 mod tests {
     use super::ConstraintSystem;
-    use crate::{component, event::Event, ret};
+    use crate::{
+        component,
+        event::{Event, Ready},
+        ret,
+    };
 
     #[test]
     pub fn constraint_system_test() {
@@ -306,19 +309,19 @@ mod tests {
         let comp = cs.component_mut("comp").unwrap();
         comp.subscribe("a", |event| {
             if let Event::Ready(v) = event {
-                assert_eq!(*v, 7)
+                assert_eq!(v, Ready::Changed(&7))
             }
         })
         .unwrap();
         comp.subscribe("b", |event| {
             if let Event::Ready(v) = event {
-                assert_eq!(*v, 0)
+                assert_eq!(v, Ready::Changed(&0))
             }
         })
         .unwrap();
         comp.subscribe("c", |event| {
             if let Event::Ready(v) = event {
-                assert_eq!(*v, 7)
+                assert_eq!(v, Ready::Changed(&7))
             }
         })
         .unwrap();
