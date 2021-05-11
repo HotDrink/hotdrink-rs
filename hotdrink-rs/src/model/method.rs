@@ -97,12 +97,9 @@ impl<T> MethodSpec for Method<T> {
     }
 }
 
-/// A [`ActivationInner`] wrapped in an [`Arc`] and a [`Mutex`] so that it can be shared.
-pub type SharedVariableActivationInner<T> = Arc<Mutex<ActivationInner<T>>>;
-
 fn handle_error<T>(
     output_indices: &[usize],
-    shared_states: &Arc<Vec<SharedVariableActivationInner<T>>>,
+    shared_states: &[Arc<Mutex<ActivationInner<T>>>],
     general_callback: &(impl Fn(EventWithLocation<'_, T, SolveError>) + Send + 'static),
     generation: GenerationId,
     errors: Vec<SolveError>,
@@ -121,7 +118,7 @@ impl<T> Method<T> {
     pub(crate) fn activate(
         &self,
         inputs: Vec<impl Into<Activation<T>>>,
-        shared_states: Vec<SharedVariableActivationInner<T>>,
+        shared_states: Vec<Arc<Mutex<ActivationInner<T>>>>,
         location: (String, String),
         generation: GenerationId,
         pool: &mut impl ThreadPool,
@@ -143,7 +140,7 @@ impl<T> Method<T> {
 
         log::trace!("Activating {}", &m_name);
 
-        let shared_states = Arc::new(shared_states);
+        let shared_states = shared_states;
         let shared_states_clone = shared_states.clone();
 
         // We need a clone of the computation to move into the thread
