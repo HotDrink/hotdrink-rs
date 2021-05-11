@@ -99,5 +99,20 @@ function main() {
     bindNumber(verification, "a4", "a");
     bindText(verification, "b4", "b");
 
+    let cancel = "Cancel";
+    bindNumber(cancel, "a5", "a");
+    bindNumber(cancel, "b5", "b");
+    bindNumber(cancel, "c5", "c");
+    let cancelToggle = document.getElementById("cancel_toggle");
+    cancelToggle.addEventListener("click", () => {
+        if (cancelToggle.checked) {
+            console.log("Disabling Bc");
+            cs.disable_constraint(cancel, "Bc");
+        } else {
+            console.log("Enabling Bc");
+            cs.enable_constraint(cancel, "Bc");
+        }
+    });
+
     cs.update();
 }

@@ -90,5 +90,23 @@ pub fn example_cs() -> Result<CsWrapper, JsValue> {
         }
     });
 
+    cs.add_component(component! {
+        component Cancel {
+            let a: i32 = 0, b: i32 = 0, c: i32 = 0;
+            constraint Ab {
+                ab(a: &i32) -> [b] = {
+                    slow_fib(*a);
+                    ret![*a]
+                };
+            }
+            constraint Bc {
+                ab(b: &i32) -> [c] = {
+                    slow_fib(*b);
+                    ret![*b]
+                };
+            }
+        }
+    });
+
     CsWrapper::wrap(cs)
 }
