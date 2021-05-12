@@ -19,6 +19,8 @@ pub enum TerminationStrategy {
 /// An extension of thread pools specifically for ones that use web workers.
 /// Passing in the shim url ensures that we don't create multiple copies of it.
 pub trait WorkerPool: MethodExecutor {
+    /// An error occurred while creating the [`WorkerPool`].
+    type FromUrlError;
     /// Constructs a new pool as usual, but with a specified
     /// path to the Web Worker source.
     /// This is useful to avoid creating many instances of the blob.
@@ -26,7 +28,7 @@ pub trait WorkerPool: MethodExecutor {
         initial: usize,
         termination_strategy: TerminationStrategy,
         wasm_bindgen_shim_url: &str,
-    ) -> Result<Self, Self::NewError>
+    ) -> Result<Self, Self::FromUrlError>
     where
         Self: Sized;
 }

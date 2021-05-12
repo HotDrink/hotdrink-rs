@@ -11,7 +11,6 @@ use super::method_executor::{MethodExecutor, TerminationHandle};
 pub struct DummyExecutor;
 
 impl MethodExecutor for DummyExecutor {
-    type NewError = bool;
     type ExecError = bool;
 
     fn execute(

@@ -21,7 +21,6 @@ pub struct StaticPool {
 }
 
 impl MethodExecutor for StaticPool {
-    type NewError = JsValue;
     type ExecError = JsValue;
 
     /// Sends the work through a channel to be executed by the first available thread.
@@ -43,13 +42,14 @@ impl MethodExecutor for StaticPool {
 }
 
 impl WorkerPool for StaticPool {
-    /// Tries to create a new `StaticPool` with the specified number of workers,
+    type FromUrlError = JsValue;
+    /// Tries to create a new [`StaticPool`] with the specified number of workers,
     /// and spawns them using the provided script url.
     fn from_url(
         initial: usize,
         termination_strategy: TerminationStrategy,
         worker_script_url: &str,
-    ) -> Result<Self, JsValue> {
+    ) -> Result<Self, Self::FromUrlError> {
         // Create channels to communicate with workers through
         let (work_sender, work_receiver) = mpsc::channel();
         let work_receiver = Arc::new(Mutex::new(work_receiver));

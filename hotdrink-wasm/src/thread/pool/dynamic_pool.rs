@@ -99,7 +99,6 @@ pub struct DynamicPool {
 }
 
 impl MethodExecutor for DynamicPool {
-    type NewError = JsValue;
     type ExecError = JsValue;
 
     fn execute(
@@ -152,11 +151,13 @@ impl MethodExecutor for DynamicPool {
 }
 
 impl WorkerPool for DynamicPool {
+    type FromUrlError = JsValue;
+
     fn from_url(
         initial: usize,
         termination_strategy: TerminationStrategy,
         wasm_bindgen_shim_url: &str,
-    ) -> Result<Self, Self::NewError>
+    ) -> Result<Self, Self::FromUrlError>
     where
         Self: Sized,
     {

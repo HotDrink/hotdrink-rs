@@ -9,8 +9,6 @@ use std::{fmt::Debug, sync::atomic::AtomicUsize};
 
 /// Trait for method executors.
 pub trait MethodExecutor {
-    /// An error for when a new thread pool could not be constructed.
-    type NewError: Debug;
     /// An error for when executing a task on the thread pool fails.
     type ExecError: Debug;
 
