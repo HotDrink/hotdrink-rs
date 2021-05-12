@@ -60,7 +60,7 @@ macro_rules! constraint_system_wrapper {
                     std::collections::VecDeque<
                         $crate::event::js_event::JsEvent<
                             $inner_type,
-                            hotdrink_rs::solver::SolveError,
+                            hotdrink_rs::scheduler::SolveError,
                         >,
                     >,
                 >,
@@ -68,7 +68,7 @@ macro_rules! constraint_system_wrapper {
             event_handler: std::sync::Mutex<
                 $crate::event::event_handler::EventHandler<
                     $inner_type,
-                    hotdrink_rs::solver::SolveError,
+                    hotdrink_rs::scheduler::SolveError,
                 >,
             >,
             pool: std::sync::Mutex<hotdrink_rs::thread::DummyPool>,

@@ -108,7 +108,7 @@ pub mod event;
 pub mod examples;
 pub mod model;
 pub mod planner;
-pub mod solver;
+pub mod scheduler;
 pub mod thread;
 pub mod util;
 pub(crate) mod variable_ranking;

@@ -7,7 +7,7 @@ use crate::{
     event::{Event, EventWithLocation, Ready},
     model::activation::{Activation, ActivationInner},
     planner::{MethodFailure, MethodFunction, MethodResult, MethodSpec, Vertex},
-    solver::{Reason, SolveError},
+    scheduler::{Reason, SolveError},
     thread::ThreadPool,
 };
 use std::{

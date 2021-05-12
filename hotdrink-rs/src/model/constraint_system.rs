@@ -12,7 +12,7 @@ use super::{
 use crate::{
     event::Event,
     planner::PlanError,
-    solver::SolveError,
+    scheduler::SolveError,
     thread::{DummyPool, ThreadPool},
 };
 use std::{collections::HashMap, fmt::Debug};

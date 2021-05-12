@@ -56,12 +56,12 @@ macro_rules! constraint_system_wrapper_threaded {
             inner: std::sync::Mutex<hotdrink_rs::model::ConstraintSystem<$inner_type>>,
             event_listener: $crate::event::event_listener::EventListener<
                 $inner_type,
-                hotdrink_rs::solver::SolveError,
+                hotdrink_rs::scheduler::SolveError,
             >,
             event_handler: std::sync::Mutex<
                 $crate::event::event_handler::EventHandler<
                     $inner_type,
-                    hotdrink_rs::solver::SolveError,
+                    hotdrink_rs::scheduler::SolveError,
                 >,
             >,
             pool: std::sync::Mutex<$thread_pool_type>,
@@ -175,7 +175,7 @@ macro_rules! constraint_system_wrapper_threaded {
 
             /// Notifies the constraint system of an event, such as a thread having updated a value.
             pub fn notify(&self, event_ptr: u32) {
-                use hotdrink_rs::solver::SolveError;
+                use hotdrink_rs::scheduler::SolveError;
                 use $crate::event::js_event::JsEvent;
                 let event =
                     unsafe { Box::from_raw(event_ptr as *mut JsEvent<$inner_type, SolveError>) };
