@@ -1,6 +1,6 @@
 //! A trait for threadpool-like types with cancellation-capabilities.
 
-use hotdrink_rs::executor::{DummyExecutor, MethodExecutor};
+use hotdrink_rs::executor::MethodExecutor;
 
 /// Strategies for when to terminate workers.
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
@@ -29,13 +29,4 @@ pub trait WorkerPool: MethodExecutor {
     ) -> Result<Self, Self::NewError>
     where
         Self: Sized;
-}
-
-impl WorkerPool for DummyExecutor {
-    fn from_url(_: usize, _: TerminationStrategy, _: &str) -> Result<Self, Self::NewError>
-    where
-        Self: Sized,
-    {
-        Ok(DummyExecutor)
-    }
 }
