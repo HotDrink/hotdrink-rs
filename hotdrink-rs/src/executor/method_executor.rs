@@ -14,11 +14,6 @@ pub trait MethodExecutor {
     /// An error for when executing a task on the thread pool fails.
     type ExecError: Debug;
 
-    /// Creates a new thread pool with the specified number of initial workers.
-    fn new(initial: usize) -> Result<Self, Self::NewError>
-    where
-        Self: Sized;
-
     /// Executes some work using the workers in the thread pool.
     fn execute(
         &mut self,

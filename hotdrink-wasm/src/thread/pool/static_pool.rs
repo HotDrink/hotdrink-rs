@@ -3,7 +3,7 @@
 
 use super::{pool_worker::Work, PoolWorker, WorkerPool};
 use crate::thread::TerminationStrategy;
-use hotdrink_rs::thread::{MethodExecutor, TerminationHandle};
+use hotdrink_rs::executor::{MethodExecutor, TerminationHandle};
 use std::sync::{
     mpsc::{self, Sender},
     Arc, Mutex,
@@ -23,15 +23,6 @@ pub struct StaticPool {
 impl MethodExecutor for StaticPool {
     type NewError = JsValue;
     type ExecError = JsValue;
-
-    /// Tries to create a new `StaticPool` with the specified number of workers.
-    fn new(initial: usize) -> Result<Self, JsValue> {
-        Self::from_url(
-            initial,
-            TerminationStrategy::UnusedResultAndNotDone,
-            &crate::thread::worker::worker_script::create(),
-        )
-    }
 
     /// Sends the work through a channel to be executed by the first available thread.
     /// It will also restart threads that appear to be stuck if their result is no longer requied.

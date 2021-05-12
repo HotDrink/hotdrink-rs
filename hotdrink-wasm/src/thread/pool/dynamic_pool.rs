@@ -1,7 +1,7 @@
 //! A thread pool implementation that changes its number of workers dynamically depending on need.
 
 use crate::thread::{worker::generic_worker::GenericWorker, TerminationStrategy};
-use hotdrink_rs::thread::{MethodExecutor, TerminationHandle};
+use hotdrink_rs::executor::{MethodExecutor, TerminationHandle};
 use js_sys::Date;
 use std::sync::{
     atomic::{AtomicBool, Ordering},
@@ -101,17 +101,6 @@ pub struct DynamicPool {
 impl MethodExecutor for DynamicPool {
     type NewError = JsValue;
     type ExecError = JsValue;
-
-    fn new(initial: usize) -> Result<Self, Self::NewError>
-    where
-        Self: Sized,
-    {
-        WorkerPool::from_url(
-            initial,
-            TerminationStrategy::UnusedResultAndNotDone,
-            &crate::thread::worker::worker_script::create(),
-        )
-    }
 
     fn execute(
         &mut self,

@@ -32,10 +32,10 @@ pub trait WorkerPool: MethodExecutor {
 }
 
 impl WorkerPool for DummyExecutor {
-    fn from_url(initial: usize, _: TerminationStrategy, _: &str) -> Result<Self, Self::NewError>
+    fn from_url(_: usize, _: TerminationStrategy, _: &str) -> Result<Self, Self::NewError>
     where
         Self: Sized,
     {
-        Self::new(initial)
+        Ok(DummyExecutor)
     }
 }

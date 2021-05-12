@@ -13,9 +13,6 @@ pub struct DummyExecutor;
 impl MethodExecutor for DummyExecutor {
     type NewError = bool;
     type ExecError = bool;
-    fn new(_: usize) -> Result<Self, Self::NewError> {
-        Ok(DummyExecutor)
-    }
 
     fn execute(
         &mut self,
