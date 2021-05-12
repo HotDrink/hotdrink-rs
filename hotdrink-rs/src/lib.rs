@@ -56,9 +56,9 @@
 //!         constraint Sum {
 //!             // Provide three ways to enforce the constraint.
 //!             // Only one will be selected, so each one *MUST* enforce the constraint.
-//!             abc(a: &i32, b: &i32) -> [c] = ret![*a + *b];
-//!             acb(a: &i32, c: &i32) -> [b] = ret![*c - *a];
-//!             bca(b: &i32, c: &i32) -> [a] = ret![*c - *b];
+//!             abc(a: &i32, b: &i32) -> [c] = ret![a + b];
+//!             acb(a: &i32, c: &i32) -> [b] = ret![c - a];
+//!             bca(b: &i32, c: &i32) -> [a] = ret![c - b];
 //!         }
 //!     }
 //! };
@@ -70,11 +70,11 @@
 //!     Event::Error(errors) => println!("Computation for `a` failed: {:?}", errors),
 //! });
 //!
-//! // Change the value of `a`
+//! // Edit the value of `a`
 //! component.edit("a", 3);
 //!
-//! // Enforce all the constraints by selecting a method for each one,
-//! // and then executing the methods in topological order.
+//! // Enforce all the constraints by selecting one method from each,
+//! // and then executing the them in topological order.
 //! component.solve();
 //!
 //! // Add the component to a constraint system.
@@ -82,7 +82,7 @@
 //! let mut cs = ConstraintSystem::new();
 //! cs.add_component(component);
 //!
-//! // Update every component in the constraint system.
+//! // Solve each component in the constraint system.
 //! cs.solve();
 //! ```
 //!
