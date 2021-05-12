@@ -137,6 +137,9 @@ impl<T> Method<T> {
         let output_indices = self.outputs().to_vec();
         let m_name = self.name().to_string();
         let (component, constraint) = location;
+        let component_clone = component.clone();
+        let constraint_clone = constraint.clone();
+        let method_clone = m_name.clone();
 
         log::trace!("Activating {}", &m_name);
 
@@ -265,7 +268,7 @@ impl<T> Method<T> {
             .expect("Could not spawn worker");
 
         // Wrap the shared states and the thread references in `Value`s
-        let values = shared_states
+        let output: Vec<Activation<T>> = shared_states
             .iter()
             .map(|st| Activation {
                 inner: st.clone(),
@@ -273,7 +276,20 @@ impl<T> Method<T> {
             })
             .collect();
 
-        values
+        // Set activation values to canceled when their values are no longer needed
+        let mut output_clone: Vec<Activation<T>> = output.iter().map(|a| a.weak_clone()).collect();
+        handle.on_drop(move || {
+            for ss in &mut output_clone {
+                ss.cancel(SolveError::new(
+                    component_clone.clone(),
+                    constraint_clone.clone(),
+                    method_clone.clone(),
+                    Reason::Cancelled,
+                ));
+            }
+        });
+
+        output
     }
 }
 

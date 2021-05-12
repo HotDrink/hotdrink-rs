@@ -164,6 +164,11 @@ impl<T> Activation<T> {
         self.producer = None;
     }
 
+    /// Removes the reference to the termination handle.
+    pub fn detach(&mut self) {
+        self.producer = None;
+    }
+
     /// Returns an activation that will not contribute to keeping the computing thread alive.
     pub fn weak_clone(&self) -> Self {
         let mut clone = self.clone();
@@ -173,7 +178,7 @@ impl<T> Activation<T> {
 
     /// Clear the error of the activation,
     /// and set the value to the previous successful one.
-    pub fn revert(&mut self) {
+    pub fn clear_error(&mut self) {
         let opt_old: Option<Activation<T>> = {
             let mut inner = self.inner.lock().unwrap();
             if let State::Error(ed) = &mut inner.state {

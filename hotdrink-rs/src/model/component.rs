@@ -247,8 +247,13 @@ impl<T> Component<T> {
         self.current_generation += 1;
         self.total_generation += 1;
         let generation = GenerationId::new(self.current_generation, self.total_generation);
-        for fcb in &mut *self.callbacks.lock().unwrap() {
-            fcb.set_target(generation);
+        // Up the generation of variables that are written to
+        for p in &plan {
+            let m = p.method();
+            let mut callbacks = self.callbacks.lock().unwrap();
+            for o in m.outputs() {
+                callbacks[*o].set_target(generation);
+            }
         }
 
         // Solve based on the plan

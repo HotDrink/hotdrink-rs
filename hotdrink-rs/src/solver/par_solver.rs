@@ -10,7 +10,6 @@ use crate::{
         generation_id::GenerationId,
         variables::Variables,
     },
-    planner::MethodSpec,
     thread::ThreadPool,
 };
 use crate::{
@@ -22,7 +21,7 @@ use std::{
     sync::{Arc, Mutex},
 };
 
-use super::{Reason, SolveError};
+use super::SolveError;
 
 /// Solves a component by executing a plan concurrently.
 ///
@@ -79,19 +78,16 @@ pub(crate) fn par_solve<T>(
             .map(|&i| current_values[i].clone())
             .collect();
 
+        // Ignore errors from previous generation,
+        // since they do no longer apply.
+        // Errors of outputs will be overwritten anyway.
         for a in &mut inputs {
-            a.revert();
+            a.clear_error();
         }
 
         let mut shared_states = Vec::with_capacity(m.outputs().len());
         for &o in m.outputs() {
-            let previous_activation = current_values.get_mut(o).unwrap();
-            previous_activation.cancel(SolveError::new(
-                component_name.clone(),
-                constraint_name.to_string(),
-                m.name().to_string(),
-                Reason::Cancelled,
-            ));
+            current_values.get_mut(o).unwrap().detach();
             // Keep the old value from the previous state, but set to pending
             let previous = current_values[o].clone();
             let shared_state = ActivationInner::new(previous, inputs.clone());

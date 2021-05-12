@@ -1,8 +1,9 @@
 //! A trait for threadpool-like types.
 
+use derivative::Derivative;
 use std::sync::{
     atomic::{AtomicBool, Ordering},
-    Arc,
+    Arc, Mutex,
 };
 use std::{fmt::Debug, sync::atomic::AtomicUsize};
 
@@ -56,6 +57,7 @@ impl TerminationHandle {
         let inner_handle = Self {
             inner: Arc::new(InnerHandle {
                 result_needed: result_needed.clone(),
+                on_drop: Arc::new(Mutex::new(None)),
             }),
             num_references: Arc::new(AtomicUsize::new(1)),
         };
@@ -66,15 +68,26 @@ impl TerminationHandle {
     pub fn num_references(&self) -> usize {
         self.num_references.load(Ordering::SeqCst)
     }
+
+    /// Gives the handle a task to perform when all handles are dropped.
+    pub fn on_drop(&self, on_drop: impl FnOnce() + Send + Sync + 'static) {
+        self.inner.on_drop(on_drop);
+    }
 }
+
+/// A function to call upon calling [`Drop::drop`].
+type OnDropFn = Box<dyn FnOnce() + Send + Sync + 'static>;
 
 /// A handle which sets the termination flag for an associated worker.
 /// This will allow the thread pool to terminate workers whose results are no longer required.
 /// The flag will be set when all references to this handle are dropped, or
 /// it is cancelled manually.
-#[derive(Clone, Debug, Default)]
+#[derive(Derivative)]
+#[derivative(Clone, Debug, Default)]
 struct InnerHandle {
     result_needed: Arc<AtomicBool>,
+    #[derivative(Debug = "ignore")]
+    on_drop: Arc<Mutex<Option<OnDropFn>>>,
 }
 
 impl InnerHandle {
@@ -82,11 +95,18 @@ impl InnerHandle {
     pub fn cancel(&self) {
         self.result_needed.store(false, Ordering::SeqCst)
     }
+    /// Gives the handle a task to perform when dropped.
+    pub fn on_drop(&self, on_drop: impl FnOnce() + Send + Sync + 'static) {
+        *self.on_drop.lock().unwrap() = Some(Box::new(on_drop))
+    }
 }
 
 impl Drop for InnerHandle {
     fn drop(&mut self) {
-        self.cancel()
+        self.cancel();
+        if let Some(f) = self.on_drop.lock().unwrap().take() {
+            f();
+        }
     }
 }
 
