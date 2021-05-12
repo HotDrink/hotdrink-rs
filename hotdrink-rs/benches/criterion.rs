@@ -23,7 +23,7 @@ fn update_random(component: &mut Component<()>, rng: &mut ThreadRng, uniform: Un
     if component.n_variables() > 0 {
         let random_number: usize = rng.sample(uniform);
         component
-            .set_variable(&format!("var{}", random_number), ())
+            .edit(&format!("var{}", random_number), ())
             .unwrap();
     }
 }
@@ -40,7 +40,7 @@ fn bench_update(
         let uniform = Uniform::new_inclusive(0, component.n_variables().saturating_sub(1));
         b.iter(|| {
             update_random(&mut component, &mut rng, uniform);
-            component.update().unwrap();
+            component.solve().unwrap();
         })
     });
 }

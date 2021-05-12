@@ -95,8 +95,8 @@ impl<T> Component<T> {
         }
     }
 
-    /// Give a variable a new value, and call its callback.
-    pub fn set_variable<'s>(
+    /// Edit the specified variable's value.
+    pub fn edit<'s>(
         &mut self,
         variable: &'s str,
         value: impl Into<T>,
@@ -210,17 +210,17 @@ impl<T> Component<T> {
     /// Enforces all constraints in the component.
     ///
     /// Returns [`PlanError`] if the system is overconstrained.
-    pub fn update(&mut self) -> Result<(), PlanError>
+    pub fn solve(&mut self) -> Result<(), PlanError>
     where
         T: Send + Sync + 'static + Debug,
     {
-        self.par_update(&mut DummyExecutor)
+        self.par_solve(&mut DummyExecutor)
     }
 
     /// Enforces all constraints in the component using the specified [`MethodExecutor`].
     ///
     /// Returns [`PlanError`] if the system is overconstrained.
-    pub fn par_update(&mut self, pool: &mut impl MethodExecutor) -> Result<(), PlanError>
+    pub fn par_solve(&mut self, pool: &mut impl MethodExecutor) -> Result<(), PlanError>
     where
         T: Send + Sync + 'static + Debug,
     {
@@ -633,8 +633,8 @@ mod tests {
         );
 
         // Update a to 3
-        component.set_variable("a", 3).unwrap();
-        component.par_update(&mut DummyExecutor).unwrap();
+        component.edit("a", 3).unwrap();
+        component.par_solve(&mut DummyExecutor).unwrap();
 
         assert_eq!(
             &component.values(),
@@ -646,8 +646,8 @@ mod tests {
         );
 
         // Update c to 2
-        component.set_variable("c", 2).unwrap();
-        component.update().unwrap();
+        component.edit("c", 2).unwrap();
+        component.solve().unwrap();
 
         assert_eq!(
             &component.values(),
@@ -667,8 +667,8 @@ mod tests {
 
         // Pin c, which has the lowest priority
         component.pin("c").unwrap();
-        component.set_variable("a", val1).unwrap();
-        component.update().unwrap();
+        component.edit("a", val1).unwrap();
+        component.solve().unwrap();
 
         // It should pick b, since it is not pinned and has a lower priority than a
         assert_eq!(
@@ -684,8 +684,8 @@ mod tests {
 
         // Unpin c
         component.unpin("c").unwrap();
-        component.set_variable("a", val2).unwrap();
-        component.update().unwrap();
+        component.edit("a", val2).unwrap();
+        component.solve().unwrap();
 
         // It should pick c, since c is no longer pinned
         assert_eq!(
@@ -703,8 +703,8 @@ mod tests {
         let mut component: Component<i32> = sum();
 
         // Perform change and update
-        component.set_variable("a", 3).unwrap();
-        component.update().unwrap();
+        component.edit("a", 3).unwrap();
+        component.solve().unwrap();
 
         // Verify that change happened
         assert_eq!(
@@ -764,8 +764,8 @@ mod tests {
         };
 
         // Should chain the entire way
-        component.set_variable("a", 1).unwrap();
-        component.update().unwrap();
+        component.edit("a", 1).unwrap();
+        component.solve().unwrap();
         assert_eq!(
             component.values(),
             vec![
@@ -778,9 +778,9 @@ mod tests {
 
         // Chain is now broken
         component.disable_constraint("Bc").unwrap();
-        component.set_variable("b", 2).unwrap();
-        component.set_variable("d", 3).unwrap();
-        component.update().unwrap();
+        component.edit("b", 2).unwrap();
+        component.edit("d", 3).unwrap();
+        component.solve().unwrap();
         assert_eq!(
             component.values(),
             vec![
@@ -793,7 +793,7 @@ mod tests {
 
         // Re-enable chain
         component.enable_constraint("Bc").unwrap();
-        component.update().unwrap();
+        component.solve().unwrap();
         assert_eq!(
             component.values(),
             vec![

@@ -17,7 +17,7 @@ use crate::{
 };
 use std::{collections::HashMap, fmt::Debug};
 
-/// A container for `Component`s.
+/// A container for [`Component`]s.
 #[derive(Clone, Debug, PartialEq)]
 pub struct ConstraintSystem<T> {
     components: HashMap<String, Component<T>>,
@@ -65,8 +65,8 @@ impl<T> ConstraintSystem<T> {
         self.components.get_mut(name).ok_or(NoSuchComponent(name))
     }
 
-    /// Updates the specified variable to the provided value.
-    pub fn set_variable<'s>(
+    /// Edits the specified variable's value.
+    pub fn edit<'s>(
         &mut self,
         component: &'s str,
         variable: &'s str,
@@ -75,7 +75,7 @@ impl<T> ConstraintSystem<T> {
         self.undo_stack.push(component.to_string());
         self.redo_stack.clear();
         let component = self.component_mut(component)?;
-        component.set_variable(variable, value)?;
+        component.edit(variable, value)?;
         Ok(())
     }
 
@@ -101,28 +101,28 @@ impl<T> ConstraintSystem<T> {
         Ok(variable)
     }
 
-    /// Attempts to enforces all constraints in every component that is modified.
+    /// Attempts to enforce all constraints in every component that is modified.
     /// If no plan could be found, it will return a [`PlanError`].
     /// This variant lets you specify a thread pool to run methods on.
-    pub fn update(&mut self) -> Result<(), PlanError>
+    pub fn solve(&mut self) -> Result<(), PlanError>
     where
         T: Send + Sync + 'static + Debug,
     {
         log::trace!("update");
-        self.par_update(&mut DummyExecutor)
+        self.par_solve(&mut DummyExecutor)
     }
 
     /// Attempts to enforces all constraints in every component that is modified.
     /// If no plan could be found, it will return a [`PlanError`].
     /// This variant lets you specify a thread pool to run methods on.
-    pub fn par_update(&mut self, me: &mut impl MethodExecutor) -> Result<(), PlanError>
+    pub fn par_solve(&mut self, spawn: &mut impl MethodExecutor) -> Result<(), PlanError>
     where
         T: Send + Sync + 'static + Debug,
     {
         log::trace!("par_update");
         for component in self.components.values_mut() {
             if component.is_modified() {
-                component.par_update(me)?;
+                component.par_solve(spawn)?;
             }
         }
 
@@ -136,7 +136,7 @@ impl<T> ConstraintSystem<T> {
         T: Send + Sync + 'static + Debug,
     {
         for component in self.components.values_mut() {
-            component.par_update(spawn)?;
+            component.par_solve(spawn)?;
         }
 
         Ok(())
@@ -303,8 +303,8 @@ mod tests {
         });
 
         // Update a few variable values
-        cs.set_variable("comp", "a", 7).unwrap();
-        assert_eq!(cs.update(), Ok(()));
+        cs.edit("comp", "a", 7).unwrap();
+        assert_eq!(cs.solve(), Ok(()));
 
         let comp = cs.component_mut("comp").unwrap();
         comp.subscribe("a", |event| {

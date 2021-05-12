@@ -21,7 +21,7 @@
 //! A `Constraint` consists of a set of [`Method`](crate::model::Method)s that are essentially functions that enforce the constraint
 //! by reading from some subset of the variables of the `Component` and writing to another.
 //! `Components` can be gathered in a [`ConstraintSystem`](crate::model::ConstraintSystem), which provides an API
-//! for interacting with multiple `Component`s at once, such as [`update`](crate::model::ConstraintSystem::update).
+//! for interacting with multiple `Component`s at once, such as [`solve`](crate::model::ConstraintSystem::solve).
 //!
 //! ## Components
 //!
@@ -71,11 +71,11 @@
 //! });
 //!
 //! // Change the value of `a`
-//! component.set_variable("a", 3);
+//! component.edit("a", 3);
 //!
 //! // Enforce all the constraints by selecting a method for each one,
 //! // and then executing the methods in topological order.
-//! component.update();
+//! component.solve();
 //!
 //! // Add the component to a constraint system.
 //! // One constraint system can contain many components.
@@ -83,7 +83,7 @@
 //! cs.add_component(component);
 //!
 //! // Update every component in the constraint system.
-//! cs.update();
+//! cs.solve();
 //! ```
 //!
 //! More examples can be found in `./examples`, and can be run with `cargo run --example <name>`.

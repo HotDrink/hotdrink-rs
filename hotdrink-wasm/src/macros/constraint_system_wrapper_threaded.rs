@@ -185,22 +185,22 @@ macro_rules! constraint_system_wrapper_threaded {
                 };
             }
 
-            /// Runs the planner and solver to re-enforce all constraints.
-            pub fn update(&self) {
+            /// Attempts to re-enforce all constraints.
+            pub fn solve(&self) {
                 let mut inner = self.inner.lock().unwrap();
                 let mut pool = self.pool.lock().unwrap();
-                if let Err(e) = inner.par_update(&mut *pool) {
+                if let Err(e) = inner.par_solve(&mut *pool) {
                     log::error!("Update failed: {:?}", e);
                 }
             }
 
             /// Gives the specified variable a new value.
-            pub fn set_variable(&self, component: &str, variable: &str, value: $wrapper_type) {
+            pub fn edit(&self, component: &str, variable: &str, value: $wrapper_type) {
                 let value = value.unwrap();
                 self.inner
                     .lock()
                     .unwrap()
-                    .set_variable(component, variable, value)
+                    .edit(component, variable, value)
                     .unwrap_or_else(|e| {
                         log::error!("Could not set variable: {}", e);
                     });

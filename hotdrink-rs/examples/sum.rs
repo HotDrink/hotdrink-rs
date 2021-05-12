@@ -26,14 +26,14 @@ fn main() {
     .unwrap();
 
     println!("Setting a");
-    comp.set_variable("a", 3).unwrap();
+    comp.edit("a", 3).unwrap();
 
     println!("Updating");
-    comp.update().unwrap();
+    comp.solve().unwrap();
 
     println!("Setting b");
-    comp.set_variable("b", 5).unwrap();
+    comp.edit("b", 5).unwrap();
 
     println!("Updating");
-    comp.update().unwrap();
+    comp.solve().unwrap();
 }

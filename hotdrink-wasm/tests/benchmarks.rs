@@ -24,10 +24,10 @@ fn bench_update<Cb: ComponentFactory>(n_constraints: usize) {
         if n_constraints > 0 {
             let random_number = (js_sys::Math::random() * n_constraints as f64) as usize;
             component
-                .set_variable(&format!("var{}", random_number), ())
+                .edit(&format!("var{}", random_number), ())
                 .unwrap();
         }
-        let result = component.par_update(&mut DummyExecutor);
+        let result = component.par_solve(&mut DummyExecutor);
         total_time += performance.now() - start;
         // web_sys::console::time_end_with_label(&format!("{} & {}", name, n_variables));
         assert_eq!(result, Ok(()));
@@ -56,10 +56,10 @@ fn bench_update_max<Cb: ComponentFactory>(n_constraints: usize) {
         if n_constraints > 0 {
             let random_number = (js_sys::Math::random() * n_constraints as f64) as usize;
             component
-                .set_variable(&format!("var{}", random_number), ())
+                .edit(&format!("var{}", random_number), ())
                 .unwrap();
         }
-        let result = component.par_update(&mut DummyExecutor);
+        let result = component.par_solve(&mut DummyExecutor);
         max = max.max(performance.now() - start);
         // web_sys::console::time_end_with_label(&format!("{} & {}", name, n_variables));
         assert_eq!(result, Ok(()));

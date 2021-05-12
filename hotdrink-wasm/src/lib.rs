@@ -59,8 +59,8 @@
 //!
 //! // Usage of `ValueWrapper`.
 //! let cs = make_cs().unwrap();
-//! cs.set_variable("MyComponent", "a", ValueWrapper::i32(5));
-//! cs.set_variable("MyComponent", "b", ValueWrapper::String("Hello".to_string()));
+//! cs.edit("MyComponent", "a", ValueWrapper::i32(5));
+//! cs.edit("MyComponent", "b", ValueWrapper::String("Hello".to_string()));
 //! ```
 //!
 //! After producing a JavaScript module in www/pkg with
@@ -76,9 +76,9 @@
 //!     () => console.log("a is pending"),
 //!     err => console.log("a failed:", err)
 //! );
-//! cs.set_variable("MyComponent", "a", wasm.ValueWrapper.i32(5));
-//! cs.set_variable("MyComponent", "b", wasm.ValueWrapper.String("Hello"));
-//! cs.update();
+//! cs.edit("MyComponent", "a", wasm.ValueWrapper.i32(5));
+//! cs.edit("MyComponent", "b", wasm.ValueWrapper.String("Hello"));
+//! cs.solve();
 //! ```
 //!
 //! ## Multithreaded

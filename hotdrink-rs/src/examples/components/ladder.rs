@@ -89,7 +89,7 @@ mod tests {
     fn constructs_without_error() {
         for i in 0..20 {
             let mut ladder = ladder::<()>(i);
-            let result = ladder.update();
+            let result = ladder.solve();
             assert_eq!(result, Ok(()));
         }
     }

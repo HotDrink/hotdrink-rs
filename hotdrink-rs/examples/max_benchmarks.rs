@@ -11,7 +11,7 @@ fn update_random(component: &mut Component<()>, rng: &mut ThreadRng, uniform: Un
     if component.n_variables() > 0 {
         let random_number: usize = rng.sample(uniform);
         component
-            .set_variable(&format!("var{}", random_number), ())
+            .edit(&format!("var{}", random_number), ())
             .unwrap();
     }
 }
@@ -28,7 +28,7 @@ fn bench_update_max<Cb: ComponentFactory>(n_constraints: usize) {
         if n_constraints > 0 {
             update_random(&mut component, &mut rng, uniform);
         }
-        let result = component.update();
+        let result = component.solve();
         let end = std::time::Instant::now();
         max = max.max(end - start);
         // web_sys::console::time_end_with_label(&format!("{} & {}", name, n_variables));

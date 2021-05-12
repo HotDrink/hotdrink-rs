@@ -38,7 +38,7 @@ pub fn main() {
         }
     };
 
-    comp.set_variable(
+    comp.edit(
         "children",
         vec![
             ("a", vec!["b", "c"]),
@@ -49,7 +49,7 @@ pub fn main() {
         .collect::<Graph>(),
     )
     .unwrap();
-    comp.update().unwrap();
+    comp.solve().unwrap();
 
     assert_eq!(
         comp.value("parents"),

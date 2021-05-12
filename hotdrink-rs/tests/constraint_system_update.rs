@@ -24,6 +24,6 @@ pub fn basic_constraint_system() {
     })
     .unwrap();
 
-    let update_result = cs.update();
+    let update_result = cs.solve();
     assert_eq!(update_result, Ok(()));
 }

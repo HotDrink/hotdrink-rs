@@ -34,9 +34,9 @@ pub fn main() {
     my_component.subscribe("perimeter", |e| { println!("perimeter: {:?}", e); }).unwrap();
 
     // Set a variable's value to something new.
-    my_component.set_variable("height", 3).unwrap();
-    my_component.set_variable("width", 5).unwrap();
+    my_component.edit("height", 3).unwrap();
+    my_component.edit("width", 5).unwrap();
 
     // Update variables in the constraint system and watch it work.
-    my_component.update().unwrap();
+    my_component.solve().unwrap();
 }
