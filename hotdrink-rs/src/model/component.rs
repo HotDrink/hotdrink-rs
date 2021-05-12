@@ -17,7 +17,7 @@ use crate::{
     model::activation::Activation,
     planner::{
         hierarchical_planner, priority_adjuster::adjust_priorities, ComponentSpec, ConstraintSpec,
-        MethodSpec, OwnedEnforcedConstraint, PlanError, Vertex,
+        MethodSpec, PlanError, Vertex,
     },
     scheduler::SolveError,
     variable_ranking::{SortRanker, VariableRanker},
@@ -217,27 +217,14 @@ impl<T> Component<T> {
         self.par_update(&mut DummyExecutor)
     }
 
-    /// Enforces all constraints in the component concurrently.
+    /// Enforces all constraints in the component using the specified [`MethodExecutor`].
     ///
     /// Returns [`PlanError`] if the system is overconstrained.
     pub fn par_update(&mut self, pool: &mut impl MethodExecutor) -> Result<(), PlanError>
     where
         T: Send + Sync + 'static + Debug,
     {
-        // Rank variables and run planner
         let plan = hierarchical_planner(self)?;
-        self.solve(pool, plan);
-        Ok(())
-    }
-
-    /// Executes `plan` using `pool` in order to enforce all constraints.
-    fn solve(
-        &mut self,
-        pool: &mut impl MethodExecutor,
-        plan: Vec<OwnedEnforcedConstraint<Method<T>>>,
-    ) where
-        T: Send + Sync + 'static + Debug,
-    {
         self.ranker = adjust_priorities(&plan, &self.ranker);
 
         self.updated_since_last_solve.clear();
@@ -275,6 +262,8 @@ impl<T> Component<T> {
 
         // Commit changes
         self.variables.commit();
+
+        Ok(())
     }
 
     /// Pins a variable.

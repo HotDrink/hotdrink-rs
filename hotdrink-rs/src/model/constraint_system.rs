@@ -115,14 +115,14 @@ impl<T> ConstraintSystem<T> {
     /// Attempts to enforces all constraints in every component that is modified.
     /// If no plan could be found, it will return a [`PlanError`].
     /// This variant lets you specify a thread pool to run methods on.
-    pub fn par_update(&mut self, spawn: &mut impl MethodExecutor) -> Result<(), PlanError>
+    pub fn par_update(&mut self, me: &mut impl MethodExecutor) -> Result<(), PlanError>
     where
         T: Send + Sync + 'static + Debug,
     {
         log::trace!("par_update");
         for component in self.components.values_mut() {
             if component.is_modified() {
-                component.par_update(spawn)?;
+                component.par_update(me)?;
             }
         }
 

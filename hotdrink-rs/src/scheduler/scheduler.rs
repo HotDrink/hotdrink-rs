@@ -31,14 +31,14 @@ use super::SolveError;
 /// 2. The current values of a component.
 /// 3. The component name for better error messages.
 /// 4. The generation to know which solve new values came from.
-/// 5. A thread pool implementation for running methods in a plan.
+/// 5. A [`MethodExecutor`] implementation for running methods in a plan.
 /// 6. A callback to pass new produced values to. These events include the component name and the generation.
 pub(crate) fn schedule<T>(
     plan: &[OwnedEnforcedConstraint<Method<T>>],
     current_values: &mut Variables<Activation<T>>,
     component_name: String,
     generation: GenerationId,
-    pool: &mut impl MethodExecutor,
+    me: &mut impl MethodExecutor,
     general_callback: impl Fn(EventWithLocation<'_, T, SolveError>) + Send + 'static + Clone,
 ) where
     T: Send + Sync + 'static + Debug,
@@ -102,7 +102,7 @@ pub(crate) fn schedule<T>(
             shared_states,
             (component_name.to_owned(), constraint_name.to_owned()),
             generation,
-            pool,
+            me,
             general_callback.clone(),
         );
 

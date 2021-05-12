@@ -121,7 +121,7 @@ impl<T> Method<T> {
         shared_states: Vec<Arc<Mutex<ActivationInner<T>>>>,
         location: (String, String),
         generation: GenerationId,
-        pool: &mut impl MethodExecutor,
+        me: &mut impl MethodExecutor,
         general_callback: impl Fn(EventWithLocation<'_, T, SolveError>) + Send + 'static,
     ) -> Vec<Activation<T>>
     where
@@ -152,7 +152,7 @@ impl<T> Method<T> {
         // Run the computation in another thread, which
         // will eventually put the computed values in
         // the shared_state slots.
-        let handle = pool
+        let handle = me
             .schedule(move || {
                 // Block on all the futures. This is ok
                 // since we are not on the main thread.
