@@ -3,7 +3,7 @@
 
 use super::{pool_worker::Work, PoolWorker, WorkerPool};
 use crate::thread::TerminationStrategy;
-use hotdrink_rs::thread::{TerminationHandle, ThreadPool};
+use hotdrink_rs::thread::{MethodExecutor, TerminationHandle};
 use std::sync::{
     mpsc::{self, Sender},
     Arc, Mutex,
@@ -20,7 +20,7 @@ pub struct StaticPool {
     termination_strategy: TerminationStrategy,
 }
 
-impl ThreadPool for StaticPool {
+impl MethodExecutor for StaticPool {
     type NewError = JsValue;
     type ExecError = JsValue;
 

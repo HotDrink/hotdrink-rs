@@ -2,8 +2,8 @@ use hotdrink_rs::{
     examples::components::{
         ComponentFactory, Ladder, LinearOneway, LinearTwoway, Random, Unprunable,
     },
+    executor::DummyExecutor,
     model::Component,
-    thread::DummyPool,
 };
 use wasm_bindgen_test::*;
 
@@ -27,7 +27,7 @@ fn bench_update<Cb: ComponentFactory>(n_constraints: usize) {
                 .set_variable(&format!("var{}", random_number), ())
                 .unwrap();
         }
-        let result = component.par_update(&mut DummyPool);
+        let result = component.par_update(&mut DummyExecutor);
         total_time += performance.now() - start;
         // web_sys::console::time_end_with_label(&format!("{} & {}", name, n_variables));
         assert_eq!(result, Ok(()));
@@ -59,7 +59,7 @@ fn bench_update_max<Cb: ComponentFactory>(n_constraints: usize) {
                 .set_variable(&format!("var{}", random_number), ())
                 .unwrap();
         }
-        let result = component.par_update(&mut DummyPool);
+        let result = component.par_update(&mut DummyExecutor);
         max = max.max(performance.now() - start);
         // web_sys::console::time_end_with_label(&format!("{} & {}", name, n_variables));
         assert_eq!(result, Ok(()));

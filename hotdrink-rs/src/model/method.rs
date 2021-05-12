@@ -5,10 +5,10 @@
 use super::generation_id::GenerationId;
 use crate::{
     event::{Event, EventWithLocation, Ready},
+    executor::MethodExecutor,
     model::activation::{Activation, ActivationInner},
     planner::{MethodFailure, MethodFunction, MethodResult, MethodSpec, Vertex},
     scheduler::{Reason, SolveError},
-    thread::ThreadPool,
 };
 use std::{
     fmt::Debug,
@@ -121,7 +121,7 @@ impl<T> Method<T> {
         shared_states: Vec<Arc<Mutex<ActivationInner<T>>>>,
         location: (String, String),
         generation: GenerationId,
-        pool: &mut impl ThreadPool,
+        pool: &mut impl MethodExecutor,
         general_callback: impl Fn(EventWithLocation<'_, T, SolveError>) + Send + 'static,
     ) -> Vec<Activation<T>>
     where

@@ -6,12 +6,12 @@
 use crate::{
     event::Event,
     event::{EventWithLocation, Ready},
+    executor::MethodExecutor,
     model::{
         activation::{Activation, ActivationInner, State},
         generation_id::GenerationId,
         variables::Variables,
     },
-    thread::ThreadPool,
 };
 use crate::{
     model::Method,
@@ -38,7 +38,7 @@ pub(crate) fn schedule<T>(
     current_values: &mut Variables<Activation<T>>,
     component_name: String,
     generation: GenerationId,
-    pool: &mut impl ThreadPool,
+    pool: &mut impl MethodExecutor,
     general_callback: impl Fn(EventWithLocation<'_, T, SolveError>) + Send + 'static + Clone,
 ) where
     T: Send + Sync + 'static + Debug,

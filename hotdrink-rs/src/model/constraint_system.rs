@@ -11,9 +11,9 @@ use super::{
 };
 use crate::{
     event::Event,
+    executor::{DummyExecutor, MethodExecutor},
     planner::PlanError,
     scheduler::SolveError,
-    thread::{DummyPool, ThreadPool},
 };
 use std::{collections::HashMap, fmt::Debug};
 
@@ -109,13 +109,13 @@ impl<T> ConstraintSystem<T> {
         T: Send + Sync + 'static + Debug,
     {
         log::trace!("update");
-        self.par_update(&mut DummyPool)
+        self.par_update(&mut DummyExecutor)
     }
 
     /// Attempts to enforces all constraints in every component that is modified.
     /// If no plan could be found, it will return a [`PlanError`].
     /// This variant lets you specify a thread pool to run methods on.
-    pub fn par_update(&mut self, spawn: &mut impl ThreadPool) -> Result<(), PlanError>
+    pub fn par_update(&mut self, spawn: &mut impl MethodExecutor) -> Result<(), PlanError>
     where
         T: Send + Sync + 'static + Debug,
     {
@@ -131,7 +131,7 @@ impl<T> ConstraintSystem<T> {
 
     /// Attempts to enforces all constraints in every component, even if they have not been modified.
     /// If no plan could be found, it will return a [`PlanError`].
-    pub fn par_update_always(&mut self, spawn: &mut impl ThreadPool) -> Result<(), PlanError>
+    pub fn par_update_always(&mut self, spawn: &mut impl MethodExecutor) -> Result<(), PlanError>
     where
         T: Send + Sync + 'static + Debug,
     {

@@ -1,6 +1,6 @@
 //! A trait for threadpool-like types with cancellation-capabilities.
 
-use hotdrink_rs::thread::{DummyPool, ThreadPool};
+use hotdrink_rs::executor::{DummyExecutor, MethodExecutor};
 
 /// Strategies for when to terminate workers.
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
@@ -18,7 +18,7 @@ pub enum TerminationStrategy {
 
 /// An extension of thread pools specifically for ones that use web workers.
 /// Passing in the shim url ensures that we don't create multiple copies of it.
-pub trait WorkerPool: ThreadPool {
+pub trait WorkerPool: MethodExecutor {
     /// Constructs a new pool as usual, but with a specified
     /// path to the Web Worker source.
     /// This is useful to avoid creating many instances of the blob.
@@ -31,7 +31,7 @@ pub trait WorkerPool: ThreadPool {
         Self: Sized;
 }
 
-impl WorkerPool for DummyPool {
+impl WorkerPool for DummyExecutor {
     fn from_url(initial: usize, _: TerminationStrategy, _: &str) -> Result<Self, Self::NewError>
     where
         Self: Sized,

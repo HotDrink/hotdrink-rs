@@ -71,7 +71,7 @@ macro_rules! constraint_system_wrapper {
                     hotdrink_rs::scheduler::SolveError,
                 >,
             >,
-            pool: std::sync::Mutex<hotdrink_rs::thread::DummyPool>,
+            pool: std::sync::Mutex<hotdrink_rs::executor::DummyExecutor>,
         }
 
         impl $cs_name {
@@ -82,8 +82,7 @@ macro_rules! constraint_system_wrapper {
             ) -> Result<$cs_name, wasm_bindgen::JsValue> {
                 // Create the event listener
                 // Create the worker pool for executing methods
-                use hotdrink_rs::thread::ThreadPool;
-                let pool = hotdrink_rs::thread::DummyPool::new(1)?;
+                let pool = hotdrink_rs::executor::DummyExecutor;
                 // Combine it all
                 Ok(Self {
                     inner: std::sync::Mutex::new(inner),

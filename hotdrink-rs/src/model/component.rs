@@ -13,13 +13,13 @@ use super::{
 };
 use crate::{
     event::{Event, EventWithLocation, Ready},
+    executor::{DummyExecutor, MethodExecutor},
     model::activation::Activation,
     planner::{
         hierarchical_planner, priority_adjuster::adjust_priorities, ComponentSpec, ConstraintSpec,
         MethodSpec, OwnedEnforcedConstraint, PlanError, Vertex,
     },
     scheduler::SolveError,
-    thread::{DummyPool, ThreadPool},
     variable_ranking::{SortRanker, VariableRanker},
 };
 use itertools::Itertools;
@@ -214,13 +214,13 @@ impl<T> Component<T> {
     where
         T: Send + Sync + 'static + Debug,
     {
-        self.par_update(&mut DummyPool)
+        self.par_update(&mut DummyExecutor)
     }
 
     /// Enforces all constraints in the component concurrently.
     ///
     /// Returns [`PlanError`] if the system is overconstrained.
-    pub fn par_update(&mut self, pool: &mut impl ThreadPool) -> Result<(), PlanError>
+    pub fn par_update(&mut self, pool: &mut impl MethodExecutor) -> Result<(), PlanError>
     where
         T: Send + Sync + 'static + Debug,
     {
@@ -231,8 +231,11 @@ impl<T> Component<T> {
     }
 
     /// Executes `plan` using `pool` in order to enforce all constraints.
-    fn solve(&mut self, pool: &mut impl ThreadPool, plan: Vec<OwnedEnforcedConstraint<Method<T>>>)
-    where
+    fn solve(
+        &mut self,
+        pool: &mut impl MethodExecutor,
+        plan: Vec<OwnedEnforcedConstraint<Method<T>>>,
+    ) where
         T: Send + Sync + 'static + Debug,
     {
         self.ranker = adjust_priorities(&plan, &self.ranker);
@@ -622,8 +625,8 @@ impl<T: PartialEq> PartialEq for Component<T> {
 mod tests {
     use super::Component;
     use crate::{
-        component, examples::components::numbers::sum, model::activation::Activation, ret,
-        thread::DummyPool,
+        component, examples::components::numbers::sum, executor::DummyExecutor,
+        model::activation::Activation, ret,
     };
 
     #[test]
@@ -642,7 +645,7 @@ mod tests {
 
         // Update a to 3
         component.set_variable("a", 3).unwrap();
-        component.par_update(&mut DummyPool).unwrap();
+        component.par_update(&mut DummyExecutor).unwrap();
 
         assert_eq!(
             &component.values(),
