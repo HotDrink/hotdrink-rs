@@ -30,12 +30,11 @@ function main() {
             csname = name;
         }
         let box = document.getElementById(name);
-        let state = document.getElementById(name + "_state");
         // Pass input events to the constraint system
         box.addEventListener("input", () => {
             let parsed = parse(box.value);
-            cs.set_variable(comp, csname, parsed);
-            cs.update();
+            cs.edit(comp, csname, parsed);
+            cs.solve();
         });
         // Subscribe to a variable in the given component
         cs.subscribe(comp, csname,
@@ -114,5 +113,5 @@ function main() {
         }
     });
 
-    cs.update();
+    cs.solve();
 }
