@@ -10,7 +10,7 @@ use std::sync::{
 };
 use wasm_bindgen::JsValue;
 
-use super::WorkerPool;
+use super::WebWorkerPool;
 
 /// Work to be passed to a worker.
 struct Work {
@@ -150,7 +150,7 @@ impl MethodExecutor for DynamicPool {
     }
 }
 
-impl WorkerPool for DynamicPool {
+impl WebWorkerPool for DynamicPool {
     type FromUrlError = JsValue;
 
     fn from_url(

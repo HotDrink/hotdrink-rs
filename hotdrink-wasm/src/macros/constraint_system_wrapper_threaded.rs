@@ -80,7 +80,7 @@ macro_rules! constraint_system_wrapper_threaded {
                 let event_listener =
                     $crate::event::event_listener::EventListener::from_url(&worker_script_url)?;
                 // Create the worker pool for executing methods
-                let pool = $crate::thread::WorkerPool::from_url(
+                let pool = $crate::thread::WebWorkerPool::from_url(
                     $num_threads,
                     $termination_strategy,
                     &worker_script_url,

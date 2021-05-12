@@ -6,4 +6,4 @@ pub mod worker;
 
 #[cfg(feature = "thread")]
 pub use pool::{DynamicPool, PoolWorker, StaticPool};
-pub use pool::{TerminationStrategy, WorkerPool};
+pub use pool::{TerminationStrategy, WebWorkerPool};

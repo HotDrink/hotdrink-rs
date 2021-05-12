@@ -1,7 +1,7 @@
 //! A thread pool implementation that has a static number of workers, but can restart any of them should they become stuck,
 //! or if their results are no longer required.
 
-use super::{pool_worker::Work, PoolWorker, WorkerPool};
+use super::{pool_worker::Work, PoolWorker, WebWorkerPool};
 use crate::thread::TerminationStrategy;
 use hotdrink_rs::executor::{MethodExecutor, TerminationHandle};
 use std::sync::{
@@ -44,7 +44,7 @@ impl MethodExecutor for StaticPool {
     }
 }
 
-impl WorkerPool for StaticPool {
+impl WebWorkerPool for StaticPool {
     type FromUrlError = JsValue;
     /// Tries to create a new [`StaticPool`] with the specified number of workers,
     /// and spawns them using the provided script url.

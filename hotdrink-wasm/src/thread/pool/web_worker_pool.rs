@@ -1,7 +1,5 @@
 //! A trait for threadpool-like types with cancellation-capabilities.
 
-use hotdrink_rs::executor::MethodExecutor;
-
 /// Strategies for when to terminate workers.
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub enum TerminationStrategy {
@@ -18,11 +16,10 @@ pub enum TerminationStrategy {
 
 /// An extension of thread pools specifically for ones that use web workers.
 /// Passing in the shim url ensures that we don't create multiple copies of it.
-pub trait WorkerPool: MethodExecutor {
-    /// An error occurred while creating the [`WorkerPool`].
+pub trait WebWorkerPool {
+    /// An error occurred while creating the [`WebWorkerPool`].
     type FromUrlError;
-    /// Constructs a new pool as usual, but with a specified
-    /// path to the Web Worker source.
+    /// Constructs a new worker pool with Web Workers running the specified blob.
     /// This is useful to avoid creating many instances of the blob.
     fn from_url(
         initial: usize,
