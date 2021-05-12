@@ -25,7 +25,10 @@ impl MethodExecutor for StaticPool {
 
     /// Sends the work through a channel to be executed by the first available thread.
     /// It will also restart threads that appear to be stuck if their result is no longer requied.
-    fn execute(&mut self, f: impl FnOnce() + Send + 'static) -> Result<TerminationHandle, JsValue> {
+    fn schedule(
+        &mut self,
+        f: impl FnOnce() + Send + 'static,
+    ) -> Result<TerminationHandle, JsValue> {
         // Replace workers that will not produce a useful result
         for pw in &mut self.workers {
             pw.restart_if_stale(&self.termination_strategy, &self.worker_script_url)?;

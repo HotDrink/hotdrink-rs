@@ -101,7 +101,7 @@ pub struct DynamicPool {
 impl MethodExecutor for DynamicPool {
     type ExecError = JsValue;
 
-    fn execute(
+    fn schedule(
         &mut self,
         f: impl FnOnce() + Send + 'static,
     ) -> Result<TerminationHandle, Self::ExecError> {

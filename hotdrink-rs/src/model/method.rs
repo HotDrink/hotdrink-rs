@@ -153,7 +153,7 @@ impl<T> Method<T> {
         // will eventually put the computed values in
         // the shared_state slots.
         let handle = pool
-            .execute(move || {
+            .schedule(move || {
                 // Block on all the futures. This is ok
                 // since we are not on the main thread.
                 let joined_inputs = futures::future::join_all(inputs);

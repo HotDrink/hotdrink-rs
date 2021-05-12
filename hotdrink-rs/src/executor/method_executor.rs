@@ -12,8 +12,8 @@ pub trait MethodExecutor {
     /// An error for when executing a task on the thread pool fails.
     type ExecError: Debug;
 
-    /// Executes some work using the workers in the thread pool.
-    fn execute(
+    /// Schedules some work to be executed by the [`MethodExecutor`].
+    fn schedule(
         &mut self,
         f: impl FnOnce() + Send + 'static,
     ) -> Result<TerminationHandle, Self::ExecError>;

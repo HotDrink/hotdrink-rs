@@ -13,7 +13,7 @@ pub struct DummyExecutor;
 impl MethodExecutor for DummyExecutor {
     type ExecError = bool;
 
-    fn execute(
+    fn schedule(
         &mut self,
         f: impl FnOnce() + Send + 'static,
     ) -> Result<TerminationHandle, Self::ExecError> {
