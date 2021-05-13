@@ -12,7 +12,7 @@ use crate::{
 };
 use std::{
     fmt::Debug,
-    sync::{Arc, Mutex},
+    sync::{Arc, RwLock},
 };
 
 /// A method for enforcing a [`Constraint`](super::Constraint).
@@ -99,7 +99,7 @@ impl<T> MethodSpec for Method<T> {
 
 fn handle_error<T>(
     output_indices: &[usize],
-    shared_states: &[Arc<Mutex<ActivationInner<T>>>],
+    shared_states: &[Arc<RwLock<ActivationInner<T>>>],
     general_callback: &(impl Fn(EventWithLocation<'_, T, SolveError>) + Send + 'static),
     generation: GenerationId,
     errors: Vec<SolveError>,
@@ -108,7 +108,7 @@ fn handle_error<T>(
         general_callback(EventWithLocation::new(o, generation, Event::Error(&errors)));
     }
     for shared_state in shared_states.iter() {
-        shared_state.lock().unwrap().set_error(errors.clone());
+        shared_state.write().unwrap().set_error(errors.clone());
     }
 }
 
@@ -118,7 +118,7 @@ impl<T> Method<T> {
     pub(crate) fn activate(
         &self,
         inputs: Vec<impl Into<Activation<T>>>,
-        shared_states: Vec<Arc<Mutex<ActivationInner<T>>>>,
+        shared_states: Vec<Arc<RwLock<ActivationInner<T>>>>,
         location: (String, String),
         generation: GenerationId,
         me: &mut impl MethodExecutor,
@@ -242,7 +242,7 @@ impl<T> Method<T> {
                                 generation,
                                 Event::Ready(Ready::Changed(&res)),
                             ));
-                            let mut shared_state = st.lock().unwrap();
+                            let mut shared_state = st.write().unwrap();
                             // Set the new value
                             shared_state.set_value_arc(res);
                         }

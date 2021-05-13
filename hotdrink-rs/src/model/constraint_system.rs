@@ -65,6 +65,11 @@ impl<T> ConstraintSystem<T> {
         self.components.get_mut(name).ok_or(NoSuchComponent(name))
     }
 
+    /// Returns an iterator over the [`ConstraintSystem`]'s components.
+    pub fn components(&self) -> impl ExactSizeIterator<Item = &Component<T>> {
+        self.components.values()
+    }
+
     /// Edits the specified variable's value.
     pub fn edit<'s>(
         &mut self,
@@ -259,10 +264,10 @@ impl<T> ConstraintSystem<T> {
     pub fn enable_constraint<'a>(
         &mut self,
         component: &'a str,
-        variable: &'a str,
+        constraint: &'a str,
     ) -> Result<(), NoSuchItem<'a>> {
         let component = self.component_mut(component)?;
-        component.enable_constraint(variable)?;
+        component.enable_constraint(constraint)?;
         Ok(())
     }
 
@@ -270,10 +275,10 @@ impl<T> ConstraintSystem<T> {
     pub fn disable_constraint<'a>(
         &mut self,
         component: &'a str,
-        variable: &'a str,
+        constraint: &'a str,
     ) -> Result<(), NoSuchItem<'a>> {
         let component = self.component_mut(component)?;
-        component.disable_constraint(variable)?;
+        component.disable_constraint(constraint)?;
         Ok(())
     }
 }

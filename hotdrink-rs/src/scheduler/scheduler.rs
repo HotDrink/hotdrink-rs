@@ -19,7 +19,7 @@ use crate::{
 };
 use std::{
     fmt::Debug,
-    sync::{Arc, Mutex},
+    sync::{Arc, RwLock},
 };
 
 use super::SolveError;
@@ -56,7 +56,7 @@ pub(crate) fn schedule<T>(
         for &o in m.inputs() {
             log::info!("Setting {} to ok", o);
             let activation = &current_values[o];
-            let inner = activation.inner().lock().unwrap();
+            let inner = activation.inner().read().unwrap();
             if let State::Error(_) = inner.state() {
                 general_callback(EventWithLocation::new(
                     o,
@@ -92,7 +92,7 @@ pub(crate) fn schedule<T>(
             // Keep the old value from the previous state, but set to pending
             let previous = current_values[o].clone();
             let shared_state = ActivationInner::new(previous, inputs.clone());
-            shared_states.push(Arc::new(Mutex::new(shared_state)));
+            shared_states.push(Arc::new(RwLock::new(shared_state)));
         }
 
         // Compute outputs

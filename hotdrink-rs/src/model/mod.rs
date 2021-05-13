@@ -11,6 +11,7 @@ pub(crate) mod activation;
 mod component;
 mod constraint;
 mod constraint_system;
+mod constraint_system_builder;
 pub(crate) mod errors;
 pub(crate) mod filtered_callback;
 pub(crate) mod generation_id;
@@ -23,5 +24,7 @@ pub use activation::{Activation, Value};
 pub use component::Component;
 pub use constraint::Constraint;
 pub use constraint_system::ConstraintSystem;
+pub use constraint_system_builder::ConstraintSystemBuilder;
+
 pub use method::Method;
 pub use variable::Variable;

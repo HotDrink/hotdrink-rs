@@ -8,7 +8,7 @@ use futures::Future;
 use std::{
     fmt::Debug,
     pin::Pin,
-    sync::{Arc, Mutex},
+    sync::{Arc, Mutex, RwLock},
     task::{Poll, Waker},
 };
 
@@ -53,7 +53,8 @@ impl<T> ErrorData<T> {
 /// It starts off with being pending, and can
 /// transition to [`State::Ready`] when its computation succeeds,
 /// or [`State::Error`] if the computation fails.
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Derivative)]
+#[derivative(Clone(bound = ""), Debug, PartialEq, Eq)]
 pub enum State<T> {
     /// The value is still being computed.
     Pending(PendingData<T>),
@@ -140,7 +141,7 @@ impl<T> ActivationInner<T> {
 pub struct Activation<T> {
     /// A slot for the data once it arrives, as well as
     /// the waker to call once a result has been produced.
-    pub inner: Arc<Mutex<ActivationInner<T>>>,
+    pub inner: Arc<RwLock<ActivationInner<T>>>,
     /// A handle that when there are no more references to it,
     /// a flag is set so that the computing thread can be cancelled.
     pub producer: Option<TerminationHandle>,
@@ -148,14 +149,14 @@ pub struct Activation<T> {
 
 impl<T> Activation<T> {
     /// Returns a reference to the shared state of this variable activation.
-    pub fn inner(&self) -> &Arc<Mutex<ActivationInner<T>>> {
+    pub fn inner(&self) -> &Arc<RwLock<ActivationInner<T>>> {
         &self.inner
     }
 
     /// Notes disinterest in the result, halting its computation
     /// if nobody else is interested.
     pub fn cancel(&mut self, e: SolveError) {
-        let mut inner = self.inner.lock().unwrap();
+        let mut inner = self.inner.write().unwrap();
         // Only set to error if still pending.
         // Otherwise the result would be overwritten.
         if let State::Pending(_) = &inner.state {
@@ -180,7 +181,7 @@ impl<T> Activation<T> {
     /// and set the value to the previous successful one.
     pub fn clear_error(&mut self) {
         let opt_old: Option<Activation<T>> = {
-            let mut inner = self.inner.lock().unwrap();
+            let mut inner = self.inner.write().unwrap();
             if let State::Error(ed) = &mut inner.state {
                 Some(ed.previous().clone())
             } else {
@@ -195,7 +196,7 @@ impl<T> Activation<T> {
 
 impl<T: Debug> Debug for Activation<T> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let shared_state = self.inner.lock().expect("Could not lock shared_state");
+        let shared_state = self.inner.read().expect("Could not lock shared_state");
         write!(f, "Activation({:?})", shared_state)
     }
 }
@@ -203,7 +204,7 @@ impl<T: Debug> Debug for Activation<T> {
 impl<T> From<T> for Activation<T> {
     fn from(value: T) -> Self {
         Self {
-            inner: Arc::new(Mutex::new(ActivationInner::from(value))),
+            inner: Arc::new(RwLock::new(ActivationInner::from(value))),
             producer: None,
         }
     }
@@ -216,7 +217,7 @@ impl<T> Future for Activation<T> {
     type Output = Value<T>;
 
     fn poll(self: Pin<&mut Self>, cx: &mut std::task::Context<'_>) -> Poll<Self::Output> {
-        let mut inner = self.inner.lock().unwrap();
+        let mut inner = self.inner.write().unwrap();
         match &inner.state {
             // Still waiting for a value
             State::Pending(_) => {
@@ -237,8 +238,8 @@ impl<T> Future for Activation<T> {
 impl<T: PartialEq> PartialEq for Activation<T> {
     /// TODO: Avoid deadlocks here?
     fn eq(&self, other: &Self) -> bool {
-        let v1 = self.inner.lock().expect("Could not lock st1");
-        let v2 = other.inner.lock().expect("Could not lock st2");
+        let v1 = self.inner.read().expect("Could not lock st1");
+        let v2 = other.inner.read().expect("Could not lock st2");
         *v1 == *v2
     }
 }

@@ -50,9 +50,9 @@ pub struct Component<T> {
 
 impl<T> Component<T> {
     /// Constructs a new [`Constraint`] with the specified name.
-    pub fn new_empty(name: String) -> Self {
+    pub fn new_empty(name: impl Into<String>) -> Self {
         Self {
-            name,
+            name: name.into(),
             ..Default::default()
         }
     }
@@ -69,7 +69,7 @@ impl<T> Component<T> {
         if let Some(&index) = self.name_to_index.get(variable) {
             // Call the callback with current variable state
             let activation = &self.variables[index];
-            let inner = activation.inner().lock().unwrap();
+            let inner = activation.inner().read().unwrap();
             match inner.state() {
                 State::Pending(_) => callback(Event::Pending),
                 State::Ready(value) => callback(Event::Ready(Ready::Changed(value))),
@@ -421,7 +421,7 @@ impl<T> Component<T> {
     fn notify(&self, callbacks: &[FilteredCallback<T, SolveError>]) {
         for (vi, v) in callbacks.iter().enumerate() {
             let va = &self.variables[vi];
-            let inner = va.inner().lock().unwrap();
+            let inner = va.inner().read().unwrap();
             let event = match inner.state() {
                 State::Pending(_) => Event::Pending,
                 State::Ready(value) => Event::Ready(Ready::Changed(value.as_ref())),
@@ -609,6 +609,8 @@ impl<T: PartialEq> PartialEq for Component<T> {
             && self.updated_since_last_solve == other.updated_since_last_solve
     }
 }
+
+impl<T: PartialEq> Eq for Component<T> {}
 
 #[cfg(test)]
 mod tests {
