@@ -175,8 +175,8 @@ macro_rules! constraint_system_wrapper {
             /// Attempts to re-enforce all constraints.
             pub fn solve(&self) {
                 let mut inner = self.inner.lock().unwrap();
-                let mut pool = self.pool.lock().unwrap();
-                match inner.par_solve(&mut *pool) {
+                let pool = self.pool.lock().unwrap();
+                match inner.par_solve(&*pool) {
                     Ok(()) => self.handle_events(),
                     Err(e) => {
                         log::error!("Update failed: {}", e);

@@ -8,20 +8,23 @@ license = "MIT OR Apache-2.0"
 keywords = [ "algorithms", "data-structures", "constraint-systems" ]
 repository = "https://github.com/HotDrink/hotdrink-rs"
 
-[dependencies]
+[[example]]
+name = "rayon"
+required-features = [ "rayon" ]
 
+[dependencies]
 log = "0.4.11"
 itertools = "0.10.0"
 futures = "0.3.7"
 getrandom = { version = "0.2.2", features = ["js"] }
 derivative = "2.2.0"
 derive_builder = "0.10.2"
+rayon = { version = "1.5.0", optional = true }
 
 [dev-dependencies]
 criterion = { version = "0.3.4", features = [ "html_reports" ] }
 pretty_assertions = "0.7.1"
 rand = "0.8.3"
-rayon = "1.5.0"
 env_logger = "0.8.3"
 
 [[bench]]

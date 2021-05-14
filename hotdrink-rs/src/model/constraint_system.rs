@@ -114,13 +114,13 @@ impl<T> ConstraintSystem<T> {
         T: Send + Sync + 'static + Debug,
     {
         log::trace!("update");
-        self.par_solve(&mut DummyExecutor)
+        self.par_solve(&DummyExecutor)
     }
 
     /// Attempts to enforces all constraints in every component that is modified.
     /// If no plan could be found, it will return a [`PlanError`].
     /// This variant lets you specify a thread pool to run methods on.
-    pub fn par_solve(&mut self, spawn: &mut impl MethodExecutor) -> Result<(), PlanError>
+    pub fn par_solve(&mut self, spawn: &impl MethodExecutor) -> Result<(), PlanError>
     where
         T: Send + Sync + 'static + Debug,
     {

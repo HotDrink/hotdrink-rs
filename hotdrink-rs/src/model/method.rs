@@ -127,7 +127,7 @@ impl<T> Method<T> {
         shared_states: Vec<Arc<RwLock<ActivationInner<T>>>>,
         location: (String, String),
         generation: GenerationId,
-        me: &mut impl MethodExecutor,
+        me: &impl MethodExecutor,
         general_callback: impl Fn(EventWithLocation<'_, T, SolveError>) + Send + 'static,
     ) -> Vec<Activation<T>>
     where

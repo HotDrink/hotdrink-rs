@@ -14,7 +14,7 @@ pub trait MethodExecutor {
 
     /// Schedules some work to be executed by the [`MethodExecutor`].
     fn schedule(
-        &mut self,
+        &self,
         f: impl FnOnce() + Send + 'static,
     ) -> Result<TerminationHandle, Self::ExecError>;
 }

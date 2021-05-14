@@ -27,7 +27,7 @@ fn bench_update<Cb: ComponentFactory>(n_constraints: usize) {
                 .edit(&format!("var{}", random_number), ())
                 .unwrap();
         }
-        let result = component.par_solve(&mut DummyExecutor);
+        let result = component.par_solve(&DummyExecutor);
         total_time += performance.now() - start;
         // web_sys::console::time_end_with_label(&format!("{} & {}", name, n_variables));
         assert_eq!(result, Ok(()));
@@ -59,7 +59,7 @@ fn bench_update_max<Cb: ComponentFactory>(n_constraints: usize) {
                 .edit(&format!("var{}", random_number), ())
                 .unwrap();
         }
-        let result = component.par_solve(&mut DummyExecutor);
+        let result = component.par_solve(&DummyExecutor);
         max = max.max(performance.now() - start);
         // web_sys::console::time_end_with_label(&format!("{} & {}", name, n_variables));
         assert_eq!(result, Ok(()));

@@ -14,7 +14,7 @@ impl MethodExecutor for DummyExecutor {
     type ExecError = bool;
 
     fn schedule(
-        &mut self,
+        &self,
         f: impl FnOnce() + Send + 'static,
     ) -> Result<TerminationHandle, Self::ExecError> {
         f();

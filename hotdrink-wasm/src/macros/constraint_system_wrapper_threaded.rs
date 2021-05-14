@@ -188,8 +188,8 @@ macro_rules! constraint_system_wrapper_threaded {
             /// Attempts to re-enforce all constraints.
             pub fn solve(&self) {
                 let mut inner = self.inner.lock().unwrap();
-                let mut pool = self.pool.lock().unwrap();
-                if let Err(e) = inner.par_solve(&mut *pool) {
+                let pool = self.pool.lock().unwrap();
+                if let Err(e) = inner.par_solve(&*pool) {
                     log::error!("Update failed: {:?}", e);
                 }
             }

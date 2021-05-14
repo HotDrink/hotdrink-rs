@@ -93,7 +93,7 @@ fn spawn_worker(wasm_bindgen_shim_url: &str) -> Result<WorkerInfo, JsValue> {
 /// A worker pool that automatically resizes itself when more workers are required.
 #[derive(Debug)]
 pub struct DynamicPool {
-    workers: Vec<WorkerInfo>,
+    workers: Mutex<Vec<WorkerInfo>>,
     termination_strategy: TerminationStrategy,
     wasm_bindgen_shim_url: String,
 }
@@ -102,12 +102,13 @@ impl MethodExecutor for DynamicPool {
     type ExecError = JsValue;
 
     fn schedule(
-        &mut self,
+        &self,
         f: impl FnOnce() + Send + 'static,
     ) -> Result<TerminationHandle, Self::ExecError> {
         let termination_strategy = self.termination_strategy;
+        let mut workers = self.workers.lock().unwrap();
         // Cancel and remove stale workers
-        self.workers.drain_filter(|w| {
+        workers.drain_filter(|w| {
             let should_be_terminated = match termination_strategy {
                 TerminationStrategy::Never => false,
                 TerminationStrategy::UnusedResultAndNotDone => !w.result_needed() && !w.is_ready(),
@@ -129,16 +130,16 @@ impl MethodExecutor for DynamicPool {
         });
 
         // Check if any workers are ready, and spawn a new one if not
-        let any_ready = self.workers.iter().any(|w| w.is_ready());
+        let any_ready = workers.iter().any(|w| w.is_ready());
         if !any_ready {
             let worker_info = spawn_worker(&self.wasm_bindgen_shim_url)?;
-            self.workers.push(worker_info);
+            workers.push(worker_info);
         }
 
         // Execute task on a ready worker.
         // We know that one must be ready, as we spawned a new one if none were.
         let (th, result_needed) = TerminationHandle::new();
-        for worker_info in &mut self.workers {
+        for worker_info in workers.iter_mut() {
             if worker_info.is_ready() {
                 worker_info.execute(f);
                 worker_info.result_needed = result_needed;
@@ -169,7 +170,7 @@ impl WebWorkerPool for DynamicPool {
         }
 
         Ok(Self {
-            workers,
+            workers: Mutex::new(workers),
             termination_strategy,
             wasm_bindgen_shim_url: wasm_bindgen_shim_url.to_owned(),
         })

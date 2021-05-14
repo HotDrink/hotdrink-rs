@@ -214,13 +214,13 @@ impl<T> Component<T> {
     where
         T: Send + Sync + 'static + Debug,
     {
-        self.par_solve(&mut DummyExecutor)
+        self.par_solve(&DummyExecutor)
     }
 
     /// Enforces all constraints in the component using the specified [`MethodExecutor`].
     ///
     /// Returns [`PlanError`] if the system is overconstrained.
-    pub fn par_solve(&mut self, pool: &mut impl MethodExecutor) -> Result<(), PlanError>
+    pub fn par_solve(&mut self, pool: &impl MethodExecutor) -> Result<(), PlanError>
     where
         T: Send + Sync + 'static + Debug,
     {

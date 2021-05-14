@@ -38,7 +38,7 @@ pub(crate) fn schedule<T>(
     current_values: &mut Variables<Activation<T>>,
     component_name: String,
     generation: GenerationId,
-    me: &mut impl MethodExecutor,
+    me: &impl MethodExecutor,
     general_callback: impl Fn(EventWithLocation<'_, T, SolveError>) + Send + 'static + Clone,
 ) where
     T: Send + Sync + 'static + Debug,

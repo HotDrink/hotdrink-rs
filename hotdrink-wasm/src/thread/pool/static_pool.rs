@@ -14,7 +14,7 @@ use wasm_bindgen::{prelude::wasm_bindgen, JsValue};
 #[wasm_bindgen]
 #[derive(Debug)]
 pub struct StaticPool {
-    workers: Vec<PoolWorker>,
+    workers: Mutex<Vec<PoolWorker>>,
     work_sender: Sender<Work>,
     worker_script_url: String,
     termination_strategy: TerminationStrategy,
@@ -25,12 +25,10 @@ impl MethodExecutor for StaticPool {
 
     /// Sends the work through a channel to be executed by the first available thread.
     /// It will also restart threads that appear to be stuck if their result is no longer requied.
-    fn schedule(
-        &mut self,
-        f: impl FnOnce() + Send + 'static,
-    ) -> Result<TerminationHandle, JsValue> {
+    fn schedule(&self, f: impl FnOnce() + Send + 'static) -> Result<TerminationHandle, JsValue> {
+        let mut workers = self.workers.lock().unwrap();
         // Replace workers that will not produce a useful result
-        for pw in &mut self.workers {
+        for pw in workers.iter_mut() {
             pw.restart_if_stale(&self.termination_strategy, &self.worker_script_url)?;
         }
 
@@ -66,7 +64,7 @@ impl WebWorkerPool for StaticPool {
 
         // Initialize struct
         Ok(Self {
-            workers,
+            workers: Mutex::new(workers),
             work_sender,
             worker_script_url: worker_script_url.to_owned(),
             termination_strategy,
@@ -77,7 +75,8 @@ impl WebWorkerPool for StaticPool {
 impl Drop for StaticPool {
     /// Terminates all workers in the pool.
     fn drop(&mut self) {
-        for worker in &self.workers {
+        let mut workers = self.workers.lock().unwrap();
+        for worker in workers.iter_mut() {
             worker.terminate();
         }
     }
