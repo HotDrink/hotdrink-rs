@@ -44,7 +44,7 @@ pub trait MethodSpec: Vertex {
     /// Applies the provided arguments to the inner function of the method.
     fn apply(&self, args: Vec<Arc<Self::Arg>>) -> MethodResult<Arc<Self::Arg>>;
     /// Returns a reference to the name of the method.
-    fn name(&self) -> &str;
+    fn name(&self) -> Option<&str>;
 }
 
 /// A trait for objects that can act as

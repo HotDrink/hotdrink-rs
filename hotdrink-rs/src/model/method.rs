@@ -46,7 +46,7 @@ impl<T> Debug for Method<T> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
-            "{}({:?} -> {:?})",
+            "{:?}({:?} -> {:?})",
             self.name(),
             self.inputs(),
             self.outputs()
@@ -95,11 +95,10 @@ impl<T> MethodSpec for Method<T> {
         Ok(output)
     }
 
-    // TODO: Option?
-    fn name(&self) -> &str {
+    fn name(&self) -> Option<&str> {
         match &self.inner {
-            MethodInner::Stay(_) => "stay",
-            MethodInner::Normal { name, .. } => &name,
+            MethodInner::Stay(_) => None,
+            MethodInner::Normal { name, .. } => Some(&name),
         }
     }
 }
@@ -142,7 +141,7 @@ impl<T> Method<T> {
         let n_inputs = self.n_inputs();
         let n_outputs = self.n_outputs();
         let output_indices = self.outputs().to_vec();
-        let m_name = self.name().to_string();
+        let m_name = self.name().unwrap_or("None").to_string();
         let (component, constraint) = location;
         let component_clone = component.clone();
         let constraint_clone = constraint.clone();

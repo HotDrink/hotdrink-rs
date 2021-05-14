@@ -292,11 +292,11 @@ impl<T> Component<T> {
     where
         T: 'static,
     {
-        let idx = self.variable_index(variable)?;
+        let target = self.variable_index(variable)?;
         self.constraints.drain_filter(|c| {
             c.methods()
                 .get(0)
-                .map(|m| m.name() == "pin".to_owned() + &idx.to_string())
+                .map(|m| m.name() == Some(&("pin".to_owned() + &target.to_string())))
                 .unwrap_or(false)
         });
         Ok(())
@@ -347,13 +347,13 @@ impl<T> Component<T> {
                     buffer,
                     "    {}_{} [label={}];",
                     c.name(),
-                    m.name(),
-                    m.name()
+                    m.name().unwrap_or("None"),
+                    m.name().unwrap_or("None")
                 )?;
             }
             write!(buffer, "    {{ rank = same; ")?;
             for m in c.methods() {
-                write!(buffer, "{}_{}; ", c.name(), m.name())?;
+                write!(buffer, "{}_{}; ", c.name(), m.name().unwrap_or("None"))?;
             }
             writeln!(buffer, "}}")?;
             writeln!(buffer, "  }}")?;
@@ -369,13 +369,19 @@ impl<T> Component<T> {
                         "  {} -> {}_{} [style=dotted];",
                         &var_name,
                         c.name(),
-                        m.name()
+                        m.name().unwrap_or("None")
                     )?;
                 }
                 // Draw an arrow from method to output-variable
                 for o in m.outputs() {
                     let var_name = index_to_name[o];
-                    writeln!(buffer, "  {}_{} -> {};", c.name(), m.name(), var_name)?;
+                    writeln!(
+                        buffer,
+                        "  {}_{} -> {};",
+                        c.name(),
+                        m.name().unwrap_or("None"),
+                        var_name
+                    )?;
                 }
             }
         }
