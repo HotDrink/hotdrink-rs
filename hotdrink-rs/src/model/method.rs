@@ -10,48 +10,47 @@ use crate::{
     planner::{MethodFailure, MethodFunction, MethodResult, MethodSpec, Vertex},
     scheduler::{Reason, SolveError},
 };
+use core::slice;
+use derivative::Derivative;
 use std::{
     fmt::Debug,
     sync::{Arc, RwLock},
 };
 
+/// The inner representation of a [`Method`].
+#[derive(Derivative)]
+#[derivative(Clone(bound = ""), Debug(bound = ""), PartialEq(bound = ""), Eq)]
+pub enum MethodInner<T> {
+    /// A stay method.
+    Stay(usize),
+    /// A normal method.
+    Normal {
+        name: String,
+        inputs: Vec<usize>,
+        outputs: Vec<usize>,
+        #[derivative(Debug = "ignore", PartialEq = "ignore")]
+        apply: MethodFunction<T>,
+    },
+}
+
 /// A method for enforcing a [`Constraint`](super::Constraint).
 /// It usually has a set of input-variables, a set of output-variables,
 /// and a function for creating the outputs from the inputs.
+#[derive(Derivative)]
+#[derivative(Clone(bound = ""), PartialEq(bound = ""), Eq)]
 pub struct Method<T> {
-    is_stay: bool,
-    name: String,
-    inputs: Vec<usize>,
-    outputs: Vec<usize>,
-    apply: MethodFunction<T>,
+    inner: MethodInner<T>,
 }
-
-impl<T> Clone for Method<T> {
-    fn clone(&self) -> Self {
-        Self {
-            is_stay: self.is_stay,
-            name: self.name.clone(),
-            inputs: self.inputs.clone(),
-            outputs: self.outputs.clone(),
-            apply: self.apply.clone(),
-        }
-    }
-}
-
-impl<T> PartialEq for Method<T> {
-    fn eq(&self, other: &Self) -> bool {
-        self.is_stay == other.is_stay
-            && self.name == other.name
-            && self.inputs == other.inputs
-            && self.outputs == other.outputs
-    }
-}
-
-impl<T> Eq for Method<T> {}
 
 impl<T> Debug for Method<T> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}({:?} -> {:?})", self.name, self.inputs, self.outputs)
+        write!(
+            f,
+            "{}({:?} -> {:?})",
+            self.name(),
+            self.inputs(),
+            self.outputs()
+        )
     }
 }
 
@@ -65,11 +64,12 @@ impl<T> MethodSpec for Method<T> {
         apply: MethodFunction<T>,
     ) -> Self {
         Self {
-            is_stay: false,
-            name,
-            inputs,
-            outputs,
-            apply,
+            inner: MethodInner::Normal {
+                name,
+                inputs,
+                outputs,
+                apply,
+            },
         }
     }
 
@@ -80,7 +80,10 @@ impl<T> MethodSpec for Method<T> {
             return Err(MethodFailure::WrongInputCount(self.n_inputs(), input.len()));
         }
         // Compute output
-        let output = (self.apply)(input)?;
+        let output = match &self.inner {
+            MethodInner::Stay(_) => input,
+            MethodInner::Normal { apply, .. } => apply(input)?,
+        };
         // Verify that all outputs are defined
         if output.len() != self.n_outputs() {
             return Err(MethodFailure::WrongOutputCount(
@@ -92,8 +95,12 @@ impl<T> MethodSpec for Method<T> {
         Ok(output)
     }
 
+    // TODO: Option?
     fn name(&self) -> &str {
-        &self.name
+        match &self.inner {
+            MethodInner::Stay(_) => "stay",
+            MethodInner::Normal { name, .. } => &name,
+        }
     }
 }
 
@@ -147,7 +154,10 @@ impl<T> Method<T> {
         let shared_states_clone = shared_states.clone();
 
         // We need a clone of the computation to move into the thread
-        let f = self.apply.clone();
+        let f = match &self.inner {
+            MethodInner::Stay(_) => Arc::new(Ok),
+            MethodInner::Normal { apply, .. } => apply.clone(),
+        };
 
         // Run the computation in another thread, which
         // will eventually put the computed values in
@@ -296,24 +306,26 @@ impl<T> Method<T> {
 impl<T> Vertex for Method<T> {
     /// Get the indices of the inputs to this method
     fn inputs(&self) -> &[usize] {
-        &self.inputs
+        match &self.inner {
+            MethodInner::Stay(index) => slice::from_ref(index),
+            MethodInner::Normal { inputs, .. } => &inputs,
+        }
     }
     /// Get the indices of the outputs to this method
     fn outputs(&self) -> &[usize] {
-        &self.outputs
+        match &self.inner {
+            MethodInner::Stay(index) => slice::from_ref(index),
+            MethodInner::Normal { outputs, .. } => &outputs,
+        }
     }
 
     fn stay(index: usize) -> Self {
         Self {
-            is_stay: true,
-            name: format!("_stay_{}", index),
-            inputs: vec![index],
-            outputs: vec![index],
-            apply: Arc::new(|_| panic!("stay constraints should not be run")),
+            inner: MethodInner::Stay(index),
         }
     }
 
     fn is_stay(&self) -> bool {
-        self.is_stay
+        matches!(self.inner, MethodInner::Stay(_))
     }
 }
