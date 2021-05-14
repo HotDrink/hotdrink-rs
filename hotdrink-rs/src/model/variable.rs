@@ -9,7 +9,7 @@ use std::{
 /// A variable that maintains its previous values.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Variable<T> {
-    index: usize,
+    generation: usize,
     activations: VecDeque<T>,
 }
 
@@ -44,31 +44,31 @@ impl<T> Variable<T> {
         let mut activations = VecDeque::with_capacity(1);
         activations.push_back(value);
         Self {
-            index: 0,
+            generation: 0,
             activations,
         }
     }
     /// Gives the variable a new value.
     pub fn set(&mut self, value: T) {
-        self.activations.truncate(self.index + 1);
+        self.activations.truncate(self.generation + 1);
         self.activations.push_back(value);
-        self.index += 1;
+        self.generation += 1;
     }
 
     /// Returns a reference to the current value of the variable.
     pub fn get(&self) -> &T {
-        &self.activations[self.index]
+        &self.activations[self.generation]
     }
 
     /// Returns a mutable reference to the current value of the variable.
     pub fn get_mut(&mut self) -> &mut T {
-        &mut self.activations[self.index]
+        &mut self.activations[self.generation]
     }
 
     /// Switches to the previous value of the variable.
     pub fn undo(&mut self) -> Result<(), NoMoreUndo> {
-        if self.index > 0 {
-            self.index -= 1;
+        if self.generation > 0 {
+            self.generation -= 1;
             Ok(())
         } else {
             Err(NoMoreUndo)
@@ -76,8 +76,8 @@ impl<T> Variable<T> {
     }
     /// Switches to the next value of the variable.
     pub fn redo(&mut self) -> Result<(), NoMoreRedo> {
-        if self.index < self.activations.len() - 1 {
-            self.index += 1;
+        if self.generation < self.activations.len() - 1 {
+            self.generation += 1;
             Ok(())
         } else {
             Err(NoMoreRedo)
@@ -89,13 +89,13 @@ impl<T> Variable<T> {
             self.activations.len() > 1,
             "Must always have at least one value"
         );
-        self.index -= 1;
+        self.generation -= 1;
         self.activations.pop_front()
     }
 
     /// Truncates the activations to the current index.
     pub(crate) fn truncate(&mut self) {
-        self.activations.truncate(self.index + 1);
+        self.activations.truncate(self.generation + 1);
     }
 }
 

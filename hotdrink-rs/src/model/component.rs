@@ -19,7 +19,7 @@ use crate::{
         hierarchical_planner, priority_adjuster::adjust_priorities, ComponentSpec, ConstraintSpec,
         MethodSpec, PlanError, Vertex,
     },
-    scheduler::SolveError,
+    scheduler::{self, SolveError},
     variable_ranking::{SortRanker, VariableRanker},
 };
 use itertools::Itertools;
@@ -247,7 +247,7 @@ impl<T> Component<T> {
         }
 
         // Solve based on the plan
-        crate::scheduler::schedule(
+        scheduler::schedule(
             &plan,
             &mut self.variables,
             component_name,

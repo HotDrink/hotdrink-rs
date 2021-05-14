@@ -173,7 +173,7 @@ impl<T> Method<T> {
                     }
                 }
 
-                // If any errors, propagate and abort.
+                // If any errors in input, propagate to outputs
                 if !errors.is_empty() {
                     handle_error(
                         &output_indices,

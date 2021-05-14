@@ -236,7 +236,6 @@ impl<T> Future for Activation<T> {
 }
 
 impl<T: PartialEq> PartialEq for Activation<T> {
-    /// TODO: Avoid deadlocks here?
     fn eq(&self, other: &Self) -> bool {
         let v1 = self.inner.read().expect("Could not lock st1");
         let v2 = other.inner.read().expect("Could not lock st2");
