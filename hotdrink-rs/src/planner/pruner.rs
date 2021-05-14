@@ -3,7 +3,7 @@
 //! This can often make planning a lot faster by shrinking the constraint graph.
 
 use crate::planner::hierarchical::Vertex;
-use crate::planner::{ComponentSpec, ConstraintSpec, MethodSpec};
+use crate::planner::{ComponentSpec, ConstraintSpec};
 use std::collections::HashSet;
 
 /// Create a map from variables to all components they are used in.
@@ -69,15 +69,9 @@ pub fn prune<C>(
                 // Except unique writer, and
                 if ci != uwci {
                     // Remove methods in the other constraints that write to this variable
-                    let to_remove: Vec<_> = constraint
-                        .methods()
-                        .iter()
-                        .filter(|m| m.outputs().contains(&current_idx))
-                        .map(|m| m.name().to_owned())
-                        .collect();
-                    for m in to_remove {
-                        constraint.remove_method(&m);
-                    }
+                    constraint
+                        .methods_mut()
+                        .drain_filter(|m| m.outputs().contains(&current_idx));
                 }
             }
 

@@ -58,6 +58,8 @@ pub trait ConstraintSpec {
     fn name(&self) -> &str;
     /// Returns a slice to the methods of the constraint.
     fn methods(&self) -> &[Self::Method];
+    /// Returns a mutable reference to the methods of the constraint.
+    fn methods_mut(&mut self) -> &mut Vec<Self::Method>;
     /// Adds a new method to the constraint.
     fn add_method(&mut self, m: Self::Method);
     /// Removes a method from the constraint.

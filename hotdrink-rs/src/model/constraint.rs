@@ -39,6 +39,10 @@ impl<T> ConstraintSpec for Constraint<T> {
         &self.methods
     }
 
+    fn methods_mut(&mut self) -> &mut Vec<Self::Method> {
+        &mut self.methods
+    }
+
     fn add_method(&mut self, m: Method<T>) {
         self.methods.push(m);
         let mut set = HashSet::with_capacity(self.variables.len());
