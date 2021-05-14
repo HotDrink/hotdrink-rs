@@ -54,6 +54,8 @@ pub trait ConstraintSpec {
     type Method: MethodSpec;
     /// Constructs a new constraint with the provided methods.
     fn new(methods: Vec<Self::Method>) -> Self;
+    /// Constructs a new stay constraint.
+    fn stay(index: usize) -> Self;
     /// Returns a reference to the name of the constraint.
     fn name(&self) -> &str;
     /// Returns a slice to the methods of the constraint.

@@ -189,8 +189,7 @@ where
             continue;
         }
         // Create a stay constraint
-        let stay_method = M::stay(var_id);
-        let stay_constraint = C::new(vec![stay_method]);
+        let stay_constraint = C::stay(var_id);
         component.add_constraint(stay_constraint);
 
         // If the constraint is a source in the solution graph, adding it is no issue.

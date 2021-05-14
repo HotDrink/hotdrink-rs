@@ -31,6 +31,16 @@ impl<T> ConstraintSpec for Constraint<T> {
         Self::new_with_name(String::new(), methods)
     }
 
+    fn stay(index: usize) -> Self {
+        Self {
+            name: "".to_string(),
+            variables: vec![index],
+            methods: vec![Method::stay(index)],
+            assert: None,
+            active: true,
+        }
+    }
+
     fn name(&self) -> &str {
         &self.name
     }
