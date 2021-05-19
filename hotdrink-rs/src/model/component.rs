@@ -61,7 +61,7 @@ impl<T> Component<T> {
     pub fn subscribe<'s>(
         &mut self,
         variable: &'s str,
-        callback: impl Fn(Event<'_, T, SolveError>) + Send + 'static,
+        callback: impl Fn(Event<'_, T, SolveError>) + Send + Sync + 'static,
     ) -> Result<(), NoSuchVariable<'s>>
     where
         T: 'static,
@@ -642,7 +642,7 @@ mod tests {
 
         // Update a to 3
         component.edit("a", 3).unwrap();
-        component.par_solve(&mut DummyExecutor).unwrap();
+        component.par_solve(&DummyExecutor).unwrap();
 
         assert_eq!(
             &component.values(),

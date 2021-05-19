@@ -178,7 +178,7 @@ impl<T> ConstraintSystem<T> {
         &mut self,
         component: &'a str,
         variable: &'a str,
-        callback: impl for<'e> Fn(Event<'e, T, SolveError>) + Send + 'static,
+        callback: impl for<'e> Fn(Event<'e, T, SolveError>) + Send + Sync + 'static,
     ) -> Result<(), NoSuchItem<'a>>
     where
         T: 'static,

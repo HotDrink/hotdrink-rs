@@ -3,7 +3,7 @@
 use super::{activation::EventCallback, generation_id::GenerationId};
 use crate::event::{Event, EventWithLocation};
 use std::fmt::Debug;
-use std::sync::{Arc, Mutex};
+use std::sync::Arc;
 
 /// Information about a variable.
 ///
@@ -37,8 +37,8 @@ impl<T, E: Clone> FilteredCallback<T, E> {
         Self::default()
     }
     /// Sets the callback of the variable.
-    pub fn subscribe(&mut self, callback: impl Fn(Event<'_, T, E>) + Send + 'static) {
-        self.callback = Some(Arc::new(Mutex::new(callback)));
+    pub fn subscribe(&mut self, callback: impl Fn(Event<'_, T, E>) + Send + Sync + 'static) {
+        self.callback = Some(Arc::new(callback));
     }
     /// Removes the callback of the variable.
     pub fn unsubscribe(&mut self) {
@@ -63,7 +63,7 @@ impl<T, E: Clone> FilteredCallback<T, E> {
 
         // Call callback
         if let Some(callback) = &self.callback {
-            callback.lock().unwrap()(ge.event());
+            callback(ge.event());
         }
     }
 }
