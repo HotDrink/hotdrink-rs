@@ -1,7 +1,8 @@
 use std::{
+    error::Error,
     sync::{
         atomic::{AtomicUsize, Ordering},
-        mpsc::Sender,
+        mpsc::{self, Sender},
         Arc, Mutex,
     },
     thread::{self, JoinHandle},
@@ -14,7 +15,7 @@ struct Task {
     inputs: Vec<usize>,
     outputs: Vec<usize>,
     deps_left: Arc<AtomicUsize>,
-    body: Arc<dyn Fn() + Send + Sync>,
+    body: Arc<Mutex<dyn Fn() + Send>>,
     #[allow(clippy::clippy::type_complexity)]
     on_completion: Arc<Mutex<Option<Box<dyn FnOnce() + Send>>>>,
 }
@@ -24,7 +25,7 @@ impl Task {
         name: impl Into<String>,
         inputs: Vec<usize>,
         outputs: Vec<usize>,
-        body: impl Fn() + Send + Sync + 'static,
+        body: impl Fn() + Send + 'static,
     ) -> Self {
         let deps_left = inputs.len();
         Self {
@@ -32,12 +33,12 @@ impl Task {
             inputs,
             outputs,
             deps_left: Arc::new(AtomicUsize::new(deps_left)),
-            body: Arc::new(body),
+            body: Arc::new(Mutex::new(body)),
             on_completion: Arc::new(Mutex::new(None)),
         }
     }
     fn execute(&self) {
-        (self.body)();
+        (self.body.lock().unwrap())();
         if let Some(f) = self.on_completion.lock().unwrap().take() {
             f()
         }
@@ -58,23 +59,20 @@ impl ThreadPoolInner {
         let threads = (0..num_threads)
             .map(|tid| {
                 let tasks = tasks.clone();
-                thread::spawn(move || {
-                    loop {
-                        let task = { tasks.lock().unwrap().recv() };
-                        match task {
-                            Ok(task) => {
-                                println!("Thread {}: Starting task {}", tid, task.name);
-                                task.execute();
-                                println!("Thread {}: Completed task {}", tid, task.name);
-                            }
-                            Err(_) => break,
+                thread::spawn(move || loop {
+                    log::trace!("Thread {}: Awaiting task", tid);
+                    let task = { tasks.lock().unwrap().recv() };
+                    match task {
+                        Ok(task) => {
+                            log::trace!("Thread {}: Received task {}", tid, task.name);
+                            task.execute()
+                        }
+
+                        Err(_) => {
+                            log::trace!("Thread {}: No more tasks", tid);
+                            break;
                         }
                     }
-                    // NOTE: Locks for entire loop body :(
-                    // while let Ok(task) = tasks.lock().unwrap().recv() {
-                    //     println!("Thread {}: Executing task {}", tid, task.name);
-                    //     task.execute();
-                    // }
                 })
             })
             .collect();
@@ -98,8 +96,6 @@ impl ScopedThreadPool {
         }
     }
     fn schedule(&self, task: Task) {
-        let name = task.name.clone();
-        println!("Scheduling task {}", name);
         if let Some(sender) = &self.sender {
             sender.send(task).unwrap();
         }
@@ -119,37 +115,24 @@ impl Drop for ScopedThreadPool {
     }
 }
 
-fn main() {
-    let mut args = std::env::args();
-    let _ = args.next().unwrap();
-    let num_threads: usize = args.next().unwrap().parse().unwrap();
+/// Schedule
+fn schedule(mut tasks: Vec<Task>, thread_pool: ScopedThreadPool) {
+    for t in tasks.drain(..) {
+        thread_pool.schedule(t);
+    }
+}
 
-    let mut tasks = Vec::new();
-    tasks.push(Task::new("0", vec![], vec![1], || {
-        thread::sleep(Duration::from_millis(1000));
-    }));
-    tasks.push(Task::new("1", vec![0], vec![], || {
-        thread::sleep(Duration::from_millis(1000));
-    }));
-    tasks.push(Task::new("2", vec![], vec![3], || {
-        thread::sleep(Duration::from_millis(2000));
-    }));
-    tasks.push(Task::new("3", vec![2], vec![], || {
-        thread::sleep(Duration::from_millis(1000));
-    }));
-
-    let tp = ScopedThreadPool::new(num_threads);
-
-    // Deferred scheduling algorithm
+/// The deferred scheduling algorithm
+fn schedule_deferred(tasks: Vec<Task>, thread_pool: ScopedThreadPool) {
     for t in tasks.clone() {
         let tasks = tasks.clone();
-        let tp = tp.sender.clone().unwrap();
+        let tp = thread_pool.sender.clone().unwrap();
         let t_clone = t.clone();
         t.on_completion(move || {
             for d_idx in &t_clone.outputs {
                 let d = &tasks[*d_idx];
                 if d.deps_left.fetch_sub(1, Ordering::SeqCst) == 1 {
-                    println!("Task {}: Scheduling task {}", t_clone.name, d.name);
+                    log::info!("{} scheduled {}", t_clone.name, d.name);
                     tp.send(d.clone()).unwrap();
                 }
             }
@@ -158,7 +141,60 @@ fn main() {
 
     for t in tasks {
         if t.deps_left.load(Ordering::SeqCst) == 0 {
-            tp.schedule(t.clone());
+            log::info!("Root {}", t.name);
+            thread_pool.schedule(t.clone());
         }
     }
+}
+
+fn main() -> Result<(), Box<dyn Error>> {
+    env_logger::init();
+
+    // Get program arguments
+    let mut args = std::env::args();
+    let _ = args.next().unwrap();
+    let num_threads: usize = args.next().unwrap().parse().unwrap();
+    let mode = args.next().unwrap_or("deferred".to_string());
+
+    // Create tasks in topological order
+    // TODO: Automate topological sorting
+    let mut tasks = Vec::new();
+
+    let (zero, one) = mpsc::channel::<()>();
+    tasks.push(Task::new("0", vec![], vec![1], move || {
+        thread::sleep(Duration::from_millis(1000));
+        zero.send(()).unwrap();
+        println!("Task 0: Hello!");
+    }));
+    tasks.push(Task::new("1", vec![0], vec![], move || {
+        one.recv().unwrap();
+        thread::sleep(Duration::from_millis(1000));
+        println!("Task 1: Hello!");
+    }));
+
+    let (two, three) = mpsc::channel::<()>();
+    tasks.push(Task::new("2", vec![], vec![3], move || {
+        thread::sleep(Duration::from_millis(2000));
+        two.send(()).unwrap();
+        println!("Task 2: Hello!");
+    }));
+    tasks.push(Task::new("3", vec![2], vec![], move || {
+        three.recv().unwrap();
+        thread::sleep(Duration::from_millis(1000));
+        println!("Task 3: Hello!");
+    }));
+
+    // Create thread pool
+    let thread_pool = ScopedThreadPool::new(num_threads);
+    match mode.as_str() {
+        "deferred" => {
+            schedule_deferred(tasks, thread_pool);
+        }
+        "pre" => {
+            schedule(tasks, thread_pool);
+        }
+        _ => {}
+    }
+
+    Ok(())
 }
