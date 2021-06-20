@@ -13,7 +13,7 @@ use crate::{
     event::Event,
     executor::{DummyExecutor, MethodExecutor},
     planner::PlanError,
-    scheduler::SolveError,
+    solver::SolveError,
 };
 use std::{collections::HashMap, fmt::Debug};
 

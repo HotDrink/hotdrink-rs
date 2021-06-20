@@ -8,7 +8,7 @@ use crate::{
     executor::MethodExecutor,
     model::activation::{Activation, ActivationInner},
     planner::{MethodFailure, MethodFunction, MethodResult, MethodSpec, Vertex},
-    scheduler::{Reason, SolveError},
+    solver::{Reason, SolveError},
 };
 use core::slice;
 use derivative::Derivative;

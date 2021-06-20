@@ -109,6 +109,6 @@ pub mod examples;
 pub mod executor;
 pub mod model;
 pub mod planner;
-pub mod scheduler;
+pub mod solver;
 pub mod util;
 pub(crate) mod variable_ranking;

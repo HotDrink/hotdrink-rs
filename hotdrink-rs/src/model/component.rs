@@ -19,7 +19,7 @@ use crate::{
         hierarchical_planner, priority_adjuster::adjust_priorities, ComponentSpec, ConstraintSpec,
         MethodSpec, PlanError, Vertex,
     },
-    scheduler::{self, SolveError},
+    solver::{self, SolveError},
     variable_ranking::{SortRanker, VariableRanker},
 };
 use itertools::Itertools;
@@ -118,13 +118,22 @@ impl<T> Component<T> {
         Ok(())
     }
 
-    /// Returns the variable called `variable`, if one exists.
+    /// Returns a reference to the specified variable, if it exists.
     pub fn variable<'a>(
         &self,
         variable: &'a str,
     ) -> Result<&Variable<Activation<T>>, NoSuchVariable<'a>> {
         let idx = self.variable_index(variable)?;
         self.variables.get(idx).ok_or(NoSuchVariable(variable))
+    }
+
+    /// Returns a mutable reference to the specified variable, if it exists.
+    pub fn variable_mut<'a>(
+        &mut self,
+        variable: &'a str,
+    ) -> Result<&mut Variable<Activation<T>>, NoSuchVariable<'a>> {
+        let idx = self.variable_index(variable)?;
+        self.variables.get_mut(idx).ok_or(NoSuchVariable(variable))
     }
 
     /// Returns the current activation of `variable`, if one exists.
@@ -247,7 +256,7 @@ impl<T> Component<T> {
         }
 
         // Solve based on the plan
-        scheduler::schedule(
+        solver::solve(
             &plan,
             &mut self.variables,
             component_name,

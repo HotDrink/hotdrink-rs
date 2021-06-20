@@ -1,6 +1,6 @@
-//! Functions for scheduling plans created by a planner.
+//! Functions for solving systems by scheduling plans created by a planner.
 //! If provided with a plan and the current values of a component,
-//! [`schedule`] will schedule methods to be run in an appropriate order
+//! [`solve`] will schedule methods to be run in an appropriate order
 //! using a method executor of choice.
 
 use crate::{
@@ -33,7 +33,7 @@ use super::SolveError;
 /// 4. The generation to know which solve new values came from.
 /// 5. A [`MethodExecutor`] implementation for running methods in a plan.
 /// 6. A callback to pass new produced values to. These events include the component name and the generation.
-pub(crate) fn schedule<T>(
+pub(crate) fn solve<T>(
     plan: &[OwnedEnforcedConstraint<Method<T>>],
     current_values: &mut Variables<Activation<T>>,
     component_name: String,
