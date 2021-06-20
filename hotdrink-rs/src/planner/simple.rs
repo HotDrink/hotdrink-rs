@@ -173,9 +173,11 @@ where
             let mut free_method: Option<&M> = None;
             for m in constraint.methods() {
                 let outputs = m.outputs();
-                if outputs.contains(&idx) && m.outputs().iter().all(|o| variables[*o].is_free()) {
+                let contains_variable = outputs.contains(&idx);
+                let all_outputs_are_free = outputs.iter().all(|o| variables[*o].is_free());
+                if contains_variable && all_outputs_are_free {
                     if let Some(other) = free_method {
-                        if other.n_outputs() > m.n_outputs() {
+                        if m.n_outputs() < other.n_outputs() {
                             free_method = Some(m);
                         }
                     } else {

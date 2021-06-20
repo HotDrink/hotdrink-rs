@@ -194,6 +194,7 @@ fn schedule_deferred(tasks: Vec<Task>, thread_pool: ScopedThreadPool) {
     }
 }
 
+#[allow(dead_code)]
 fn dual_chain_example() -> Vec<Task> {
     // Create tasks in topological order
     let mut tasks = Vec::new();
