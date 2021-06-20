@@ -9,7 +9,8 @@ module.exports = {
   entry: {
     index: "./js/index.js",
     image_resize: "./js/image_resize.js",
-    turbines: "./js/turbines.js"
+    turbines: "./js/turbines.js",
+    signup: "./js/signup.js"
   },
   output: {
     path: dist,
