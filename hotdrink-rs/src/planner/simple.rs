@@ -5,7 +5,6 @@
 
 use super::{hierarchical::Vertex, toposorter::toposort};
 use crate::planner::{ComponentSpec, ConstraintSpec, MethodSpec};
-use itertools::Itertools;
 use std::{collections::VecDeque, fmt::Debug};
 
 /// Maintains a list of constraints that reference this variable.
@@ -169,16 +168,23 @@ where
         let referencing_constraints = interesting_variable.referencing_constraints().to_owned();
         for ci in referencing_constraints {
             let constraint = &constraints[ci];
-            // Find all methods that write to free variables,
-            // sorted by their number of outputs.
-            let mut free_methods = constraint
-                .methods()
-                .iter()
-                .filter(|m| m.outputs().contains(&idx))
-                .filter(|m| m.outputs().iter().all(|o| variables[*o].is_free()))
-                .sorted_by_key(|m| m.outputs().len());
 
-            if let Some(m) = free_methods.next() {
+            // Find best method candidate
+            let mut free_method: Option<&M> = None;
+            for m in constraint.methods() {
+                let outputs = m.outputs();
+                if outputs.contains(&idx) && m.outputs().iter().all(|o| variables[*o].is_free()) {
+                    if let Some(other) = free_method {
+                        if other.n_outputs() > m.n_outputs() {
+                            free_method = Some(m);
+                        }
+                    } else {
+                        free_method = Some(m);
+                    }
+                }
+            }
+
+            if let Some(m) = free_method {
                 // Add this method to the plan
                 plan.push(EnforcedConstraint::new(constraint.name(), m));
                 remaining_constraints -= 1;
