@@ -1,5 +1,6 @@
 use std::{
     error::Error,
+    fmt::Debug,
     sync::{
         atomic::{AtomicUsize, Ordering},
         mpsc::{self, Sender},
@@ -18,6 +19,12 @@ struct Task {
     body: Arc<Mutex<dyn Fn() + Send>>,
     #[allow(clippy::clippy::type_complexity)]
     on_completion: Arc<Mutex<Option<Box<dyn FnOnce() + Send>>>>,
+}
+
+impl Debug for Task {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.name)
+    }
 }
 
 impl Task {
@@ -115,6 +122,46 @@ impl Drop for ScopedThreadPool {
     }
 }
 
+fn topologically_sort(tasks: Vec<Task>) -> Vec<Task> {
+    let mut stack: Vec<_> = (0..tasks.len()).collect();
+    let mut permastack = Vec::new();
+    let mut visited = vec![false; tasks.len()];
+    let mut pushed = vec![false; tasks.len()];
+    while let Some(i) = stack.pop() {
+        if visited[i] && !pushed[i] {
+            permastack.push(i);
+            pushed[i] = true;
+        } else if !visited[i] {
+            visited[i] = true;
+            let task = &tasks[i];
+            stack.push(i);
+            for &d in &task.outputs {
+                if !visited[d] {
+                    stack.push(d);
+                }
+            }
+        }
+    }
+
+    let mut tasks: Vec<_> = tasks.into_iter().map(Some).collect();
+    permastack
+        .into_iter()
+        .rev()
+        .map(|i| tasks[i].take().unwrap())
+        .collect()
+}
+
+#[test]
+fn topologically_sort_test() {
+    let mut tasks = Vec::new();
+    tasks.push(Task::new("a", vec![1], vec![], || {}));
+    tasks.push(Task::new("b", vec![2], vec![0], || {}));
+    tasks.push(Task::new("c", vec![], vec![1], || {}));
+    dbg!(&tasks);
+    dbg!(topologically_sort(tasks));
+    assert!(false)
+}
+
 /// Schedule
 fn schedule(mut tasks: Vec<Task>, thread_pool: ScopedThreadPool) {
     for t in tasks.drain(..) {
@@ -147,17 +194,8 @@ fn schedule_deferred(tasks: Vec<Task>, thread_pool: ScopedThreadPool) {
     }
 }
 
-fn main() -> Result<(), Box<dyn Error>> {
-    env_logger::init();
-
-    // Get program arguments
-    let mut args = std::env::args();
-    let _ = args.next().unwrap();
-    let num_threads: usize = args.next().unwrap().parse().unwrap();
-    let mode = args.next().unwrap_or("deferred".to_string());
-
+fn dual_chain_example() -> Vec<Task> {
     // Create tasks in topological order
-    // TODO: Automate topological sorting
     let mut tasks = Vec::new();
 
     let (zero, one) = mpsc::channel::<()>();
@@ -183,6 +221,58 @@ fn main() -> Result<(), Box<dyn Error>> {
         thread::sleep(Duration::from_millis(1000));
         println!("Task 3: Hello!");
     }));
+
+    tasks
+}
+
+fn split_merge_example() -> Vec<Task> {
+    let mut tasks = Vec::new();
+
+    tasks.push(Task::new("m1", vec![], vec![1, 3, 5], move || {
+        thread::sleep(Duration::from_millis(500))
+    }));
+
+    tasks.push(Task::new("m2", vec![0], vec![2], move || {
+        thread::sleep(Duration::from_millis(500))
+    }));
+    tasks.push(Task::new("m3", vec![1], vec![7], move || {
+        thread::sleep(Duration::from_millis(500))
+    }));
+
+    tasks.push(Task::new("m4", vec![0], vec![4], move || {
+        thread::sleep(Duration::from_millis(500))
+    }));
+    tasks.push(Task::new("m5", vec![3], vec![7], move || {
+        thread::sleep(Duration::from_millis(500))
+    }));
+
+    tasks.push(Task::new("m6", vec![0], vec![6], move || {
+        thread::sleep(Duration::from_millis(500))
+    }));
+    tasks.push(Task::new("m7", vec![5], vec![7], move || {
+        thread::sleep(Duration::from_millis(500))
+    }));
+
+    tasks.push(Task::new("m8", vec![2, 4, 6], vec![], move || {
+        thread::sleep(Duration::from_millis(500))
+    }));
+
+    tasks
+}
+
+fn main() -> Result<(), Box<dyn Error>> {
+    env_logger::init();
+
+    // Get program arguments
+    let mut args = std::env::args();
+    let _ = args.next().unwrap();
+    let num_threads: usize = args.next().unwrap().parse().unwrap();
+    let mode = args.next().unwrap_or_else(|| "deferred".to_string());
+
+    let tasks = split_merge_example();
+    dbg!(&tasks);
+    let tasks = topologically_sort(tasks);
+    dbg!(&tasks);
 
     // Create thread pool
     let thread_pool = ScopedThreadPool::new(num_threads);
