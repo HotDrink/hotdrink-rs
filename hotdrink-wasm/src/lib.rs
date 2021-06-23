@@ -63,7 +63,7 @@
 //! cs.edit("MyComponent", "b", ValueWrapper::String("Hello".to_string()));
 //! ```
 //!
-//! After producing a JavaScript module in www/pkg with
+//! After producing a JavaScript module in `www/pkg` with
 //! ```bash
 //! wasm-pack build --out-dir www/pkg --release
 //! ```
@@ -122,7 +122,7 @@
 //! wasm-pack build --out-dir www/pkg --target no-modules --release
 //! ```
 //!
-//! This will produce WebAssembly code and JS wrappers in www/pkg, which can then be imported there.
+//! This will produce WebAssembly code and JS wrappers in `www/pkg`, which can then be imported there.
 //! See wasm-pack's documentation for more information.
 
 #![warn(
