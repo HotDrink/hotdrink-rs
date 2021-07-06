@@ -24,7 +24,7 @@ use web_sys::{DedicatedWorkerGlobalScope, Worker, WorkerOptions};
 /// The work to be done by the web worker.
 /// It is given access to the global scope in order to send messages back to it.
 pub struct Work {
-    func: Box<dyn FnOnce(DedicatedWorkerGlobalScope) + Send>,
+    func: Box<dyn FnOnce(DedicatedWorkerGlobalScope) + Send + 'static>,
 }
 
 impl std::fmt::Debug for Work {
@@ -107,7 +107,7 @@ impl GenericWorker {
     /// This pointer (a simple `u32`) is then sent to the worker (thread).
     pub fn execute(
         &self,
-        f: Box<dyn FnOnce(DedicatedWorkerGlobalScope) + Send>,
+        f: Box<dyn FnOnce(DedicatedWorkerGlobalScope) + Send + 'static>,
     ) -> Result<(), JsValue> {
         let worker = &self.worker;
         let work = Box::new(Work { func: Box::new(f) });
