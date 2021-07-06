@@ -1,5 +1,8 @@
 //! A trait for threadpool-like types with cancellation-capabilities.
 
+use hotdrink_rs::executor::DummyExecutor;
+use wasm_bindgen::JsValue;
+
 /// Strategies for when to terminate workers.
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub enum TerminationStrategy {
@@ -28,4 +31,15 @@ pub trait WebWorkerPool {
     ) -> Result<Self, Self::FromUrlError>
     where
         Self: Sized;
+}
+
+impl WebWorkerPool for DummyExecutor {
+    type FromUrlError = JsValue;
+
+    fn from_url(_: usize, _: TerminationStrategy, _: &str) -> Result<Self, Self::FromUrlError>
+    where
+        Self: Sized,
+    {
+        Ok(DummyExecutor)
+    }
 }

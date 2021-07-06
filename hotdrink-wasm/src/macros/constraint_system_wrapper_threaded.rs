@@ -8,7 +8,7 @@
 /// # Examples
 ///
 /// ```rust
-/// use hotdrink_rs::{thread::DummyPool, model::ConstraintSystem};
+/// use hotdrink_rs::{executor::DummyExecutor, model::ConstraintSystem};
 /// use hotdrink_wasm::thread::TerminationStrategy;
 ///
 /// hotdrink_wasm::constraint_system_wrapper_threaded!(
@@ -20,7 +20,7 @@
 ///                 String
 ///             }
 ///         }
-///         thread_pool: DummyPool,
+///         thread_pool: DummyExecutor,
 ///         num_threads: 4,
 ///         termination_strategy: TerminationStrategy::UnusedResultAndNotDone
 ///     }
@@ -80,7 +80,7 @@ macro_rules! constraint_system_wrapper_threaded {
                 let event_listener =
                     $crate::event::event_listener::EventListener::from_url(&worker_script_url)?;
                 // Create the worker pool for executing methods
-                let pool = $crate::thread::WebWorkerPool::from_url(
+                let pool: $thread_pool_type = $crate::thread::WebWorkerPool::from_url(
                     $num_threads,
                     $termination_strategy,
                     &worker_script_url,
@@ -175,7 +175,7 @@ macro_rules! constraint_system_wrapper_threaded {
 
             /// Notifies the constraint system of an event, such as a thread having updated a value.
             pub fn notify(&self, event_ptr: u32) {
-                use hotdrink_rs::scheduler::SolveError;
+                use hotdrink_rs::solver::SolveError;
                 use $crate::event::js_event::JsEvent;
                 let event =
                     unsafe { Box::from_raw(event_ptr as *mut JsEvent<$inner_type, SolveError>) };
@@ -271,7 +271,7 @@ macro_rules! constraint_system_wrapper_threaded {
 #[cfg(test)]
 mod tests {
     use crate::thread::TerminationStrategy;
-    use hotdrink_rs::thread::DummyPool;
+    use hotdrink_rs::executor::DummyExecutor;
 
     #[ignore = "Simply for verification that it compiles"]
     #[test]
@@ -286,7 +286,7 @@ mod tests {
                         f64
                     }
                 }
-                thread_pool: DummyPool,
+                thread_pool: DummyExecutor,
                 num_threads: 4,
                 termination_strategy: TerminationStrategy::UnusedResultAndNotDone
             }
