@@ -24,7 +24,7 @@ impl MethodExecutor for StaticPool {
     type ExecError = JsValue;
 
     /// Sends the work through a channel to be executed by the first available thread.
-    /// It will also restart threads that appear to be stuck if their result is no longer requied.
+    /// It will also restart threads that appear to be stuck if their result is no longer required.
     fn schedule(&self, f: impl FnOnce() + Send + 'static) -> Result<TerminationHandle, JsValue> {
         let mut workers = self.workers.lock().unwrap();
         // Replace workers that will not produce a useful result
@@ -45,7 +45,7 @@ impl MethodExecutor for StaticPool {
 impl WebWorkerPool for StaticPool {
     type FromUrlError = JsValue;
     /// Tries to create a new [`StaticPool`] with the specified number of workers,
-    /// and spawns them using the provided script url.
+    /// and spawns them using the provided script URL.
     fn from_url(
         initial: usize,
         termination_strategy: TerminationStrategy,

@@ -56,12 +56,12 @@ macro_rules! constraint_system_wrapper_threaded {
             inner: std::sync::Mutex<hotdrink_rs::model::ConstraintSystem<$inner_type>>,
             event_listener: $crate::event::event_listener::EventListener<
                 $inner_type,
-                hotdrink_rs::scheduler::SolveError,
+                hotdrink_rs::solver::SolveError,
             >,
             event_handler: std::sync::Mutex<
                 $crate::event::event_handler::EventHandler<
                     $inner_type,
-                    hotdrink_rs::scheduler::SolveError,
+                    hotdrink_rs::solver::SolveError,
                 >,
             >,
             pool: std::sync::Mutex<$thread_pool_type>,

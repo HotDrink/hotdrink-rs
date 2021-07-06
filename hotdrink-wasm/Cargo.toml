@@ -29,7 +29,7 @@ log = "0.4.11"
 itertools = "0.10.0"
 
 # Wasm
-wasm-bindgen = "0.2.73"
+wasm-bindgen = "0.2.74"
 wasm-bindgen-futures = "0.4.18"
 
 # The `console_error_panic_hook` crate provides better debugging of panics by
