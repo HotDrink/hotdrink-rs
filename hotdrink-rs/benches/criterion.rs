@@ -112,7 +112,7 @@ fn hierarchical_planner_benches(c: &mut Criterion) {
 
 fn simple_planner_benches(c: &mut Criterion) {
     let mut group = c.benchmark_group("simple_planner");
-    for i in &[0, 25000, 75000] {
+    for i in &[0, 25000, 75000, 100000] {
         bench_simple_planner(&mut group, "linear-oneway", i, LINEAR_TWOWAY);
         bench_simple_planner(&mut group, "linear-twoway", i, LINEAR_TWOWAY);
         bench_simple_planner(&mut group, "ladder", i, LADDER);
@@ -156,18 +156,6 @@ fn hierarchical_planner_benches_max(c: &mut Criterion) {
     group.finish();
 }
 
-fn simple_planner_benches_max(c: &mut Criterion) {
-    let mut group = c.benchmark_group("simple_planner_max");
-    for i in &[75000] {
-        bench_simple_planner(&mut group, "linear-oneway", i, LINEAR_TWOWAY);
-        bench_simple_planner(&mut group, "linear-twoway", i, LINEAR_TWOWAY);
-        bench_simple_planner(&mut group, "ladder", i, LADDER);
-        bench_simple_planner(&mut group, "random", i, RANDOM);
-        bench_simple_planner(&mut group, "unprunable", i, UNPRUNABLE);
-    }
-    group.finish();
-}
-
 // Benchmarks for generating thesis output
 
 fn thesis_solve(c: &mut Criterion) {
@@ -189,7 +177,6 @@ criterion_group!(
     simple_planner_benches,
     solve_benches_max,
     hierarchical_planner_benches_max,
-    simple_planner_benches_max,
     thesis_solve,
 );
 
