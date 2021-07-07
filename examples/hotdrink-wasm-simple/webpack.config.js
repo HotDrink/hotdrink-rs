@@ -8,7 +8,7 @@ module.exports = {
   mode: "production",
   entry: {
     index: "./js/index.js",
-    image_resize: "./js/image_resize.js",
+    image_scaling: "./js/image_scaling.js",
     turbines: "./js/turbines.js",
     signup: "./js/signup.js"
   },

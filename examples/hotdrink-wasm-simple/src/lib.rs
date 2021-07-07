@@ -1,6 +1,6 @@
 use wasm_bindgen::prelude::wasm_bindgen;
 
-pub mod image_resize;
+pub mod image_scaling;
 pub mod signup;
 pub mod turbines;
 

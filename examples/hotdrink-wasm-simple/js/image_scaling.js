@@ -2,7 +2,7 @@ import("../pkg").then(hd => {
     const wrapper = hd.NumberWrapper;
 
     // Initialize constraint system
-    let cs = hd.image_resize();
+    let cs = hd.image_scaling();
     let component = "ImageScaling";
 
     // Capture undo events

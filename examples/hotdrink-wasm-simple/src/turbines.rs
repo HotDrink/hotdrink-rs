@@ -1,6 +1,6 @@
 //! A wind turbine example.
 
-use super::image_resize::{Number, NumberJsCs};
+use super::image_scaling::{Number, NumberJsCs};
 use hotdrink_rs::{
     component,
     model::{Component, ConstraintSystem},

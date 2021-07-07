@@ -30,7 +30,7 @@ hotdrink_wasm::constraint_system_wrapper!(NumberJsCs, NumberWrapper, Number);
 
 /// Generate a component that describes the constraints
 /// required between properties of the image.
-pub fn image_resize_component() -> Component<Number> {
+pub fn image_scaling_component() -> Component<Number> {
     component! {
         component ImageScaling {
             let initial_height: i32 = 400, initial_width: i32 = 400,
@@ -76,8 +76,8 @@ pub fn image_resize_component() -> Component<Number> {
 /// Adds the component to a [`ConstraintSystem`],
 /// then wraps that in the [`NumberJsCs`].
 #[wasm_bindgen]
-pub fn image_resize() -> Result<NumberJsCs, JsValue> {
+pub fn image_scaling() -> Result<NumberJsCs, JsValue> {
     let mut cs = ConstraintSystem::new();
-    cs.add_component(image_resize_component());
+    cs.add_component(image_scaling_component());
     NumberJsCs::wrap(cs)
 }
