@@ -74,8 +74,8 @@ fn thesis_update() {
         bench_update::<LinearOneway>(i);
         bench_update::<LinearTwoway>(i);
         bench_update::<Ladder>(i);
-        bench_update::<Unprunable>(i);
         bench_update::<Random>(i);
+        bench_update::<Unprunable>(i);
     }
     for &i in &[100, 500, 1000] {
         bench_update_max::<LinearOneway>(i);
