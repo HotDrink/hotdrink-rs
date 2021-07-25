@@ -3,4 +3,7 @@ build-std = ['std', 'panic_abort']
 
 [build]
 target = "wasm32-unknown-unknown"
-rustflags = '-Ctarget-feature=+atomics,+bulk-memory'
+# The issue at https://github.com/rustwasm/wasm-bindgen/issues/2487
+# is resolved by https://github.com/GoogleChromeLabs/wasm-bindgen-rayon/issues/9
+# and is why we need +mutable-globals.
+rustflags = '-Ctarget-feature=+atomics,+bulk-memory,+mutable-globals'
