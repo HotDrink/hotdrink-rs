@@ -143,6 +143,7 @@ macro_rules! constraint_system_wrapper_threaded {
                     let variable = variable.to_owned();
                     let mut inner = self.inner.lock().unwrap();
                     let sender = self.event_listener.sender().clone();
+                    let sender = std::sync::Mutex::new(sender);
                     let (component_clone, variable_clone) = (component.clone(), variable.clone());
                     let result = inner.subscribe(&component_clone, &variable_clone, move |e| {
                         let js_event = $crate::event::js_event::JsEvent::new(
@@ -150,7 +151,7 @@ macro_rules! constraint_system_wrapper_threaded {
                             variable.clone(),
                             e.into(),
                         );
-                        sender.send(js_event).unwrap()
+                        sender.lock().unwrap().send(js_event).unwrap()
                     });
 
                     if let Err(e) = result {
