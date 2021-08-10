@@ -1,7 +1,6 @@
 //! A constraint system that only contains strings.
 
-use hotdrink_rs::thread::DummyPool;
-use hotdrink_wasm::thread::TerminationStrategy;
+use hotdrink_wasm::thread::{TerminationStrategy, StaticPool};
 
 hotdrink_wasm::component_type_wrapper! {
     pub struct StringWrapper {
@@ -16,7 +15,7 @@ hotdrink_wasm::constraint_system_wrapper_threaded!(
     StringJsCs,
     StringWrapper,
     StringValue,
-    DummyPool,
+    StaticPool,
     4,
     TerminationStrategy::UnusedResultAndNotDone
 );
