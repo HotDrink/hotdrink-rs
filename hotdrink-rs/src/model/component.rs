@@ -24,7 +24,7 @@ use crate::{
 };
 use itertools::Itertools;
 use std::{
-    collections::{HashMap, HashSet},
+    collections::HashMap,
     fmt::{self, Debug, Write},
     ops::{Index, IndexMut},
     sync::{Arc, Mutex},
@@ -42,7 +42,6 @@ pub struct Component<T> {
     variables: Variables<Activation<T>>,
     constraints: Vec<Constraint<T>>,
     ranker: SortRanker,
-    updated_since_last_solve: HashSet<usize>,
     n_ready: usize,
     current_generation: usize,
     total_generation: usize,
@@ -102,7 +101,6 @@ impl<T> Component<T> {
         value: impl Into<T>,
     ) -> Result<(), NoSuchVariable<'s>> {
         let idx = self.variable_index(variable)?;
-        self.updated_since_last_solve.insert(idx);
         self.ranker.touch(idx);
         let value = value.into();
 
@@ -236,7 +234,6 @@ impl<T> Component<T> {
         let plan = hierarchical_planner(self)?;
         self.ranker = adjust_priorities(&plan, &self.ranker);
 
-        self.updated_since_last_solve.clear();
         let component_name = self.name().to_owned();
 
         // Clone the variable information for use in the general callback
@@ -314,7 +311,7 @@ impl<T> Component<T> {
     /// Returns true if any variables have been updated since
     /// the last solve, meaning that any constraints may be broken.
     pub fn is_modified(&self) -> bool {
-        !self.updated_since_last_solve.is_empty()
+        true
     }
 
     /// Returns the current ranking of variables,
@@ -504,7 +501,6 @@ impl<T> Component<T> {
             callbacks: Arc::new(Mutex::new(vec![FilteredCallback::new(); n_variables])),
             constraints,
             ranker: VariableRanker::of_size(n_variables),
-            updated_since_last_solve: (0..n_variables).collect(),
             n_ready: n_variables,
             ..Default::default()
         }
@@ -543,7 +539,6 @@ impl<T> ComponentSpec for Component<T> {
             callbacks: Arc::new(Mutex::new(vec![FilteredCallback::new(); n_variables])),
             constraints,
             ranker: VariableRanker::of_size(n_variables),
-            updated_since_last_solve: (0..n_variables).collect(),
             n_ready: n_variables,
             ..Default::default()
         }
@@ -621,7 +616,6 @@ impl<T: PartialEq> PartialEq for Component<T> {
             && self.variables == other.variables
             && self.constraints == other.constraints
             && self.ranker == other.ranker
-            && self.updated_since_last_solve == other.updated_since_last_solve
     }
 }
 

@@ -3,37 +3,37 @@ use hotdrink_rs::{event::Event, examples::components::numbers::sum, model::Compo
 fn main() {
     let mut comp: Component<i32> = sum();
 
-    println!("Subscribing");
+    eprintln!("Subscribing");
     comp.subscribe("a", |e| {
         if let Event::Ready(v) = e {
-            println!("a = {:?}", v);
+            eprintln!("a = {:?}", v);
         }
     })
     .unwrap();
 
     comp.subscribe("b", |e| {
         if let Event::Ready(v) = e {
-            println!("b = {:?}", v);
+            eprintln!("b = {:?}", v);
         }
     })
     .unwrap();
 
     comp.subscribe("c", |e| {
         if let Event::Ready(v) = e {
-            println!("c = {:?}", v);
+            eprintln!("c = {:?}", v);
         }
     })
     .unwrap();
 
-    println!("Setting a");
+    eprintln!("Setting a");
     comp.edit("a", 3).unwrap();
 
-    println!("Updating");
+    eprintln!("Updating");
     comp.solve().unwrap();
 
-    println!("Setting b");
+    eprintln!("Setting b");
     comp.edit("b", 5).unwrap();
 
-    println!("Updating");
+    eprintln!("Updating");
     comp.solve().unwrap();
 }
