@@ -187,7 +187,7 @@ impl<T> ConstraintSystem<T> {
         let component = self.component_mut(component)?;
         component
             .subscribe(variable, callback)
-            .map_err(NoSuchItem::NoSuchVariable)
+            .map_err(NoSuchItem::Variable)
     }
 
     /// Unsubscribe from a variable in the specified component to avoid receiving further events.
@@ -200,7 +200,7 @@ impl<T> ConstraintSystem<T> {
         let component = self.component_mut(component)?;
         component
             .unsubscribe(variable)
-            .map_err(NoSuchItem::NoSuchVariable)
+            .map_err(NoSuchItem::Variable)
     }
 
     /// Pins a variable.

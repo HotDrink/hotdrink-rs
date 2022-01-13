@@ -7,56 +7,56 @@ use std::fmt::Display;
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum NoSuchItem<'a> {
     /// See [`NoSuchComponent`].
-    NoSuchComponent(NoSuchComponent<'a>),
+    Component(NoSuchComponent<'a>),
     /// See [`NoSuchConstraint`].
-    NoSuchConstraint(NoSuchConstraint<'a>),
+    Constraint(NoSuchConstraint<'a>),
     /// See [`NoSuchVariable`].
-    NoSuchVariable(NoSuchVariable<'a>),
+    Variable(NoSuchVariable<'a>),
     /// Nothing more to undo.
-    NoMoreUndo,
+    Undo,
     /// Nothing more to redo.
-    NoMoreRedo,
+    Redo,
 }
 
 impl<'a> Display for NoSuchItem<'a> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            NoSuchItem::NoSuchComponent(e) => e.fmt(f),
-            NoSuchItem::NoSuchConstraint(e) => e.fmt(f),
-            NoSuchItem::NoSuchVariable(e) => e.fmt(f),
-            NoSuchItem::NoMoreUndo => write!(f, "Nothing more to undo"),
-            NoSuchItem::NoMoreRedo => write!(f, "Nothing more to redo"),
+            NoSuchItem::Component(e) => e.fmt(f),
+            NoSuchItem::Constraint(e) => e.fmt(f),
+            NoSuchItem::Variable(e) => e.fmt(f),
+            NoSuchItem::Undo => write!(f, "Nothing more to undo"),
+            NoSuchItem::Redo => write!(f, "Nothing more to redo"),
         }
     }
 }
 
 impl<'a> From<NoSuchComponent<'a>> for NoSuchItem<'a> {
     fn from(nsc: NoSuchComponent<'a>) -> Self {
-        Self::NoSuchComponent(nsc)
+        Self::Component(nsc)
     }
 }
 
 impl<'a> From<NoSuchConstraint<'a>> for NoSuchItem<'a> {
     fn from(nsc: NoSuchConstraint<'a>) -> Self {
-        Self::NoSuchConstraint(nsc)
+        Self::Constraint(nsc)
     }
 }
 
 impl<'a> From<NoSuchVariable<'a>> for NoSuchItem<'a> {
     fn from(nsv: NoSuchVariable<'a>) -> Self {
-        Self::NoSuchVariable(nsv)
+        Self::Variable(nsv)
     }
 }
 
 impl<'a> From<NoMoreUndo> for NoSuchItem<'a> {
     fn from(_: NoMoreUndo) -> Self {
-        Self::NoMoreUndo
+        Self::Undo
     }
 }
 
 impl<'a> From<NoMoreRedo> for NoSuchItem<'a> {
     fn from(_: NoMoreRedo) -> Self {
-        Self::NoMoreRedo
+        Self::Redo
     }
 }
 

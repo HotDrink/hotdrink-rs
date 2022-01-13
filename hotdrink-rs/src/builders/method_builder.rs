@@ -184,24 +184,28 @@ impl<T> MethodBuilder<T> {
     }
 
     /// Add an immutable input to the method.
+    #[must_use]
     pub fn input<S: Into<String>>(mut self, input: S) -> Self {
         self.inputs.push(MethodInput::Ref(input.into()));
         self
     }
 
     /// Add a mutable input to the method.
+    #[must_use]
     pub fn input_mut<S: Into<String>>(mut self, input: S) -> Self {
         self.inputs.push(MethodInput::MutRef(input.into()));
         self
     }
 
     /// Set the inputs of the method.
+    #[must_use]
     pub fn inputs(mut self, inputs: Vec<MethodInput>) -> Self {
         self.inputs = inputs;
         self
     }
 
     /// Set the outputs of the method.
+    #[must_use]
     pub fn outputs(mut self, outputs: Vec<MethodOutput>) -> Self {
         self.outputs = outputs.into_iter().map_into().collect();
         self
@@ -210,6 +214,7 @@ impl<T> MethodBuilder<T> {
     /// Set the function to run when this method is applied.
     /// This function takes a slice with a length corresponding to its inputs as input,
     /// and should return a vector of length corresponding to its outputs.
+    #[must_use]
     pub fn apply(
         mut self,
         apply: impl for<'a> Fn(Vec<MethodArg<'a, T>>) -> MethodResult<T> + 'static,
@@ -226,6 +231,7 @@ impl<T> MethodBuilder<T> {
     /// If it is not pure, it will be re-run every update.
     /// Set this to false if the method reads from or writes to something other than
     /// its inputs and outputs.
+    #[must_use]
     pub fn pure(mut self, pure: bool) -> Self {
         self.pure = pure;
         self

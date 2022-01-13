@@ -6,19 +6,18 @@ use std::fmt::Debug;
 /// A builder for making programmatic construction of constraints easier.
 #[derive(Clone, Debug)]
 pub struct ConstraintBuilder<T> {
-    name: String,
     methods: Vec<MethodBuilder<T>>,
 }
 
 impl<T> ConstraintBuilder<T> {
     /// Constructs a new `ConstraintBuilder`.
-    pub fn new<S: Into<String>>(name: S) -> Self {
+    pub fn new<S: Into<String>>(_: S) -> Self {
         Self {
-            name: name.into(),
             methods: Vec::new(),
         }
     }
     /// Adds a method to the builder.
+    #[must_use]
     pub fn method(mut self, method: MethodBuilder<T>) -> Self {
         self.methods.push(method);
         self

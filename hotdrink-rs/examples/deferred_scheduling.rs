@@ -13,11 +13,10 @@ use std::{
 #[derive(Clone)]
 struct Task {
     name: String,
-    inputs: Vec<usize>,
     outputs: Vec<usize>,
     deps_left: Arc<AtomicUsize>,
     body: Arc<Mutex<dyn Fn() + Send>>,
-    #[allow(clippy::clippy::type_complexity)]
+    #[allow(clippy::type_complexity)]
     on_completion: Arc<Mutex<Option<Box<dyn FnOnce() + Send>>>>,
 }
 
@@ -37,7 +36,6 @@ impl Task {
         let deps_left = inputs.len();
         Self {
             name: name.into(),
-            inputs,
             outputs,
             deps_left: Arc::new(AtomicUsize::new(deps_left)),
             body: Arc::new(Mutex::new(body)),

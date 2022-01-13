@@ -66,11 +66,11 @@ impl<T> ConstraintSpec for Constraint<T> {
     ///
     /// Panics if the method does not exit, or if the name is ambiguous.
     fn remove_method(&mut self, name: &str) {
-        let removed: Vec<_> = self
+        let num_removed = self
             .methods
             .drain_filter(|m| m.name() == Some(name))
-            .collect();
-        match removed.len() {
+            .count();
+        match num_removed {
             0 => panic!("No method named {}", name),
             1 => {}
             _ => panic!("Ambiguous method name {}", name),

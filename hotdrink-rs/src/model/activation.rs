@@ -171,6 +171,7 @@ impl<T> Activation<T> {
     }
 
     /// Returns an activation that will not contribute to keeping the computing thread alive.
+    #[must_use]
     pub fn weak_clone(&self) -> Self {
         let mut clone = self.clone();
         clone.producer = None;

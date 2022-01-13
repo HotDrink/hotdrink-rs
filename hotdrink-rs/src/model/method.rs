@@ -98,7 +98,7 @@ impl<T> MethodSpec for Method<T> {
     fn name(&self) -> Option<&str> {
         match &self.inner {
             MethodInner::Stay(_) => None,
-            MethodInner::Normal { name, .. } => Some(&name),
+            MethodInner::Normal { name, .. } => Some(name),
         }
     }
 }
@@ -307,14 +307,14 @@ impl<T> Vertex for Method<T> {
     fn inputs(&self) -> &[usize] {
         match &self.inner {
             MethodInner::Stay(index) => slice::from_ref(index),
-            MethodInner::Normal { inputs, .. } => &inputs,
+            MethodInner::Normal { inputs, .. } => inputs,
         }
     }
     /// Get the indices of the outputs to this method
     fn outputs(&self) -> &[usize] {
         match &self.inner {
             MethodInner::Stay(index) => slice::from_ref(index),
-            MethodInner::Normal { outputs, .. } => &outputs,
+            MethodInner::Normal { outputs, .. } => outputs,
         }
     }
 

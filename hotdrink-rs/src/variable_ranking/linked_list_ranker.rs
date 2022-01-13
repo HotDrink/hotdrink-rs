@@ -97,9 +97,8 @@ impl LinkedListRanker {
     /// Returns an iterator over the variables in ranked order.
     pub fn iter(&self) -> impl Iterator<Item = usize> + '_ {
         FastRankerIterator {
-            ranker: &self,
+            ranker: self,
             current: self.root,
-            done: false,
         }
     }
 }
@@ -111,7 +110,6 @@ impl LinkedListRanker {
 struct FastRankerIterator<'a> {
     ranker: &'a LinkedListRanker,
     current: Option<usize>,
-    done: bool,
 }
 
 impl<'a> Iterator for FastRankerIterator<'a> {
